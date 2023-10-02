@@ -1,0 +1,25 @@
+[package]
+name = "tester-contract-wasm"
+version = "0.0.0"
+authors = [ "you",]
+edition = "2018"
+publish = false
+
+[lib]
+crate-type = [ "cdylib",]
+
+[workspace]
+members = [ ".",]
+
+[dev-dependencies]
+
+[profile.release]
+codegen-units = 1
+opt-level = "z"
+lto = true
+debug = false
+panic = "abort"
+
+[dependencies]
+tester-contract = { path = ".." }
+multiversx-sc-wasm-adapter = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }

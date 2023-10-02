@@ -1,0 +1,18 @@
+[package]
+name = "novax-data"
+version = "0.0.1"
+edition = "2021"
+license = "GPL-3.0-only"
+description = "A foundational crate for the NovaX framework, providing essential data types and conversions necessary for working with smart contracts and blockchain interactions."
+repository = "https://github.com/gfusee/novax"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+num-bigint = "0.4.3"
+multiversx-sc = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+multiversx-sc-scenario = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+multiversx-sc-codec = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+multiversx-sdk = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+serde = "1.0.183"
+base64 = "0.21.3"

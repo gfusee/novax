@@ -1,0 +1,14 @@
+[workspace]
+resolver = "2"
+
+members = [
+    "data",
+    "executor",
+    "mocking",
+    "caching",
+    "request",
+    "token",
+    "tester/core",
+    "tester/contract",
+    "tester/contract/meta"
+]

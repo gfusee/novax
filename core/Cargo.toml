@@ -1,0 +1,32 @@
+[package]
+name = "novax"
+version = "0.0.1"
+edition = "2021"
+license = "GPL-3.0-only"
+readme = "../README.md"
+description = "NovaX is your go-to toolkit for building robust software seamlessly interacting with the MultiversX blockchain."
+repository = "https://github.com/gfusee/novax"
+categories = ["cryptography::cryptocurrencies", "api-bindings"]
+keywords = ["multiversx", "blockchain", "sdk", "api"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+novax-data = { path = "../data" }
+novax-executor = { path = "../executor" }
+num-bigint = { version = "0.4.3", features = ["serde"] }
+async-trait = "0.1.72"
+serde = "1.0.177"
+serde_json = "1.0.104"
+tokio = "1.29.1"
+multiversx-sc = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+multiversx-sc-snippets = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+multiversx-sdk = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+multiversx-sc-scenario = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+multiversx-sc-codec = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+multiversx-sc-codec-derive = "0.18.1"
+reqwest = "0.11.18"
+hex = "0.4.3"
+
+[build-dependencies]
+novax-abi-build = { path = "../abi-build" }

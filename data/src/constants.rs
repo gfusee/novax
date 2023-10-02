@@ -1,0 +1,1 @@
+pub const EGLD_TOKEN_IDENTIFIER: &str = "EGLD";

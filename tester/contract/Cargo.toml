@@ -1,0 +1,16 @@
+[package]
+name = "tester-contract"
+version = "0.0.0"
+authors = [ "you",]
+edition = "2018"
+publish = false
+license = "GPL-3.0-only"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+multiversx-sc = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+
+[dev-dependencies]
+multiversx-sc-scenario = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }

@@ -1,0 +1,14 @@
+[package]
+name = "tester-contract-meta"
+version = "0.0.0"
+edition = "2018"
+publish = false
+authors = [ "you",]
+
+[dev-dependencies]
+
+[dependencies]
+multiversx-sc-meta = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+tester-contract = { path = ".." }
+
+

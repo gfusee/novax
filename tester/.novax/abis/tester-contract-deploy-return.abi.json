@@ -1,0 +1,625 @@
+{
+    "buildInfo": {
+        "rustc": {
+            "version": "1.74.0-nightly",
+            "commitHash": "ec08a0337f3556212525dbf1d3b41e19bdf27621",
+            "commitDate": "2023-09-04",
+            "channel": "Nightly",
+            "short": "rustc 1.74.0-nightly (ec08a0337 2023-09-04)"
+        },
+        "contractCrate": {
+            "name": "tester-contract",
+            "version": "0.0.0"
+        },
+        "framework": {
+            "name": "multiversx-sc",
+            "version": "0.43.3"
+        }
+    },
+    "name": "TesterWithReturningDeploy",
+    "constructor": {
+        "inputs": [
+            {
+                "name": "initial_value",
+                "type": "BigUint"
+            }
+        ],
+        "outputs": [
+            {
+                "type": "BigUint"
+            }
+        ]
+    },
+    "endpoints": [
+        {
+            "name": "getSum",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "add",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "value",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "noArgNoReturnEndpoint",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "returnCaller",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "Address"
+                }
+            ]
+        },
+        {
+            "name": "returnManagedBuffer",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "bytes"
+                }
+            ]
+        },
+        {
+            "name": "returnBiguint",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "returnU8",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u8"
+                }
+            ]
+        },
+        {
+            "name": "returnU16",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u16"
+                }
+            ]
+        },
+        {
+            "name": "returnU32",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u32"
+                }
+            ]
+        },
+        {
+            "name": "returnU64",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "returnU32Vec",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "List<u32>"
+                }
+            ]
+        },
+        {
+            "name": "returnU64Vec",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "List<u64>"
+                }
+            ]
+        },
+        {
+            "name": "returnBufferVec",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "List<bytes>"
+                }
+            ]
+        },
+        {
+            "name": "returnBiguintVec",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "List<BigUint>"
+                }
+            ]
+        },
+        {
+            "name": "returnTwoU64",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                },
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "returnTwoBuffers",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "bytes"
+                },
+                {
+                    "type": "bytes"
+                }
+            ]
+        },
+        {
+            "name": "returnOneBufferOneU64AndOneBiguint",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "bytes"
+                },
+                {
+                    "type": "u64"
+                },
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "returnDoubleOfU64Arg",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "arg",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "returnDoubleOfBiguintArg",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "arg",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "returnAppendedBufferArg",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "arg",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "bytes"
+                }
+            ]
+        },
+        {
+            "name": "returnSumTwoBiguintArgs",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "first_arg",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "second_arg",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "returnConcatMultiBufferArgs",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "args",
+                    "type": "variadic<bytes>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "bytes"
+                }
+            ]
+        },
+        {
+            "name": "returnSumMultiU64Args",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "args",
+                    "type": "variadic<u64>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "returnSumMultiBiguintArgs",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "args",
+                    "type": "variadic<BigUint>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "returnCustomStruct",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "CustomStruct"
+                }
+            ]
+        },
+        {
+            "name": "returnCustomStructArg",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "arg",
+                    "type": "CustomStruct"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "CustomStruct"
+                }
+            ]
+        },
+        {
+            "name": "returnCustomStructWithStructAndVec",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "CustomStructWithStructAndVec"
+                }
+            ]
+        },
+        {
+            "name": "returnCustomStructWithStructAndVecArg",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "arg",
+                    "type": "CustomStructWithStructAndVec"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "CustomStructWithStructAndVec"
+                }
+            ]
+        },
+        {
+            "name": "returnCustomEnum",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "CustomEnum"
+                }
+            ]
+        },
+        {
+            "name": "returnCustomEnumArg",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "arg",
+                    "type": "CustomEnum"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "CustomEnum"
+                }
+            ]
+        },
+        {
+            "name": "returnFirstCustomEnumWithValues",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "CustomEnumWithValues"
+                }
+            ]
+        },
+        {
+            "name": "returnSecondCustomEnumWithValues",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "CustomEnumWithValues"
+                }
+            ]
+        },
+        {
+            "name": "returnCustomEnumWithValuesArg",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "arg",
+                    "type": "CustomEnumWithValues"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "CustomEnumWithValues"
+                }
+            ]
+        },
+        {
+            "name": "returnFirstCustomEnumWithFields",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "CustomEnumWithFields"
+                }
+            ]
+        },
+        {
+            "name": "returnSecondCustomEnumWithFields",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "CustomEnumWithFields"
+                }
+            ]
+        },
+        {
+            "name": "returnCustomEnumWithFieldsArg",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "arg",
+                    "type": "CustomEnumWithFields"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "CustomEnumWithFields"
+                }
+            ]
+        },
+        {
+            "name": "returnMultiValueTwo",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "arg",
+                    "type": "optional<multi<u64,u64,u64>>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "optional<multi<u64,u64,u64>>",
+                    "multi_result": true
+                }
+            ]
+        }
+    ],
+    "events": [],
+    "hasCallback": false,
+    "types": {
+        "CustomEnum": {
+            "type": "enum",
+            "variants": [
+                {
+                    "name": "First",
+                    "discriminant": 0
+                },
+                {
+                    "name": "Second",
+                    "discriminant": 1
+                },
+                {
+                    "name": "Third",
+                    "discriminant": 2
+                }
+            ]
+        },
+        "CustomEnumWithFields": {
+            "type": "enum",
+            "variants": [
+                {
+                    "name": "First",
+                    "discriminant": 0,
+                    "fields": [
+                        {
+                            "name": "first_first",
+                            "type": "bytes"
+                        },
+                        {
+                            "name": "first_second",
+                            "type": "u64"
+                        },
+                        {
+                            "name": "first_third",
+                            "type": "BigUint"
+                        }
+                    ]
+                },
+                {
+                    "name": "Second",
+                    "discriminant": 1,
+                    "fields": [
+                        {
+                            "name": "second_first",
+                            "type": "List<u64>"
+                        },
+                        {
+                            "name": "second_second",
+                            "type": "List<bytes>"
+                        },
+                        {
+                            "name": "second_third",
+                            "type": "CustomStruct"
+                        }
+                    ]
+                }
+            ]
+        },
+        "CustomEnumWithValues": {
+            "type": "enum",
+            "variants": [
+                {
+                    "name": "First",
+                    "discriminant": 0,
+                    "fields": [
+                        {
+                            "name": "0",
+                            "type": "bytes"
+                        },
+                        {
+                            "name": "1",
+                            "type": "u64"
+                        },
+                        {
+                            "name": "2",
+                            "type": "BigUint"
+                        }
+                    ]
+                },
+                {
+                    "name": "Second",
+                    "discriminant": 1,
+                    "fields": [
+                        {
+                            "name": "0",
+                            "type": "List<u64>"
+                        },
+                        {
+                            "name": "1",
+                            "type": "List<bytes>"
+                        },
+                        {
+                            "name": "2",
+                            "type": "CustomStruct"
+                        }
+                    ]
+                }
+            ]
+        },
+        "CustomStruct": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "first",
+                    "type": "bytes"
+                },
+                {
+                    "name": "second",
+                    "type": "u64"
+                },
+                {
+                    "name": "third",
+                    "type": "BigUint"
+                }
+            ]
+        },
+        "CustomStructWithStructAndVec": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "first",
+                    "type": "List<u64>"
+                },
+                {
+                    "name": "second",
+                    "type": "List<bytes>"
+                },
+                {
+                    "name": "third",
+                    "type": "CustomStruct"
+                }
+            ]
+        }
+    }
+}

@@ -1,0 +1,29 @@
+[package]
+name = "novax-token"
+version = "0.0.1"
+edition = "2021"
+license = "GPL-3.0-only"
+description = "The `novax-token` crate offers utilities for retrieving token information from the blockchain, such as querying address balances, token metadata, and other related operations. By encapsulating the logic for interacting with token-related blockchain features, `novax-token` simplifies the process of querying and managing tokens within decentralized applications, making it a valuable tool for developers working with blockchain tokens and assets."
+repository = "https://github.com/gfusee/novax"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = "1.0.188"
+serde_json = "1.0.105"
+hex = "0.4.3"
+novax = { path = "../core" }
+novax-data = { path = "../data" }
+novax-request = { path = "../request" }
+num-bigint = "0.4.4"
+async-trait = "0.1.73"
+multiversx-sc = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+multiversx-sc-scenario = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+multiversx-sc-codec = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+
+[dev-dependencies]
+tokio = "1.32.0"
+async-trait = "0.1.73"
+reqwest = "0.11.20"
+hyper = "1.0.0-rc.4"
+

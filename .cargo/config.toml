@@ -1,0 +1,2 @@
+[env]
+NOVAX_PATH={ value = "tester/.novax", relative = true }

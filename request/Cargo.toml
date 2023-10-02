@@ -1,0 +1,15 @@
+[package]
+name = "novax-request"
+version = "0.0.1"
+edition = "2021"
+license = "GPL-3.0-only"
+description = "The `novax-request` crate serves as an abstraction layer for request clients, enabling mocking or actual interactions with blockchain gateway APIs. Its primary utility is within other Nova crates like `novax-token`, providing a standardized interface for handling requests, thereby promoting ease of testing and consistency across different blockchain interaction scenarios."
+repository = "https://github.com/gfusee/novax"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = "1.0.188"
+reqwest = "0.11.20"
+async-trait = "0.1.73"
+

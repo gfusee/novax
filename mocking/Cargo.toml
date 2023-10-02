@@ -1,0 +1,25 @@
+[package]
+name = "novax-mocking"
+version = "0.0.1"
+edition = "2021"
+license = "GPL-3.0-only"
+description = "The `novax-mocking` crate is a part of the Nova framework, providing utilities to simulate blockchain environments. It facilitates the creation of a `MockExecutor` and other simulated entities, enabling easy testing and development against smart contract interactions within a controlled, replicated blockchain scenario."
+repository = "https://github.com/gfusee/novax"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+num-bigint = "0.4.3"
+async-trait = "0.1.72"
+tokio = "1.30.0"
+novax = { path = "../core" }
+novax-token = { path = "../token" }
+multiversx-sc = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+multiversx-sc-snippets = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+multiversx-sdk = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+multiversx-sc-scenario = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+reqwest = "0.11.18"
+serde = "1.0.180"
+serde_json = "1.0.104"
+futures = "0.3.28"
+hex = "0.4.3"
