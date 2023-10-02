@@ -1,6 +1,5 @@
 use async_trait::async_trait;
-use multiversx_sc::codec::{CodecFrom, TopEncodeMulti};
-use multiversx_sc_scenario::scenario_model::{ScCallStep, TypedResponse, TypedScDeploy};
+use multiversx_sc_scenario::scenario_model::{ScCallStep, ScDeployStep};
 use multiversx_sc_snippets::Interactor;
 use multiversx_sdk::wallet::Wallet;
 use novax_data::Address;
@@ -45,30 +44,28 @@ pub trait BlockchainInteractor: Send + Sync {
         where
             S: AsMut<ScCallStep> + Send;
 
-    /// Deploys a smart contract on the blockchain and retrieves the result of the deployment.
+    /// Deploys a smart contract on the blockchain.
+    ///
+    /// The `sc_deploy` method takes a `sc_deploy_step` parameter that encapsulates the information required
+    /// for deploying a smart contract. The method is asynchronous and requires the [`tokio`] runtime, ensuring non-blocking
+    /// operation and concurrency where needed.
     ///
     /// # Type Parameters
-    ///
-    /// * `OriginalResult`: The type representing the expected result of the deployment.
-    ///   It should implement `TopEncodeMulti`, `Send`, and `Sync`.
-    /// * `RequestedResult`: The type representing the result to be retrieved.
-    ///   It should implement `CodecFrom<OriginalResult>`.
-    /// * `S`: A type that implements `AsMut<TypedScDeploy<OriginalResult>>` and `Send`,
-    ///   representing the deployment step.
+    /// - `S`: A type that implements [`AsMut<ScDeployStep>`] trait, allowing for a mutable reference to an [`ScDeployStep`] instance to be obtained.
     ///
     /// # Parameters
-    ///
-    /// * `step`: An instance of `S` representing the deployment step.
+    /// - `&mut self`: A mutable reference to the current [`BlockchainInteractor`] instance.
+    /// - `sc_deploy_step`: The smart contract deployment step encapsulating the necessary information for deployment.
     ///
     /// # Returns
+    /// The method returns a [`Result`] indicating the success or failure of the operation. Successful operations
+    /// will return `Ok(())` while failures will return `Err(BlockchainInteractorError)`.
     ///
-    /// * `(Address, TypedResponse<RequestedResult>)`: A tuple containing the blockchain address
-    ///   of the deployed smart contract and a `TypedResponse` holding the requested result.
-    async fn sc_deploy_get_result<OriginalResult, RequestedResult, S>(&mut self, step: S) -> (Address, TypedResponse<RequestedResult>)
+    /// # Errors
+    /// Any errors that occur during the execution of this method will be encapsulated in a [`BlockchainInteractorError`] and returned.
+    async fn sc_deploy<S>(&mut self, sc_deploy_step: S)
         where
-            OriginalResult: TopEncodeMulti + Send + Sync,
-            RequestedResult: CodecFrom<OriginalResult>,
-            S: AsMut<TypedScDeploy<OriginalResult>> + Send;
+            S: AsMut<ScDeployStep> + Send;
 }
 
 /// Implementation of the `BlockchainInteractor` trait for the `Interactor` struct from the `multiversx-sdk` crate.
@@ -115,36 +112,25 @@ impl BlockchainInteractor for Interactor {
         self.sc_call(sc_call_step).await;
     }
 
-    /// Asynchronously deploys a smart contract on the blockchain and retrieves the result of the deployment.
+    /// Implements the `sc_deploy` method from the [`BlockchainInteractor`] trait.
+    ///
+    /// The `sc_deploy` method of this implementation delegates the smart contract deployment
+    /// process to the `sc_deploy` method of the current `Interactor` instance.
     ///
     /// # Type Parameters
-    ///
-    /// * `OriginalResult`: The type representing the expected result of the deployment.
-    ///   It should implement `TopEncodeMulti`, `Send`, and `Sync`.
-    /// * `RequestedResult`: The type representing the result to be retrieved.
-    ///   It should implement `CodecFrom<OriginalResult>`.
-    /// * `S`: A type that implements `AsMut<TypedScDeploy<OriginalResult>>` and `Send`,
-    ///   representing the deployment step.
+    /// - `S`: A type that implements [`AsMut<ScDeployStep>`] trait, allowing for a mutable reference to an [`ScDeployStep`] instance to be obtained.
     ///
     /// # Parameters
-    ///
-    /// * `step`: An instance of `S` representing the deployment step.
+    /// - `&mut self`: A mutable reference to the current [`Interactor`] instance.
+    /// - `sc_deploy_step`: The smart contract deployment step encapsulating the necessary information for deployment.
     ///
     /// # Returns
+    /// The method returns a [`Result`] indicating the success or failure of the operation. Successful operations
+    /// will return `Ok(())` while failures will return `Err(BlockchainInteractorError)`.
     ///
-    /// * `(Address, TypedResponse<RequestedResult>)`: A tuple containing the blockchain address
-    ///   of the deployed smart contract and a `TypedResponse` holding the requested result.
-    async fn sc_deploy_get_result<OriginalResult, RequestedResult, S>(&mut self, step: S) -> (Address, TypedResponse<RequestedResult>)
-        where
-            OriginalResult: TopEncodeMulti + Send + Sync,
-            RequestedResult: CodecFrom<OriginalResult>,
-            S: AsMut<TypedScDeploy<OriginalResult>> + Send
-    {
-        let result = self.sc_deploy_get_result(step).await;
-
-        (
-            result.0.into(),
-            result.1
-        )
+    /// # Errors
+    /// Any errors that occur during the execution of this method will be encapsulated in a [`BlockchainInteractorError`] and returned.
+    async fn sc_deploy<S>(&mut self, sc_deploy_step: S) where S: AsMut<ScDeployStep> + Send {
+        self.sc_deploy(sc_deploy_step).await
     }
 }

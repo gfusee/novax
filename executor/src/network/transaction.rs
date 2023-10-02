@@ -1,7 +1,6 @@
 use std::marker::PhantomData;
 use std::mem;
 use async_trait::async_trait;
-use multiversx_sc::codec::multi_types::IgnoreValue;
 use multiversx_sc::codec::TopEncodeMulti;
 use multiversx_sc_scenario::scenario_model::{ScCallStep, ScDeployStep, TypedScCall, TypedScDeploy};
 use multiversx_sc_snippets::Interactor;
@@ -103,10 +102,9 @@ impl<Interactor: BlockchainInteractor> DeployExecutor for BaseTransactionNetwork
     /// # Returns
     ///
     /// A `Result` with an empty `Ok(())` value indicating success, or an `Err(ExecutorError)` indicating failure.
-    async fn sc_deploy<OriginalResult, S>(&mut self, mut sc_deploy_step: S) -> Result<(), ExecutorError>
+    async fn sc_deploy<OriginalResult>(&mut self, sc_deploy_step: &mut TypedScDeploy<OriginalResult>) -> Result<(), ExecutorError>
         where
             OriginalResult: TopEncodeMulti + Send + Sync,
-            S: AsMut<TypedScDeploy<OriginalResult>> + Send
     {
         let sc_deploy_step = sc_deploy_step.as_mut();
         let owned_sc_deploy_step = mem::replace(sc_deploy_step, ScDeployStep::new().into());
@@ -114,7 +112,7 @@ impl<Interactor: BlockchainInteractor> DeployExecutor for BaseTransactionNetwork
         let sender_address = interactor.register_wallet(self.wallet);
         *sc_deploy_step = owned_sc_deploy_step.from(&multiversx_sc::types::Address::from(sender_address.to_bytes()));
 
-        interactor.sc_deploy_get_result::<OriginalResult, IgnoreValue, _>(sc_deploy_step).await;
+        interactor.sc_deploy(sc_deploy_step).await;
 
         Ok(())
     }

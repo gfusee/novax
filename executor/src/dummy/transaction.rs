@@ -68,12 +68,10 @@ impl TransactionExecutor for DummyExecutor<ScCallStep> {
 #[async_trait]
 impl DeployExecutor for DummyExecutor<ScDeployStep> {
     /// Captures the smart contract deployment details.
-    async fn sc_deploy<OriginalResult, S>(&mut self, mut sc_deploy_step: S) -> Result<(), ExecutorError>
+    async fn sc_deploy<OriginalResult>(&mut self, sc_deploy_step: &mut TypedScDeploy<OriginalResult>) -> Result<(), ExecutorError>
         where
             OriginalResult: TopEncodeMulti + Send + Sync,
-            S: AsMut<TypedScDeploy<OriginalResult>> + Send
     {
-        let sc_deploy_step = sc_deploy_step.as_mut();
         let mut owned_sc_deploy_step = mem::replace(sc_deploy_step, ScDeployStep::new().into());
 
         if let Some(caller) = &self.caller {

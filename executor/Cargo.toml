@@ -16,7 +16,7 @@ serde = "1.0.183"
 hex = "0.4.3"
 base64 = "0.21.3"
 novax-data = { path = "../data" }
-multiversx-sc = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
-multiversx-sc-scenario = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
-multiversx-sdk = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
-multiversx-sc-snippets = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+multiversx-sc = "0.43.2"
+multiversx-sc-scenario = "0.43.2"
+multiversx-sdk = "0.2.0"
+multiversx-sc-snippets = "0.43.2"

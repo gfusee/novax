@@ -17,9 +17,9 @@ novax-data = { path = "../data" }
 novax-request = { path = "../request" }
 num-bigint = "0.4.4"
 async-trait = "0.1.73"
-multiversx-sc = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
-multiversx-sc-scenario = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
-multiversx-sc-codec = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+multiversx-sc = "0.43.2"
+multiversx-sc-scenario = "0.43.2"
+multiversx-sc-codec = "0.18.1"
 
 [dev-dependencies]
 tokio = "1.32.0"

@@ -8,7 +8,7 @@ use novax::testerwithreturningdeploy::testerwithreturningdeploy::TesterWithRetur
 use novax::transaction::CallResult;
 use novax::executor::BlockchainInteractor;
 use novax::executor::BaseTransactionNetworkExecutor;
-use novax_mocking::{CodecFrom, ScCallStep, TopEncodeMulti, TxResponse, TypedResponse, TypedScDeploy};
+use novax_mocking::{ScCallStep, ScDeployStep, TxResponse};
 use crate::utils::decode_scr_data::decode_scr_data_or_panic;
 
 mod utils;
@@ -40,12 +40,7 @@ impl BlockchainInteractor for MockInteractor {
         todo!()
     }
 
-    async fn sc_deploy_get_result<OriginalResult, RequestedResult, S>(&mut self, mut _step: S) -> (Address, TypedResponse<RequestedResult>)
-        where
-            OriginalResult: TopEncodeMulti + Send + Sync,
-            RequestedResult: CodecFrom<OriginalResult>,
-            S: AsMut<TypedScDeploy<OriginalResult>> + Send
-    {
+    async fn sc_deploy<S>(&mut self, mut sc_deploy_step: S) where S: AsMut<ScDeployStep> + Send {
         let mut response = if self.is_deploy_returning {
             TxResponse::from_raw_results(decode_scr_data_or_panic("@6f6b@05"))
         } else {
@@ -53,13 +48,8 @@ impl BlockchainInteractor for MockInteractor {
         };
 
         response.new_deployed_address = Some(Address::from_bech32_string(NEW_CONTRACT).unwrap().into());
-        let step = _step.as_mut();
-        step.sc_deploy_step.response = Some(response.clone());
-
-        (
-            NEW_CONTRACT.into(),
-            TypedResponse::from_raw(&response)
-        )
+        let step = sc_deploy_step.as_mut();
+        step.response = Some(response.clone());
     }
 }
 

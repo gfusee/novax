@@ -24,10 +24,9 @@ pub trait DeployExecutor: Send + Sync {
     /// # Returns
     ///
     /// A `Result` with an empty `Ok(())` value for success, or `Err(ExecutorError)` for failure.
-    async fn sc_deploy<OriginalResult, S>(&mut self, sc_deploy_step: S) -> Result<(), ExecutorError>
+    async fn sc_deploy<OriginalResult>(&mut self, sc_deploy_step: &mut TypedScDeploy<OriginalResult>) -> Result<(), ExecutorError>
         where
-            OriginalResult: TopEncodeMulti + Send + Sync,
-            S: AsMut<TypedScDeploy<OriginalResult>> + Send;
+            OriginalResult: TopEncodeMulti + Send + Sync;
 
     /// Indicates whether to skip deserialization during the deployment execution.
     ///
@@ -45,10 +44,9 @@ pub trait DeployExecutor: Send + Sync {
 #[async_trait]
 impl<T: DeployExecutor> DeployExecutor for Arc<Mutex<T>> {
     /// Executes a smart contract deployment step asynchronously, delegating to the inner `DeployExecutor`.
-    async fn sc_deploy<OriginalResult, S>(&mut self, sc_deploy_step: S) -> Result<(), ExecutorError>
+    async fn sc_deploy<OriginalResult>(&mut self, sc_deploy_step: &mut TypedScDeploy<OriginalResult>) -> Result<(), ExecutorError>
         where
             OriginalResult: TopEncodeMulti + Send + Sync,
-            S: AsMut<TypedScDeploy<OriginalResult>> + Send
     {
         {
             let mut locked = self.lock().await;

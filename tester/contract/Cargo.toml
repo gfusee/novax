@@ -10,7 +10,7 @@ license = "GPL-3.0-only"
 path = "src/lib.rs"
 
 [dependencies]
-multiversx-sc = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+multiversx-sc = "0.43.2"
 
 [dev-dependencies]
-multiversx-sc-scenario = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+multiversx-sc-scenario = "0.43.2"

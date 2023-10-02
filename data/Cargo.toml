@@ -10,9 +10,9 @@ repository = "https://github.com/gfusee/novax"
 
 [dependencies]
 num-bigint = "0.4.3"
-multiversx-sc = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
-multiversx-sc-scenario = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
-multiversx-sc-codec = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
-multiversx-sdk = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+multiversx-sc = "0.43.2"
+multiversx-sc-scenario = "0.43.2"
+multiversx-sc-codec = "0.18.1"
+multiversx-sdk = "0.2.0"
 serde = "1.0.183"
 base64 = "0.21.3"

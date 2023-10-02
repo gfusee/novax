@@ -8,7 +8,7 @@ use novax::errors::NovaXError;
 use num_bigint::BigUint;
 use novax::tester::tester::{CustomEnum, CustomEnumWithFields, CustomEnumWithValues, CustomStruct, CustomStructWithStructAndVec, TesterContract};
 use novax::executor::{BaseTransactionNetworkExecutor, BlockchainInteractor, SendableTransactionConvertible};
-use novax_mocking::{CodecFrom, ScCallStep, TopEncodeMulti, TxResponse, TypedResponse, TypedScDeploy};
+use novax_mocking::{ScCallStep, ScDeployStep, TxResponse};
 use crate::utils::decode_scr_data::decode_scr_data_or_panic;
 
 const CALLER_PRIVATE_KEY: &str = "69417ce717e43d0d3a598f68b5e562d7d2a532a5a3ac1e8b3342515e0b2d950f"; // to anyone reading : this has been generated only for the tests below
@@ -112,12 +112,7 @@ impl BlockchainInteractor for MockInteractor {
         call_step.response = Some(response);
     }
 
-    async fn sc_deploy_get_result<OriginalResult, RequestedResult, S>(&mut self, _step: S) -> (Address, TypedResponse<RequestedResult>)
-    where
-        OriginalResult: TopEncodeMulti + Send + Sync,
-        RequestedResult: CodecFrom<OriginalResult>,
-        S: AsMut<TypedScDeploy<OriginalResult>> + Send
-    {
+    async fn sc_deploy<S>(&mut self, _sc_deploy_step: S) where S: AsMut<ScDeployStep> + Send {
         todo!()
     }
 }

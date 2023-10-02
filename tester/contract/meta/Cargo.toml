@@ -8,7 +8,7 @@ authors = [ "you",]
 [dev-dependencies]
 
 [dependencies]
-multiversx-sc-meta = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+multiversx-sc-meta = "0.43.2"
 tester-contract = { path = ".." }
 
 

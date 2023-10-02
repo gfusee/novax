@@ -1264,7 +1264,8 @@ dependencies = [
 [[package]]
 name = "multiversx-chain-scenario-format"
 version = "0.20.0"
-source = "git+https://github.com/gfusee/mx-sdk-rs?branch=feature/typed_sc_deploy_as_mut#5d2c15c747e471ba5b2d676b05432e02e72cc3e2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cc5bd3e4bf86e4d8c53f915be3110261432fac45b1defe42c8eebe07c82ab983"
 dependencies = [
  "bech32",
  "hex",
@@ -1278,7 +1279,8 @@ dependencies = [
 [[package]]
 name = "multiversx-chain-vm"
 version = "0.5.2"
-source = "git+https://github.com/gfusee/mx-sdk-rs?branch=feature/typed_sc_deploy_as_mut#5d2c15c747e471ba5b2d676b05432e02e72cc3e2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1a17902391e7bb99a225a374464698c0d2b0829d8732e925451cce66c12efecf"
 dependencies = [
  "bitflags 1.3.2",
  "ed25519-dalek",
@@ -1313,8 +1315,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc"
-version = "0.43.3"
-source = "git+https://github.com/gfusee/mx-sdk-rs?branch=feature/typed_sc_deploy_as_mut#5d2c15c747e471ba5b2d676b05432e02e72cc3e2"
+version = "0.43.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "406939660d0c79dd191c6677f4b048df873a95f4531d8abafc9cdbe282bf1725"
 dependencies = [
  "bitflags 1.3.2",
  "hashbrown 0.13.2",
@@ -1327,10 +1330,11 @@ dependencies = [
 [[package]]
 name = "multiversx-sc-codec"
 version = "0.18.1"
-source = "git+https://github.com/gfusee/mx-sdk-rs?branch=feature/typed_sc_deploy_as_mut#5d2c15c747e471ba5b2d676b05432e02e72cc3e2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0f1e15b46c17b87c0c7cdd79b041a4abd7f3a2b45f3c993f6ce38c0f233e82b6"
 dependencies = [
  "arrayvec",
- "multiversx-sc-codec-derive 0.18.1 (git+https://github.com/gfusee/mx-sdk-rs?branch=feature/typed_sc_deploy_as_mut)",
+ "multiversx-sc-codec-derive",
  "num-bigint",
 ]
 
@@ -1347,20 +1351,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "multiversx-sc-codec-derive"
-version = "0.18.1"
-source = "git+https://github.com/gfusee/mx-sdk-rs?branch=feature/typed_sc_deploy_as_mut#5d2c15c747e471ba5b2d676b05432e02e72cc3e2"
-dependencies = [
- "hex",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
 name = "multiversx-sc-derive"
-version = "0.43.3"
-source = "git+https://github.com/gfusee/mx-sdk-rs?branch=feature/typed_sc_deploy_as_mut#5d2c15c747e471ba5b2d676b05432e02e72cc3e2"
+version = "0.43.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9e006240993963b482fe0682ae49b2d07255495e3c86706925d119137376cdfc"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -1371,8 +1365,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-meta"
-version = "0.43.3"
-source = "git+https://github.com/gfusee/mx-sdk-rs?branch=feature/typed_sc_deploy_as_mut#5d2c15c747e471ba5b2d676b05432e02e72cc3e2"
+version = "0.43.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "467a1a945055107f0880d865a0854e3c67abd77c0f1dc65f6bc83abe082f424e"
 dependencies = [
  "anyhow",
  "clap",
@@ -1397,8 +1392,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-scenario"
-version = "0.43.3"
-source = "git+https://github.com/gfusee/mx-sdk-rs?branch=feature/typed_sc_deploy_as_mut#5d2c15c747e471ba5b2d676b05432e02e72cc3e2"
+version = "0.43.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5003813b6c5d703e6f973fcdef5aeed277182d49a75b73e255060f4c4c987b29"
 dependencies = [
  "base64 0.13.1",
  "bech32",
@@ -1424,8 +1420,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-snippets"
-version = "0.43.3"
-source = "git+https://github.com/gfusee/mx-sdk-rs?branch=feature/typed_sc_deploy_as_mut#5d2c15c747e471ba5b2d676b05432e02e72cc3e2"
+version = "0.43.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ad75832d4a2c4c9cde42d141370839668ab6b7f419a65012b1111585974c8f59"
 dependencies = [
  "base64 0.13.1",
  "env_logger",
@@ -1440,7 +1437,8 @@ dependencies = [
 [[package]]
 name = "multiversx-sdk"
 version = "0.2.0"
-source = "git+https://github.com/gfusee/mx-sdk-rs?branch=feature/typed_sc_deploy_as_mut#5d2c15c747e471ba5b2d676b05432e02e72cc3e2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7fb48ac185858a4ac825c300643df43344baeafe434fb4f9d9077fb81318f987"
 dependencies = [
  "anyhow",
  "base64 0.13.1",
@@ -1498,7 +1496,7 @@ dependencies = [
  "hex",
  "multiversx-sc",
  "multiversx-sc-codec",
- "multiversx-sc-codec-derive 0.18.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiversx-sc-codec-derive",
  "multiversx-sc-scenario",
  "multiversx-sc-snippets",
  "multiversx-sdk",

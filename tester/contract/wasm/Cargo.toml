@@ -22,4 +22,4 @@ panic = "abort"
 
 [dependencies]
 tester-contract = { path = ".." }
-multiversx-sc-wasm-adapter = { git = "https://github.com/gfusee/mx-sdk-rs", branch = "feature/typed_sc_deploy_as_mut" }
+multiversx-sc-wasm-adapter = "0.43.2"

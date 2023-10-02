@@ -138,10 +138,9 @@ impl<A> DeployExecutor for MockExecutor<A>
     ///
     /// A `Result` with an empty `Ok(())` value indicating success, or an `Err(ExecutorError)` indicating failure,
     /// specifically a `MockDeployError::WalletAddressNotPresent` error if the wallet address is not present.
-    async fn sc_deploy<OriginalResult, S>(&mut self, mut sc_deploy_step: S) -> Result<(), ExecutorError>
+    async fn sc_deploy<OriginalResult>(&mut self, sc_deploy_step: &mut TypedScDeploy<OriginalResult>) -> Result<(), ExecutorError>
         where
             OriginalResult: TopEncodeMulti + Send + Sync,
-            S: AsMut<TypedScDeploy<OriginalResult>> + Send
     {
         let caller: Address = {
             let Some(caller) = self.opt_caller.as_deref() else {
