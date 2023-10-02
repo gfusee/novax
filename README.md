@@ -4,10 +4,9 @@ NovaX is your go-to toolkit for building robust software seamlessly interacting 
 
 [![Crates.io](https://img.shields.io/crates/v/novax.svg)](https://crates.io/crates/novax)
 [![Documentation](https://docs.rs/novax/badge.svg)](https://docs.rs/novax)
-[![Build Status](https://travis-ci.org/your-username/novax.svg?branch=master)](https://travis-ci.org/your-username/novax)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-<div style="text-align: center;"><img src="readme-demo.gif" Test></div>
+<div style="text-align: center;"><img src="https://github.com/gfusee/novax/blob/main/readme-demo.gif?raw=true"></div>
 <div style="text-align: center;">Estimating a WEGLD -> USDC swap result </div>
 
 ## 🔥 Features
