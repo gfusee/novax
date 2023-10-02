@@ -64,7 +64,7 @@ Add `novax` to your `Cargo.toml` file under the `[dependencies]` section:
 
 ```toml
 [dependencies]
-novax = "0.1.0"
+novax = "0.0.1"
 ```
 
 ### 4️⃣ Build and Enjoy!
