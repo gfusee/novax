@@ -12,8 +12,8 @@ repository = "https://github.com/gfusee/novax"
 num-bigint = "0.4.3"
 async-trait = "0.1.72"
 tokio = "1.30.0"
-novax = { path = "../core" }
-novax-token = { path = "../token" }
+novax = { path = "../core", version = "0.0.1" }
+novax-token = { path = "../token", version = "0.0.1" }
 multiversx-sc = "0.43.2"
 multiversx-sc-snippets = "0.43.2"
 multiversx-sdk = "0.2.0"
