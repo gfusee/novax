@@ -1,0 +1,6 @@
+[book]
+authors = ["Fusee"]
+language = "en"
+multilingual = false
+src = "src"
+title = "NovaX Cookbook"

@@ -13,7 +13,7 @@ const CONTRACT: &str = "sc:tester";
 
 fn get_executor() -> StandardMockExecutor {
     let mut world = ScenarioWorld::new();
-    world.register_contract("file:../.novax/tester-contract.wasm", tester_contract::ContractBuilder);
+    world.register_contract("file:../../.novax/tester-contract.wasm", tester_contract::ContractBuilder);
 
     world.set_state_step(
         SetStateStep::new()
@@ -32,7 +32,7 @@ async fn test_deploy_with_biguint_arg() -> Result<(), NovaXError> {
     let mut executor = get_executor();
 
     let deploy_data = DeployData {
-        code: "../.novax/tester-contract.wasm",
+        code: "../../.novax/tester-contract.wasm",
         metadata: Default::default(),
     };
 
@@ -67,7 +67,7 @@ async fn test_deploy_with_metadatas() -> Result<(), NovaXError> {
     let mut executor = get_executor();
 
     let deploy_data = DeployData {
-        code: "../.novax/tester-contract.wasm",
+        code: "../../.novax/tester-contract.wasm",
         metadata: CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE,
     };
 
