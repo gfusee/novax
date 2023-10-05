@@ -11,10 +11,11 @@ Here's a simple validation procedure:
 1. In any Rust file, like `lib.rs`, `main.rs`, etc., add the following code snippet:
 
 ```rust
+# extern crate novax;
 use novax::pair::pair::PairContract;
 
-async fn hello() {
-    let _pair_contract = PairContract::new("");
+async fn hello() { 
+   let _pair_contract = PairContract::new("");
 }
 ```
 

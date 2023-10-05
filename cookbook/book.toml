@@ -4,3 +4,6 @@ language = "en"
 multilingual = false
 src = "src"
 title = "NovaX Cookbook"
+
+[rust]
+edition = "2018"

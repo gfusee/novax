@@ -13,7 +13,7 @@ Integrating NovaX into your Rust environment is straightforward. Just follow thi
 2. **Setting Up Your ABIs**:
    For NovaX to function properly, you need to organize your ABIs in a specific structure. Here's a simple representation of how your directory should look:
 
-   ```
+   ```text
    .
    ├── .novax
    │   └── abis
@@ -37,7 +37,7 @@ Integrating NovaX into your Rust environment is straightforward. Just follow thi
 4. **Test Your Setup**:
    Now that you've configured everything, let's ensure the setup is working correctly. Build your project by running the following command:
 
-   ```
+   ```shell
    cargo build
    ```
 
