@@ -31,7 +31,8 @@ Autocompletion is a handy feature that boosts your productivity by suggesting re
 
 1. **Autocompletion Test:** After the successful setup in the previous step, along with the `PairContract`, a `PairContractQuery` struct should also be generated. Start typing `PairContr` in your Rust file. Your IDE should offer autocompletion, suggesting the `PairContractQuery`:
 
-   ![Autocompletion in action](<photo of the autocompletion working>)
+   ![Autocompletion in action](pair-contract-autocompletion.png)
+
 
 If you witness the autocompletion in action, then everything's set! You can proceed to the next chapter.
 
@@ -41,4 +42,4 @@ However, if the autocompletion is missing:
 2. **Rebuild Project:** Run `cargo build` to rebuild the project.
 3. **Re-index your project:** This step often fixes autocompletion issues. While it isn't always necessary in VSCode, it's sometimes required in JetBrains IDEs like IntelliJ or CLion. Open the cargo panel on the right and click on the refresh button.
 
-   ![Cargo panel with the refresh button highlighted](<photo of the cargo panel and refresh button>)
+   ![Cargo panel with the refresh button highlighted](cargo-refresh-button.png)
