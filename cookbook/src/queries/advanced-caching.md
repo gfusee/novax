@@ -8,7 +8,7 @@ Basic caching strategies aim to prevent repeated requests for the same data. But
 
 Consider the following example:
 
-```rust
+```rust,ignore
 # extern crate tokio;
 # extern crate novax;
 # extern crate novax_caching;
@@ -51,7 +51,7 @@ So, in this concurrent scenario, we're not really benefiting from our caching me
 
 To enhance concurrency and push your code's efficiency to the extreme, employ the `CachingLocked` wrapper around your caching strategy. Here's how:
 
-```rust
+```rust,ignore
 # extern crate tokio;
 # extern crate novax;
 # extern crate novax_caching;
@@ -94,7 +94,7 @@ Suppose you aim to utilize multiple caching mechanisms simultaneously, such as I
 
 In the following example, we hypothesize that the `novax-caching` crate offers a `CachingRedis` struct. As of this writing, this feature is not available, but it's on the horizon.
 
-```rust
+```rust,ignore
 # extern crate tokio;
 # extern crate novax;
 # extern crate novax_caching;

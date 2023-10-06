@@ -6,7 +6,7 @@ Imagine you have the xExchange's Pair contract ABI, and you wish to fetch the id
 
 Below is a concise example showcasing how to harness this auto-generated method:
 
-```rust
+```rust,ignore
 # extern crate tokio;
 # extern crate novax;
 
@@ -43,7 +43,7 @@ num-bigint = "0.4.4"
 
 Suppose you want to estimate a swap result (an amount of USDC) through the "getAmountOut" endpoint, with an input of 1 WEGLD:
 
-```rust
+```rust,ignore
 # extern crate tokio;
 # extern crate num_bigint;
 # extern crate novax;

@@ -16,7 +16,7 @@ novax-caching = "0.0.1"
 
 Let's integrate in-memory caching into the previous example, where we fetched the first token identifier of the xExchange's Pair contract:
 
-```rust
+```rust,ignore
 # extern crate tokio;
 # extern crate novax;
 # extern crate novax_caching;
@@ -51,9 +51,11 @@ async fn main() {
 
 The `with_caching_strategy` method indicates: "If the result exists in the provided cache, use it. Otherwise, fetch the data from the blockchain and store it in the cache." In this example, the token identifier is fetched only for `first_result`. The `second_result` retrieves data from the cache, saving you an additional request!
 
+> **Note:** The `with_caching_strategy` method can accept any struct implementing the `CachingStrategy` trait, offering a flexible approach to integrate diverse caching mechanisms.
+
 **Important**: `CachingLocal` utilizes a `HashMap` wrapped in an `Arc`. When you clone a `CachingLocal`, the cloned version still modifies the same `HashMap`. Thus, the following code, which uses a cloned cache, behaves identically to the one above:
 
-```rust
+```rust,ignore
 # extern crate tokio;
 # extern crate novax;
 # extern crate novax_caching;
@@ -93,7 +95,7 @@ async fn main() {
 
 In the blockchain world, executing the same query within a single block will invariably yield the same result. Recognizing this invariant, NovaX provides a caching mechanism that retains the result only until the current block concludes. This strategy is particularly effective for queries whose outcomes might differ with every new block, such as swap estimations.
 
-```rust
+```rust,ignore
 # extern crate tokio;
 # extern crate num_bigint;
 # extern crate novax;
@@ -106,7 +108,7 @@ use novax_caching::local::caching_local::CachingLocal;
 
 #[tokio::main]
 async fn main() {
-let caching = CachingLocal::empty();
+    let caching = CachingLocal::empty();
 
     let pair_contract = PairContract::new("erd1qqqqqqqqqqqqqpgqeel2kumf0r8ffyhth7pqdujjat9nx0862jpsg2pqaq");
 

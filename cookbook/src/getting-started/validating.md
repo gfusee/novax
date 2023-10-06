@@ -10,7 +10,7 @@ Here's a simple validation procedure:
 
 1. In any Rust file, like `lib.rs`, `main.rs`, etc., add the following code snippet:
 
-```rust
+```rust,ignore
 # extern crate novax;
 use novax::pair::pair::PairContract;
 

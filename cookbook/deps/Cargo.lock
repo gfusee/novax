@@ -1507,6 +1507,7 @@ dependencies = [
  "async-trait",
  "novax",
  "novax-caching",
+ "novax-mocking",
  "num-bigint",
  "serde",
  "tokio",
@@ -1544,6 +1545,58 @@ dependencies = [
  "num-bigint",
  "serde",
  "tokio",
+]
+
+[[package]]
+name = "novax-mocking"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ded7f676d8f48f69361fa1ae954add02be66b656cc80051af24f2399d47c3109"
+dependencies = [
+ "async-trait",
+ "futures",
+ "hex",
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "multiversx-sc-snippets",
+ "multiversx-sdk",
+ "novax",
+ "novax-token",
+ "num-bigint",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "novax-request"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "35a3f4893968704681b561dd24aa4c8fb401f2333d2ae9c87fbf5bdea6e39530"
+dependencies = [
+ "async-trait",
+ "reqwest",
+ "serde",
+]
+
+[[package]]
+name = "novax-token"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d88f4961372d5c3720d79735d2f5858c875b2b51131495bfc33f38ca829c8118"
+dependencies = [
+ "async-trait",
+ "hex",
+ "multiversx-sc",
+ "multiversx-sc-codec",
+ "multiversx-sc-scenario",
+ "novax",
+ "novax-data",
+ "novax-request",
+ "num-bigint",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
