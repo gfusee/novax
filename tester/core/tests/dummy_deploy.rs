@@ -19,7 +19,7 @@ async fn test_deploy_with_biguint_arg() -> Result<(), NovaXError> {
     let mut executor = get_executor();
 
     let deploy_data = DeployData {
-        code: "../.novax/tester-contract.wasm",
+        code: "../../.novax/tester-contract.wasm",
         metadata: Default::default(),
     };
 
@@ -51,7 +51,7 @@ async fn test_deploy_with_metadatas() -> Result<(), NovaXError> {
     let mut executor = get_executor();
 
     let deploy_data = DeployData {
-        code: "../.novax/tester-contract.wasm",
+        code: "../../.novax/tester-contract.wasm",
         metadata: CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE,
     };
 
