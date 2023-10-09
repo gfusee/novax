@@ -1,6 +1,6 @@
 ## Deploys
 
-Deploying contracts using NovaX is a straightforward process, bearing similarities to contract calls. NovaX auto-generates a "deploy" method from the ABI. This method not only takes in the required inputs but also deployment details such as the WASM binary and metadata attributes (like readability and upgradeability).
+Deploying contracts using NovaX is a straightforward process, bearing similarities to contract calls. NovaX auto-generates a "deploy" method from the ABI. This method not only takes in the required inputs but also deployment details such as the WASM binary and metadata attributes (such as readability and upgradeability).
 
 ### Creating A Wallet
 

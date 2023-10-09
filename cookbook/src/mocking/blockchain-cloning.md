@@ -1,6 +1,6 @@
 ## Cloning Blockchain Data for Precision Mocking with NovaX
 
-NovaX empowers developers with the ability to precisely replicate blockchain data, allowing you to craft an almost real-world mocking environment. This process encompasses:
+NovaX empowers developers with the ability to precisely replicate blockchain data, allowing them to craft an almost real-world mocking environment. This process encompasses:
 
 - Retrieving contract storage data.
 - Fetching balances associated with specific addresses.
