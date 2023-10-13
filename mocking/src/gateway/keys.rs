@@ -23,10 +23,10 @@ impl AddressKeys {
         let bech32 = address.to_bech32_string().map_err(NovaXError::from)?;
         let url = format!("{gateway_url}/address/{bech32}/keys");
 
-        let Ok(response) = reqwest::get(url).await else { return Err(NovaXMockingError::UnableToFetchAddressKeys.into()) };
-        let Ok(response) = response.text().await else { return Err(NovaXMockingError::UnableToFetchAddressKeys.into()) };
+        let Ok(response) = reqwest::get(url).await else { return Err(NovaXMockingError::UnableToFetchAddressKeys) };
+        let Ok(response) = response.text().await else { return Err(NovaXMockingError::UnableToFetchAddressKeys) };
 
-        let Ok(result) = serde_json::from_str::<AddressKeys>(&response) else { return Err(NovaXMockingError::UnableToParseAddressKeys.into()) };
+        let Ok(result) = serde_json::from_str::<AddressKeys>(&response) else { return Err(NovaXMockingError::UnableToParseAddressKeys) };
 
         Ok(result)
     }

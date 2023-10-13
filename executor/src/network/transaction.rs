@@ -107,7 +107,7 @@ impl<Interactor: BlockchainInteractor> DeployExecutor for BaseTransactionNetwork
             OriginalResult: TopEncodeMulti + Send + Sync,
     {
         let sc_deploy_step = sc_deploy_step.as_mut();
-        let owned_sc_deploy_step = mem::replace(sc_deploy_step, ScDeployStep::new().into());
+        let owned_sc_deploy_step = mem::replace(sc_deploy_step, ScDeployStep::new());
         let mut interactor = Interactor::new(&self.gateway_url).await;
         let sender_address = interactor.register_wallet(self.wallet);
         *sc_deploy_step = owned_sc_deploy_step.from(&multiversx_sc::types::Address::from(sender_address.to_bytes()));

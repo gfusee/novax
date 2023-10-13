@@ -53,7 +53,7 @@ impl ScenarioWorldInfos {
             .open(file_path)
             .unwrap();
 
-        let Ok(result) = serde_json::from_reader::<_, ScenarioWorldInfosJson>(reader) else { return Err(NovaXMockingError::UnableToReadInfosFromFile.into()) };
+        let Ok(result) = serde_json::from_reader::<_, ScenarioWorldInfosJson>(reader) else { return Err(NovaXMockingError::UnableToReadInfosFromFile) };
 
         Ok(result.into())
     }

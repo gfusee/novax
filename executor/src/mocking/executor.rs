@@ -152,7 +152,7 @@ impl<A> DeployExecutor for MockExecutor<A>
 
         let sc_deploy_step = sc_deploy_step.as_mut();
 
-        let owned_sc_deploy_step = mem::replace(sc_deploy_step, ScDeployStep::new().into());
+        let owned_sc_deploy_step = mem::replace(sc_deploy_step, ScDeployStep::new());
         *sc_deploy_step = owned_sc_deploy_step.from(&caller);
 
         {
