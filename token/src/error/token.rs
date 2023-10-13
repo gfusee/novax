@@ -1,6 +1,7 @@
+use serde::{Deserialize, Serialize};
 use novax::errors::NovaXError;
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub enum TokenError {
     TokenNotFound { token_identifier: String },
     UnknownErrorForToken { token_identifier: String },

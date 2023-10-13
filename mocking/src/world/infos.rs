@@ -53,7 +53,7 @@ impl ScenarioWorldInfos {
             .open(file_path)
             .unwrap();
 
-        let Ok(result) = serde_json::from_reader::<_, ScenarioWorldInfosJson>(reader) else { return Err(NovaXMockingError::UnableToReadInfosFromFile.into()) };
+        let Ok(result) = serde_json::from_reader::<_, ScenarioWorldInfosJson>(reader) else { return Err(NovaXMockingError::UnableToReadInfosFromFile) };
 
         Ok(result.into())
     }
@@ -82,7 +82,7 @@ impl ScenarioWorldInfos {
     pub async fn fetch(
         gateway_url: &str,
         addresses: &[Address]
-    ) -> ScenarioWorldInfos {
+    ) -> Result<ScenarioWorldInfos, NovaXMockingError> {
         let (
             accounts,
             keys,
@@ -93,11 +93,13 @@ impl ScenarioWorldInfos {
             get_addresses_balances(gateway_url, addresses)
         ).await;
 
-        ScenarioWorldInfos {
-            address_keys: keys,
-            address_balances: balances,
-            address_infos: accounts,
-        }
+        let infos = ScenarioWorldInfos {
+            address_keys: keys?,
+            address_balances: balances?,
+            address_infos: accounts?,
+        };
+
+        Ok(infos)
     }
 
     pub fn into_world<RegisterFunction>(self, register: RegisterFunction) -> ScenarioWorld
@@ -171,7 +173,6 @@ impl ScenarioWorldInfos {
                         }
                     }
                 }
-
             }
 
             set_state_accounts_step = set_state_accounts_step.put_account(&*encoded_contract_address_expr, account);
@@ -194,7 +195,7 @@ impl ScenarioWorldInfos {
     }
 }
 
-async fn get_addresses_infos(gateway_url: &str, addresses: &[Address]) -> Vec<AccountInfos> {
+async fn get_addresses_infos(gateway_url: &str, addresses: &[Address]) -> Result<Vec<AccountInfos>, NovaXMockingError> {
     let mut accounts_futures = vec![];
     for address in addresses {
         accounts_futures.push(async {
@@ -203,12 +204,16 @@ async fn get_addresses_infos(gateway_url: &str, addresses: &[Address]) -> Vec<Ac
     };
 
     let accounts: Vec<Result<AccountInfos, NovaXError>> = join_all(accounts_futures).await;
-    accounts.into_iter()
-        .filter_map(|e| e.ok())
-        .collect()
+    let mut results = vec![];
+
+    for account in accounts {
+        results.push(account?)
+    }
+
+    Ok(results)
 }
 
-async fn get_addresses_keys(gateway_url: &str, addresses: &[Address]) -> HashMap<[u8; 32], AddressKeys> {
+async fn get_addresses_keys(gateway_url: &str, addresses: &[Address]) -> Result<HashMap<[u8; 32], AddressKeys>, NovaXMockingError> {
     let mut keys_futures = vec![];
     for address in addresses {
         keys_futures.push(async {
@@ -217,12 +222,17 @@ async fn get_addresses_keys(gateway_url: &str, addresses: &[Address]) -> HashMap
     };
 
     let keys: Vec<Result<([u8; 32], AddressKeys), NovaXMockingError>> = join_all(keys_futures).await;
-    keys.into_iter()
-        .filter_map(|e| e.ok())
-        .collect()
+    let mut results = HashMap::new();
+
+    for key in keys {
+        let key = key?;
+        results.insert(key.0, key.1);
+    }
+
+    Ok(results)
 }
 
-async fn get_addresses_balances(gateway_url: &str, addresses: &[Address]) -> HashMap<[u8; 32], Vec<EsdtTokenAmount>> {
+async fn get_addresses_balances(gateway_url: &str, addresses: &[Address]) -> Result<HashMap<[u8; 32], Vec<EsdtTokenAmount>>, NovaXMockingError> {
     let mut balances_futures = vec![];
     for address in addresses {
         balances_futures.push(async {
@@ -232,9 +242,13 @@ async fn get_addresses_balances(gateway_url: &str, addresses: &[Address]) -> Has
         })
     };
 
-    let balances: BalanceAsyncResults = join_all(balances_futures).await;
-    balances.into_iter()
-        .filter_map(|e| e.ok())
+    let balances_results: BalanceAsyncResults = join_all(balances_futures).await;
+    let mut balances = vec![];
+    for balance in balances_results {
+        balances.push(balance?)
+    }
+
+    let result = balances.into_iter()
         .map(|e| {
             let mut amounts: Vec<EsdtTokenAmount> = vec![];
             for infos in e.1 {
@@ -248,7 +262,9 @@ async fn get_addresses_balances(gateway_url: &str, addresses: &[Address]) -> Has
 
             (e.0, amounts)
         })
-        .collect()
+        .collect();
+
+    Ok(result)
 }
 
 fn convert_hashmap_address_keys_to_bytes<T>(hashmap: HashMap<String, T>) -> HashMap<[u8; 32], T> {

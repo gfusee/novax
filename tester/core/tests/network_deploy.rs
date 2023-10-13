@@ -49,7 +49,7 @@ impl BlockchainInteractor for MockInteractor {
 
         response.new_deployed_address = Some(Address::from_bech32_string(NEW_CONTRACT).unwrap().into());
         let step = sc_deploy_step.as_mut();
-        step.response = Some(response.clone());
+        step.response = Some(response);
     }
 }
 
