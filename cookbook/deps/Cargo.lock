@@ -1549,9 +1549,9 @@ dependencies = [
 
 [[package]]
 name = "novax-mocking"
-version = "0.0.1"
+version = "0.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ded7f676d8f48f69361fa1ae954add02be66b656cc80051af24f2399d47c3109"
+checksum = "089e0309f785673d69582121cf5ada101ae273701aeb2859b8144eaeab35aecc"
 dependencies = [
  "async-trait",
  "futures",
@@ -1582,9 +1582,9 @@ dependencies = [
 
 [[package]]
 name = "novax-token"
-version = "0.0.1"
+version = "0.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d88f4961372d5c3720d79735d2f5858c875b2b51131495bfc33f38ca829c8118"
+checksum = "8aaf163678b17b4ae13787d3983a769eabc6d7da3ad1b0a22b13fc780c06af17"
 dependencies = [
  "async-trait",
  "hex",

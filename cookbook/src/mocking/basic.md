@@ -4,7 +4,7 @@ NovaX equips developers with the capability to mock their environments seamlessl
 Before delving into the mocking process with NovaX, ensure you've added the necessary extension crate to your project. Update your `Cargo.toml` dependencies to include:
 
 ```toml
-novax-mocking = "0.0.1"
+novax-mocking = "0.0.2"
 ```
 
 Now, let's proceed with how to execute mocked queries, calls, and deploys using NovaX.
