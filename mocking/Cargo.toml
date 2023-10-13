@@ -1,6 +1,6 @@
 [package]
 name = "novax-mocking"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 license = "GPL-3.0-only"
 description = "The `novax-mocking` crate is a part of the Nova framework, providing utilities to simulate blockchain environments. It facilitates the creation of a `MockExecutor` and other simulated entities, enabling easy testing and development against smart contract interactions within a controlled, replicated blockchain scenario."
