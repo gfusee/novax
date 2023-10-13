@@ -76,3 +76,11 @@ cargo build
 ```
 
 With these steps completed, you're all set to make the most out of the NovaX toolkit!
+
+## 🛠 Documentation and examples
+
+A [comprehensive cookbook](https://gfusee.github.io/novax/) is available to help you using NovaX.
+
+You can also check out the following examples:
+
+- [Adder](https://github.com/gfusee/novax-adder-example) - A dead simple example that show you how to deploy, query and call a contract.
