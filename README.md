@@ -84,3 +84,4 @@ A [comprehensive cookbook](https://gfusee.github.io/novax/) is available to help
 You can also check out the following examples:
 
 - [Adder](https://github.com/gfusee/novax-adder-example) - A dead simple example that show you how to deploy, query and call a contract.
+- [xExchange Price Getter](https://github.com/gfusee/novax-price-getter) - This repository offers a comprehensive guide on deriving the price of tokens listed on xExchange. Notably, it demonstrates how to effectively conduct integration tests using the _novax-mocking_ crate, providing both a practical and educational perspective.
