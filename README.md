@@ -41,6 +41,8 @@ Mocking and simulation are essential for testing and verifying your smart contra
 
 ## 🛠 Installation
 
+To truly understand NovaX, explore the [comprehensive cookbook](https://gfusee.github.io/novax/). If you haven't checked it out yet, we highly recommend doing so!
+
 Follow these steps to seamlessly integrate NovaX into your project:
 
 ### 1️⃣ Create Directories
