@@ -16,3 +16,6 @@ hex = "0.4.3"
 tester-contract = { path = "../contract" }
 novax = { path = "../../core" }
 novax-mocking = { path = "../../mocking" }
+
+[package.metadata.release]
+release = false

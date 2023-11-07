@@ -19,7 +19,7 @@ pub type ProxyQueryExecutor = QueryNetworkExecutor<CommunicationProxy>;
 ///
 /// This executor utilizes a blockchain proxy to communicate with the blockchain network and
 /// execute the queries.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct QueryNetworkExecutor<Proxy: BlockchainProxy> {
     /// The URL of the gateway to the blockchain network.
     pub gateway_url: String,
