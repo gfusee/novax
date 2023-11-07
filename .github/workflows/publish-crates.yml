@@ -10,6 +10,11 @@ env:
 jobs:
   build:
 
+    permissions:
+      id-token: write # Enable OIDC
+      pull-requests: write
+      contents: write
+
     runs-on: ubuntu-latest
 
     steps:
