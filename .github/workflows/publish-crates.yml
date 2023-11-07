@@ -1,4 +1,4 @@
-name: Publish
+name: Publish crates
 
 on:
   release:
@@ -14,6 +14,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Switch to Rust nightly
+      run: rustup default nightly
     - name: Build
       run: cargo build --verbose
     - name: Run tests
