@@ -672,12 +672,6 @@ fn get_managed_type_for_abi_type(abi_type_name: &str, abi_types: &AbiTypes, api_
             quote! {#managed_type_ident}
         )
     } else {
-        let test = parse_abi_type_name_to_managed_ident(
-            abi_type_name,
-            abi_types,
-            api_generic
-        )?;
-
         if abi_type_name.starts_with("multi") {
             panic!("bouhhh");
         }

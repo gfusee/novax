@@ -1,24 +1,24 @@
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use rust_format::{Formatter, RustFmt};
 use crate::abi::result::Abi;
 use crate::errors::build_error::BuildError;
 use crate::generator::generated_file::GeneratedFile;
-use crate::generator::generator_error::GeneratorError;
 use crate::generator::impl_abi_types::impl_abi_types_mod;
 use crate::generator::impl_contract::impl_contract;
 
 pub fn generate_from_abi(abi: &Abi) -> Result<GeneratedFile, BuildError> {
-    let Ok(formatted_content) = RustFmt::default().format_str(impl_mod(abi)?.to_string()) else {
-        println!("{:?}", RustFmt::default().format_str(impl_mod(abi)?.to_string()).unwrap_err());
-        return Err(GeneratorError::UnableToFormatRustCode.into())
+    let content = impl_mod(abi)?.to_string();
+
+    #[cfg(not(feature = "no-fmt-output"))]
+    let Ok(content) = rust_format::Formatter::format_str(&rust_format::RustFmt::default(), content) else {
+        return Err(crate::generator::generator_error::GeneratorError::UnableToFormatRustCode.into())
     };
 
     Ok(
         GeneratedFile {
             file_name: abi.get_mod_name() + ".rs",
             mod_name: abi.get_mod_name(),
-            file_content: formatted_content
+            file_content: content
         }
     )
 }

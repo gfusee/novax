@@ -6,6 +6,9 @@ description = "A build-dependency crate for 'nova' which hosts macros and utilit
 license = "GPL-3.0-only"
 repository = "https://github.com/gfusee/novax"
 
+[features]
+no-fmt-output = []
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
