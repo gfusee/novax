@@ -16,6 +16,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        ref: 'main'
     - name: Configuring git client
       run: git config --global user.email "quentus123@gmail.com" && git config --global user.name "Quentin Diebold (CI)"
     - name: Switch to Rust nightly
