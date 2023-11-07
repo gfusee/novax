@@ -11,4 +11,7 @@ authors = [ "you",]
 multiversx-sc-meta = "0.43.2"
 tester-contract = { path = ".." }
 
+[package.metadata.release]
+release = false
+
 
