@@ -9,10 +9,7 @@ env:
 
 jobs:
   build:
-
     permissions:
-      id-token: write # Enable OIDC
-      pull-requests: write
       contents: write
 
     runs-on: ubuntu-latest
@@ -29,10 +26,7 @@ jobs:
       run: cargo test --features ci
     - name: Install cargo-release
       run: cargo install cargo-release
-    - uses: cargo-bins/release-pr@v2
+    - name: Publish crate
       env:
         CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        version: ${{ github.event.release.tag_name }}
-        crate-release-all: true
+      run: yes | cargo-release release ${{ github.event.release.tag_name }} --execute --no-tag --no-verify --allow-branch \*
