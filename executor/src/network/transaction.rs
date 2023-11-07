@@ -1,3 +1,4 @@
+use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use std::mem;
 use async_trait::async_trait;
@@ -17,7 +18,6 @@ pub type NetworkExecutor = BaseTransactionNetworkExecutor<Interactor>;
 ///
 /// This executor is designed to interact with a blockchain network via a specified gateway URL and a wallet
 /// for signing transactions. It is parameterized by a type `Interactor` that encapsulates the blockchain interaction logic.
-#[derive(Clone, Debug)]
 pub struct BaseTransactionNetworkExecutor<Interactor: BlockchainInteractor> {
     /// The URL of the blockchain network gateway through which transactions will be sent.
     pub gateway_url: String,
@@ -26,6 +26,44 @@ pub struct BaseTransactionNetworkExecutor<Interactor: BlockchainInteractor> {
     /// Phantom data to allow the generic parameter `Interactor`.
     /// This field does not occupy any space in memory.
     _phantom_data: PhantomData<Interactor>,
+}
+
+/// Custom implementation of `Clone` for `BaseTransactionNetworkExecutor`.
+///
+/// This implementation is necessary because the `Interactor` generic parameter might not
+/// implement `Clone`. However, since `Interactor` is used only as phantom data (it does not
+/// affect the state of `BaseTransactionNetworkExecutor`), we can safely implement `Clone`
+/// without the `Interactor` needing to be `Clone`.
+impl<Interactor> Clone for BaseTransactionNetworkExecutor<Interactor>
+where
+    Interactor: BlockchainInteractor
+{
+    fn clone(&self) -> Self {
+        Self {
+            gateway_url: self.gateway_url.clone(),
+            wallet: self.wallet,
+            _phantom_data: Default::default(),
+        }
+    }
+}
+
+/// Custom implementation of `Debug` for `BaseTransactionNetworkExecutor`.
+///
+/// This implementation is necessary because the `Interactor` generic parameter might not
+/// implement `Debug`. As with `Clone`, since `Interactor` is only used as phantom data,
+/// it does not impact the debug representation of `BaseTransactionNetworkExecutor`. This
+/// implementation ensures that instances of `BaseTransactionNetworkExecutor` can be
+/// formatted using the `Debug` trait regardless of whether `Interactor` implements `Debug`.
+impl<Interactor> Debug for BaseTransactionNetworkExecutor<Interactor>
+    where
+        Interactor: BlockchainInteractor
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("BaseTransactionNetworkExecutor")
+            .field("gateway_url", &self.gateway_url)
+            .field("wallet", &self.wallet)
+            .finish()
+    }
 }
 
 impl<Interactor: BlockchainInteractor> BaseTransactionNetworkExecutor<Interactor> {
