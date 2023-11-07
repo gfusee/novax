@@ -17,6 +17,7 @@ pub type NetworkExecutor = BaseTransactionNetworkExecutor<Interactor>;
 ///
 /// This executor is designed to interact with a blockchain network via a specified gateway URL and a wallet
 /// for signing transactions. It is parameterized by a type `Interactor` that encapsulates the blockchain interaction logic.
+#[derive(Clone, Debug)]
 pub struct BaseTransactionNetworkExecutor<Interactor: BlockchainInteractor> {
     /// The URL of the blockchain network gateway through which transactions will be sent.
     pub gateway_url: String,
