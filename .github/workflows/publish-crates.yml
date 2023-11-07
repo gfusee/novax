@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         ref: 'main'
     - name: Configuring git client
@@ -31,4 +31,4 @@ jobs:
     - name: Publish crate
       env:
         CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
-      run: yes | cargo-release release ${{ github.event.release.tag_name }} --execute --no-tag --no-verify --allow-branch \*
+      run: yes | cargo-release release ${{ github.event.release.tag_name }} --execute --no-tag --no-verify --no-push --allow-branch \*
