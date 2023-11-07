@@ -1,6 +1,6 @@
 [package]
 name = "novax-executor"
-version = "0.0.1"
+version = "0.0.3"
 edition = "2021"
 license = "GPL-3.0-only"
 description = "Part of the NovaX framework, this crate facilitates the execution of transactions and queries against smart contracts on the blockchain."
@@ -15,7 +15,7 @@ num-bigint = "0.4.3"
 serde = "1.0.183"
 hex = "0.4.3"
 base64 = "0.21.3"
-novax-data = { path = "../data", version = "0.0.1" }
+novax-data = { path = "../data", version = "0.0.3" }
 multiversx-sc = "0.43.2"
 multiversx-sc-scenario = "0.43.2"
 multiversx-sdk = "0.2.0"
