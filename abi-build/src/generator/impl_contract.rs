@@ -678,8 +678,6 @@ fn get_managed_type_for_abi_type(abi_type_name: &str, abi_types: &AbiTypes, api_
             api_generic
         )?;
 
-        println!("name: {abi_type_name}, result: {test}");
-
         if abi_type_name.starts_with("multi") {
             panic!("bouhhh");
         }

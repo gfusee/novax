@@ -10,7 +10,6 @@ use crate::generator::impl_contract::impl_contract;
 
 pub fn generate_from_abi(abi: &Abi) -> Result<GeneratedFile, BuildError> {
     let Ok(formatted_content) = RustFmt::default().format_str(impl_mod(abi)?.to_string()) else {
-        println!("{}", RustFmt::default().format_str(impl_mod(abi)?.to_string()).err().unwrap());
         return Err(GeneratorError::UnableToFormatRustCode.into())
     };
 
