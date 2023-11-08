@@ -1,6 +1,6 @@
 [package]
 name = "novax-caching"
-version = "0.0.8"
+version = "0.0.9"
 edition = "2021"
 license = "GPL-3.0-only"
 description = "An auxiliary crate within the NovaX framework that provides caching functionalities to optimize and enhance the performance of blockchain interactions."
@@ -13,7 +13,7 @@ serde = "1.0.180"
 rmp-serde = "1.1.2"
 tokio = "1.29.1"
 async-trait = "0.1.72"
-novax = { path = "../core", version = "0.0.8" }
+novax = { path = "../core", version = "0.0.9" }
 
 [dev-dependencies]
 thread_local = "1.1.7"

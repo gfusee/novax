@@ -1490,7 +1490,7 @@ dependencies = [
 
 [[package]]
 name = "novax"
-version = "0.0.8"
+version = "0.0.9"
 dependencies = [
  "async-trait",
  "hex",
@@ -1512,7 +1512,7 @@ dependencies = [
 
 [[package]]
 name = "novax-abi-build"
-version = "0.0.8"
+version = "0.0.9"
 dependencies = [
  "convert_case",
  "proc-macro2",
@@ -1525,7 +1525,7 @@ dependencies = [
 
 [[package]]
 name = "novax-caching"
-version = "0.0.8"
+version = "0.0.9"
 dependencies = [
  "async-trait",
  "novax",
@@ -1537,7 +1537,7 @@ dependencies = [
 
 [[package]]
 name = "novax-data"
-version = "0.0.8"
+version = "0.0.9"
 dependencies = [
  "base64 0.21.3",
  "multiversx-sc",
@@ -1550,7 +1550,7 @@ dependencies = [
 
 [[package]]
 name = "novax-executor"
-version = "0.0.8"
+version = "0.0.9"
 dependencies = [
  "async-trait",
  "base64 0.21.3",
@@ -1568,7 +1568,7 @@ dependencies = [
 
 [[package]]
 name = "novax-mocking"
-version = "0.0.8"
+version = "0.0.9"
 dependencies = [
  "async-trait",
  "futures",
@@ -1588,7 +1588,7 @@ dependencies = [
 
 [[package]]
 name = "novax-request"
-version = "0.0.8"
+version = "0.0.9"
 dependencies = [
  "async-trait",
  "reqwest",
@@ -1597,7 +1597,7 @@ dependencies = [
 
 [[package]]
 name = "novax-token"
-version = "0.0.8"
+version = "0.0.9"
 dependencies = [
  "async-trait",
  "hex",
