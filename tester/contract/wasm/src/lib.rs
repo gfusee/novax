@@ -5,12 +5,14 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           41
+// Endpoints:                           42
 // Async Callback:                       1
-// Total number of exported functions:  43
+// Total number of exported functions:  44
 
 #![no_std]
-#![allow(internal_features)]
+
+// Configuration that works with rustc < 1.73.0.
+// TODO: Recommended rustc version: 1.73.0 or newer.
 #![feature(lang_items)]
 
 multiversx_sc_wasm_adapter::allocator!();
@@ -25,6 +27,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         noArgNoReturnEndpoint => no_arg_no_return_endpoint
         returnCaller => return_caller
         returnManagedBuffer => return_managed_buffer
+        returnContractAddress => return_contract_address
         returnBiguint => return_biguint
         returnU8 => return_u8
         returnU16 => return_u16

@@ -133,6 +133,24 @@ async fn test_call_buffer_result() -> Result<(), NovaXError> {
 }
 
 #[tokio::test]
+async fn test_call_contract_address_result() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .call(executor, 600000000)
+        .return_contract_address(&TESTER_CONTRACT_ADDRESS.into())
+        .await?;
+
+    let expected: Address = TESTER_CONTRACT_ADDRESS.into();
+
+    assert_eq!(result.result.unwrap(), expected);
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_call_biguint_result() -> Result<(), NovaXError> {
     let executor = get_executor();
 

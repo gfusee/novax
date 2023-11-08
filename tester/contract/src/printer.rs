@@ -49,6 +49,12 @@ pub trait PrinterModule: ContractBase {
         ManagedBuffer::from("test")
     }
 
+    // there was a bug when an endpoint's parameter is called "contract_address"
+    #[endpoint(returnContractAddress)]
+    fn return_contract_address(&self, contract_address: ManagedAddress<Self::Api>) -> ManagedAddress<Self::Api> {
+        contract_address
+    }
+
     #[endpoint(returnBiguint)]
     fn return_biguint(&self) -> BigUint<Self::Api> {
         BigUint::from(10u8).pow(18)
