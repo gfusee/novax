@@ -375,8 +375,8 @@ fn impl_abi_endpoint_call_query(contract_info_name: &str, abi_endpoint: &AbiEndp
     let (endpoint_args_let_statements, endpoint_args_inputs) = impl_endpoint_args_for_call(&abi_endpoint.inputs, abi_types)?;
 
     let common_token = quote! {
-        let contract_address: AddressValue = (&Address::from(&self.contract_address)).into();
-        let mut _novax_contract = #contract_info_ident::new(&contract_address); // unnecessary clone when calling
+        let _novax_contract_address_value: AddressValue = (&Address::from(&self.contract_address)).into();
+        let mut _novax_contract = #contract_info_ident::new(&_novax_contract_address_value); // unnecessary clone when calling
 
         #endpoint_args_let_statements
 
@@ -619,7 +619,7 @@ fn impl_endpoint_key_for_query(endpoint_name: &str, abi_inputs: &AbiInputs) -> T
     }
     quote! {
         let mut _novax_hasher = DefaultHasher::new();
-        contract_address.value.hash(&mut _novax_hasher);
+        _novax_contract_address_value.value.hash(&mut _novax_hasher);
         #endpoint_name.hash(&mut _novax_hasher);
         #(#inputs_hash_idents)*
         let _novax_key = _novax_hasher.finish();
