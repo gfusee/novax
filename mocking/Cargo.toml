@@ -14,10 +14,10 @@ async-trait = "0.1.72"
 tokio = "1.30.0"
 novax = { path = "../core", version = "0.0.9" }
 novax-token = { path = "../token", version = "0.0.9" }
+novax-executor = { path = "../executor", version = "0.0.9" }
 multiversx-sc = "0.43.2"
 multiversx-sc-snippets = "0.43.2"
 multiversx-sdk = "0.2.0"
-multiversx-sc-scenario = "0.43.2"
 reqwest = "0.11.18"
 serde = "1.0.180"
 serde_json = "1.0.104"
