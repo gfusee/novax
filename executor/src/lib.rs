@@ -75,3 +75,6 @@ pub use dummy::transaction::DummyDeployExecutor;
 
 pub use utils::transaction::data::SendableTransaction;
 pub use utils::transaction::data::SendableTransactionConvertible;
+
+pub use multiversx_sc_scenario::ScenarioWorld;
+pub use multiversx_sc_scenario::scenario_model::{ScCallStep, ScDeployStep, ScQueryStep, SetStateStep, Account, TxQuery, TxResponse, TypedScCall, TypedScDeploy, TypedScQuery, TypedResponse};

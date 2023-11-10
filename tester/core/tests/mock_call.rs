@@ -7,6 +7,7 @@ use novax_mocking::world::infos::ScenarioWorldInfos;
 use num_bigint::BigUint;
 use novax::tester::tester::{CustomEnum, CustomEnumWithFields, CustomEnumWithValues, CustomStruct, CustomStructWithStructAndVec, TesterContract};
 use novax::executor::StandardMockExecutor;
+use novax_mocking::ScenarioWorld;
 
 const CALLER: &str = "bech32:erd1h4uhy73dev6qrfj7wxsguapzs8632mfwqjswjpsj6kzm2jfrnslqsuduqu";
 const TESTER_CONTRACT_ADDRESS: &str = "bech32:erd1qqqqqqqqqqqqqpgq9wmk04e90fkhcuzns0pgwm33sdtxze346vpsq0ka9p";
@@ -37,6 +38,18 @@ fn get_executor_without_caller() -> Arc<Mutex<StandardMockExecutor>> {
     );
 
     Arc::new(Mutex::new(executor))
+}
+
+// useless, should compile only
+// allow to test ScenarioWorld re-export
+#[allow(dead_code)]
+fn get_useless_executor() -> StandardMockExecutor {
+    let world = ScenarioWorld::new();
+
+    StandardMockExecutor::new(
+        Arc::new(Mutex::new(world)),
+        None
+    )
 }
 
 #[tokio::test]
