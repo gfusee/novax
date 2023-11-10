@@ -1,6 +1,6 @@
 [package]
 name = "novax-request"
-version = "0.0.9"
+version = "0.0.10"
 edition = "2021"
 license = "GPL-3.0-only"
 description = "The `novax-request` crate serves as an abstraction layer for request clients, enabling mocking or actual interactions with blockchain gateway APIs. Its primary utility is within other Nova crates like `novax-token`, providing a standardized interface for handling requests, thereby promoting ease of testing and consistency across different blockchain interaction scenarios."
