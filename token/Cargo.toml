@@ -17,9 +17,9 @@ novax-data = { path = "../data", version = "0.0.10" }
 novax-request = { path = "../request", version = "0.0.10" }
 num-bigint = "0.4.4"
 async-trait = "0.1.73"
-multiversx-sc = "0.43.2"
-multiversx-sc-scenario = "0.43.2"
-multiversx-sc-codec = "0.18.1"
+multiversx-sc = "=0.43.3"
+multiversx-sc-scenario = "=0.43.3"
+multiversx-sc-codec = "=0.18.1"
 
 [dev-dependencies]
 tokio = "1.32.0"
