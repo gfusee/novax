@@ -88,3 +88,14 @@ impl QueryExecutor for &str {
         ProxyQueryExecutor::new(self).execute::<OutputManaged>(request).await
     }
 }
+
+#[async_trait]
+impl QueryExecutor for String {
+    /// Allows using a string representing the gateway URL to execute a query on the real blockchain environment.
+    ///
+    /// This implementation creates a new `ProxyQueryExecutor` instance using the string as the gateway URL,
+    /// and delegates the query execution to it.
+    async fn execute<OutputManaged>(&self, request: &ScCallStep) -> Result<OutputManaged::Native, ExecutorError> where OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync {
+        self.as_str().execute::<OutputManaged>(request).await
+    }
+}
