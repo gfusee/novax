@@ -1,6 +1,6 @@
 [package]
 name = "novax-token"
-version = "0.0.13"
+version = "0.0.12"
 edition = "2021"
 license = "GPL-3.0-only"
 description = "The `novax-token` crate offers utilities for retrieving token information from the blockchain, such as querying address balances, token metadata, and other related operations. By encapsulating the logic for interacting with token-related blockchain features, `novax-token` simplifies the process of querying and managing tokens within decentralized applications, making it a valuable tool for developers working with blockchain tokens and assets."
@@ -12,9 +12,9 @@ repository = "https://github.com/gfusee/novax"
 serde = "1.0.188"
 serde_json = "1.0.105"
 hex = "0.4.3"
-novax = { path = "../core", version = "0.0.13" }
-novax-data = { path = "../data", version = "0.0.13" }
-novax-request = { path = "../request", version = "0.0.13" }
+novax = { path = "../core", version = "0.0.12" }
+novax-data = { path = "../data", version = "0.0.12" }
+novax-request = { path = "../request", version = "0.0.12" }
 num-bigint = "0.4.4"
 async-trait = "0.1.73"
 multiversx-sc = "=0.43.3"
