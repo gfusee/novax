@@ -29,7 +29,7 @@ struct GatewayAllEsdtForAddress {
     pub data: GatewayAllEsdtForAddressData,
 }
 
-#[derive(Clone, PartialEq, Debug, Default)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Debug, Default)]
 pub struct TokenInfos {
     pub token_identifier: String,
     pub nonce: u64,
