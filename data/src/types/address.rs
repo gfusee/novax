@@ -64,7 +64,7 @@ impl Address {
     /// let address = Address::from_bech32_string("erd1qqqqqqqqqqqqqpgq7ykazrzd905zvnlr88dpfw06677lxe9w0n4suz00uh").unwrap();
     /// ```
     pub fn from_bech32_string(bech32: &str) -> Result<Address, DataError> {
-        let Ok(address) = SDKAddress::from_bech32_string(bech32) else { return Err(AddressError::InvalidBech32String.into()) };
+        let Ok(address) = SDKAddress::from_bech32_string(bech32) else { return Err(AddressError::InvalidBech32String { invalid_value: bech32.to_string() }.into()) };
 
         Ok(Address(address))
     }
@@ -235,7 +235,7 @@ impl<'a> Deserialize<'a> for Address {
 mod tests {
     use multiversx_sc::types::ManagedAddress;
     use multiversx_sc_scenario::api::StaticApi;
-    use crate::Address;
+    use crate::{Address, AddressError, DataError};
     use crate::types::managed::ManagedConvertible;
     use crate::types::native::NativeConvertible;
 
@@ -261,4 +261,30 @@ mod tests {
             managed.to_byte_array()
         )
     }
+
+    #[test]
+    fn test_from_bech32_string_valid_address() {
+        Address::from_bech32_string("erd1an4xpn58j7ymd58m2jznr32t0vmas75egrdfa8mta6fzvqn9tkxq4jvghn").unwrap();
+    }
+
+    #[test]
+    fn test_from_bech32_string_invalid_address() {
+        let str = "erd1an4xpn58j7ymd58m2jznr32t0vmas75egrdfa8mta6fzvqn9tkxq4jvghm";
+        let error = Address::from_bech32_string(str).unwrap_err();
+
+        let expected = DataError::Address(AddressError::InvalidBech32String { invalid_value: str.to_string() });
+
+        assert_eq!(error, expected);
+    }
+
+    #[test]
+    fn test_from_bech32_string_invalid_address_bad_length() {
+        let str = "erd1an4xpn58j7ymd58m2jznr32t";
+        let error = Address::from_bech32_string(str).unwrap_err();
+
+        let expected = DataError::Address(AddressError::InvalidBech32String { invalid_value: str.to_string() });
+
+        assert_eq!(error, expected);
+    }
+
 }

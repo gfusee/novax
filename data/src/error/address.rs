@@ -24,7 +24,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub enum AddressError {
     /// Represents an error case where an invalid Bech32 string is provided.
-    InvalidBech32String,
+    InvalidBech32String { invalid_value: String },
     /// Represents an error case where an `Address` cannot be converted to its Bech32 string representation.
     CannotConvertToBech32String,
 }
