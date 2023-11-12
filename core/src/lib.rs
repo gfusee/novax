@@ -78,3 +78,12 @@ pub use multiversx_sc::types::CodeMetadata;
 pub mod executor {
     pub use novax_executor::*;
 }
+
+/// The `data` module provides re-exports of functionalities from the `novax_data` crate.
+///
+/// This module acts as an interface to the `novax_data` crate, facilitating access to its
+/// provided features for handling data structures, storage mechanisms, and other data-related
+/// operations used within the blockchain context.
+pub mod data {
+    pub use novax_data::*;
+}
