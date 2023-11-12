@@ -13,18 +13,6 @@ use crate::error::utils::UtilsError;
 ///     as represented by the `AddressError` enum.
 /// - `Utils(UtilsError)`: Encapsulates errors that occur within utility functions,
 ///     as represented by the `UtilsError` enum.
-///
-/// # Example
-/// ```
-/// # use novax_data::{DataError, AddressError};
-/// let address_error = AddressError::InvalidBech32String;
-/// let data_error: DataError = address_error.into();
-///
-/// match data_error {
-///     DataError::Address(err) => println!("Address error: {:?}", err),
-///     DataError::Utils(err) => println!("Utils error: {:?}", err),
-/// }
-/// ```
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub enum DataError {
     /// Represents an error from address-related operations.

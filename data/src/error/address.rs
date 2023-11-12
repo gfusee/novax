@@ -10,21 +10,17 @@ use serde::{Deserialize, Serialize};
 /// a centralized error type for broader error handling.
 ///
 /// # Variants
-/// - `InvalidBech32String`: This error occurs when attempting to construct an `Address`
-///     from an invalid Bech32 string.
-/// - `CannotConvertToBech32String`: This error occurs when attempting to convert an `Address`
-///     to its Bech32 string representation.
-///
-/// # Example
-/// ```
-/// # use novax_data::{AddressError, DataError};
-/// let error = AddressError::InvalidBech32String;
-/// let data_error: DataError = error.into();
-/// ```
+/// - `InvalidBech32String`: Represents an error case where an invalid Bech32 string is provided.
+/// - `CannotConvertToBech32String`: Represents an error case where an `Address` cannot be converted to its
+///   Bech32 string representation.
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub enum AddressError {
     /// Represents an error case where an invalid Bech32 string is provided.
-    InvalidBech32String { invalid_value: String },
+    InvalidBech32String {
+        /// The invalid Bech32 string that led to the error. Storing this string helps in diagnosing
+        /// the specific input that failed to parse, facilitating easier troubleshooting.
+        invalid_value: String
+    },
     /// Represents an error case where an `Address` cannot be converted to its Bech32 string representation.
     CannotConvertToBech32String,
 }
