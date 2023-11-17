@@ -253,7 +253,7 @@ async fn get_addresses_balances(gateway_url: &str, addresses: &[Address]) -> Res
             let mut amounts: Vec<ScenarioWorldInfosEsdtTokenAmount> = vec![];
             for infos in e.1 {
                 amounts.push(ScenarioWorldInfosEsdtTokenAmount {
-                    token_identifier: infos.token_identifier,
+                    token_identifier: parse_token_identifier(&infos.token_identifier),
                     nonce: infos.nonce,
                     amount: infos.balance,
                     opt_attributes_expr: None, // TODO
@@ -282,5 +282,60 @@ where
 {
     for (new_key, new_value) in new {
         original.insert(new_key, new_value);
+    }
+}
+
+fn parse_token_identifier(token_identifier: &str) -> String {
+    let mut hyphen_count = 0;
+    let mut end_index = None;
+
+    for (index, char) in token_identifier.char_indices() {
+        if char == '-' {
+            hyphen_count += 1;
+            if hyphen_count == 2 {
+                end_index = Some(index);
+                break;
+            }
+        }
+    }
+
+    match end_index {
+        Some(index) => String::from(&token_identifier[..index]),
+        None => String::from(token_identifier),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::world::infos::parse_token_identifier;
+
+    #[test]
+    fn test_parse_token_identifier_empty_string() {
+        assert_eq!(parse_token_identifier(""), "");
+    }
+
+    #[test]
+    fn test_parse_token_identifier_no_hyphen() {
+        assert_eq!(parse_token_identifier("TEST"), "TEST");
+    }
+
+    #[test]
+    fn test_parse_token_identifier_one_hyphen() {
+        assert_eq!(parse_token_identifier("TEST-abcdef"), "TEST-abcdef");
+    }
+
+    #[test]
+    fn test_parse_token_identifier_trailing_hyphen() {
+        assert_eq!(parse_token_identifier("TEST-abcdef-"), "TEST-abcdef");
+    }
+
+    #[test]
+    fn test_parse_token_identifier_two_hyphens() {
+        assert_eq!(parse_token_identifier("TEST-abcdef-123456"), "TEST-abcdef");
+    }
+
+    #[test]
+    fn test_parse_token_identifier_more_than_two_hyphens() {
+        assert_eq!(parse_token_identifier("TEST-abcdef-123456-abcdef"), "TEST-abcdef");
     }
 }
