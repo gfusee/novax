@@ -5,7 +5,7 @@ use novax::errors::NovaXError;
 use novax_mocking::world::infos::{ScenarioWorldInfosEsdtTokenAmount, ScenarioWorldInfos};
 use num_bigint::BigUint;
 use novax::Address;
-use novax::tester::tester::{CustomEnum, CustomEnumWithFields, CustomEnumWithValues, CustomStruct, CustomStructWithStructAndVec, TesterContract};
+use novax::tester::tester::{CustomEnum, CustomEnumWithFields, CustomEnumWithValues, CustomStruct, CustomStructWithStructAndVec, TesterContract, TestTokenProperties};
 use novax::executor::StandardMockExecutor;
 
 const TESTER_CONTRACT_ADDRESS: &str = "erd1qqqqqqqqqqqqqpgq9wmk04e90fkhcuzns0pgwm33sdtxze346vpsq0ka9p";
@@ -24,7 +24,7 @@ fn get_executor() -> Arc<StandardMockExecutor> {
             token_identifier: "TEST-abcdef".to_string(),
             nonce: 0,
             amount: BigUint::from(25u8),
-            opt_attributes_expr: None,
+            opt_attributes: None,
         }
     );
 
@@ -33,7 +33,7 @@ fn get_executor() -> Arc<StandardMockExecutor> {
             token_identifier: "NFT-abcdef".to_string(),
             nonce: 6,
             amount: BigUint::from(1u8),
-            opt_attributes_expr: None,
+            opt_attributes: Some(b"AAAAC3Rlc3QgYnVmZmVyAAAAAQo=".to_vec()),
         }
     );
 
@@ -138,6 +138,27 @@ async fn test_query_sc_non_fungible_balance() -> Result<(), NovaXError> {
         .await?;
 
     let expected = BigUint::from(1u8);
+
+    assert_eq!(result, expected);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_query_sc_non_fungible_attributes() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .query(executor)
+        .return_nft_properties()
+        .await?;
+
+    let expected = TestTokenProperties {
+        buffer: "test buffer".to_string(),
+        integer: BigUint::from(10u8),
+    };
 
     assert_eq!(result, expected);
 

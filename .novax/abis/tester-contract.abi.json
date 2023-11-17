@@ -10,7 +10,7 @@
         "contractCrate": {
             "name": "tester-contract",
             "version": "0.0.0",
-            "gitVersion": "0.0.16-1-gecdcf08"
+            "gitVersion": "0.0.17-4-g302e541"
         },
         "framework": {
             "name": "multiversx-sc",
@@ -48,6 +48,16 @@
                 }
             ],
             "outputs": []
+        },
+        {
+            "name": "returnNftProperties",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "TestTokenProperties"
+                }
+            ]
         },
         {
             "name": "returnFungibleBalance",
@@ -701,6 +711,19 @@
                 {
                     "name": "third",
                     "type": "CustomStruct"
+                }
+            ]
+        },
+        "TestTokenProperties": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "buffer",
+                    "type": "bytes"
+                },
+                {
+                    "name": "integer",
+                    "type": "BigUint"
                 }
             ]
         }

@@ -69,7 +69,13 @@ mod test {
                     token_identifier: "WEGLD-abcdef".to_string(),
                     nonce: 0,
                     amount: BigUint::from(10u8),
-                    opt_attributes_expr: Some(vec![0, 1]),
+                    opt_attributes: Some(vec![0, 1]),
+                },
+                ScenarioWorldInfosEsdtTokenAmount {
+                    token_identifier: "NFT-abcdef-9a".to_string(),
+                    nonce: 0,
+                    amount: BigUint::from(10u8),
+                    opt_attributes: Some(vec![0, 1]),
                 }
             ]
         );

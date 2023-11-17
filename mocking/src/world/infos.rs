@@ -3,6 +3,7 @@ use std::fs::OpenOptions;
 use std::future::join;
 use std::hash::Hash;
 use std::path::Path;
+use base64::Engine;
 use num_bigint::BigUint;
 use futures::future::join_all;
 use multiversx_sc_snippets::hex;
@@ -26,7 +27,7 @@ pub struct ScenarioWorldInfosEsdtTokenAmount {
     pub token_identifier: String,
     pub nonce: u64,
     pub amount: BigUint,
-    pub opt_attributes_expr: Option<Vec<u8>>
+    pub opt_attributes: Option<Vec<u8>>
 }
 
 #[derive(PartialEq, Clone, Debug)]
@@ -130,7 +131,13 @@ impl ScenarioWorldInfos {
                     if balance.nonce == 0 {
                         account = account.esdt_balance(token_identifier, &balance.amount)
                     } else {
-                        account = account.esdt_nft_balance(token_identifier, balance.nonce, &balance.amount, balance.opt_attributes_expr.clone());
+                        let opt_attributes_expr = balance.opt_attributes
+                            .as_deref()
+                            .map(|e| {
+                                base64::engine::general_purpose::STANDARD.decode(e).unwrap()
+                            });
+
+                        account = account.esdt_nft_balance(token_identifier, balance.nonce, &balance.amount, opt_attributes_expr);
                     }
                 }
             }
@@ -253,10 +260,10 @@ async fn get_addresses_balances(gateway_url: &str, addresses: &[Address]) -> Res
             let mut amounts: Vec<ScenarioWorldInfosEsdtTokenAmount> = vec![];
             for infos in e.1 {
                 amounts.push(ScenarioWorldInfosEsdtTokenAmount {
-                    token_identifier: infos.token_identifier,
+                    token_identifier: parse_token_identifier(&infos.token_identifier),
                     nonce: infos.nonce,
                     amount: infos.balance,
-                    opt_attributes_expr: None, // TODO
+                    opt_attributes: infos.attributes.map(|e| e.as_bytes().to_vec())
                 })
             }
 
@@ -282,5 +289,60 @@ where
 {
     for (new_key, new_value) in new {
         original.insert(new_key, new_value);
+    }
+}
+
+fn parse_token_identifier(token_identifier: &str) -> String {
+    let mut hyphen_count = 0;
+    let mut end_index = None;
+
+    for (index, char) in token_identifier.char_indices() {
+        if char == '-' {
+            hyphen_count += 1;
+            if hyphen_count == 2 {
+                end_index = Some(index);
+                break;
+            }
+        }
+    }
+
+    match end_index {
+        Some(index) => String::from(&token_identifier[..index]),
+        None => String::from(token_identifier),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::world::infos::parse_token_identifier;
+
+    #[test]
+    fn test_parse_token_identifier_empty_string() {
+        assert_eq!(parse_token_identifier(""), "");
+    }
+
+    #[test]
+    fn test_parse_token_identifier_no_hyphen() {
+        assert_eq!(parse_token_identifier("TEST"), "TEST");
+    }
+
+    #[test]
+    fn test_parse_token_identifier_one_hyphen() {
+        assert_eq!(parse_token_identifier("TEST-abcdef"), "TEST-abcdef");
+    }
+
+    #[test]
+    fn test_parse_token_identifier_trailing_hyphen() {
+        assert_eq!(parse_token_identifier("TEST-abcdef-"), "TEST-abcdef");
+    }
+
+    #[test]
+    fn test_parse_token_identifier_two_hyphens() {
+        assert_eq!(parse_token_identifier("TEST-abcdef-123456"), "TEST-abcdef");
+    }
+
+    #[test]
+    fn test_parse_token_identifier_more_than_two_hyphens() {
+        assert_eq!(parse_token_identifier("TEST-abcdef-123456-abcdef"), "TEST-abcdef");
     }
 }

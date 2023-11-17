@@ -1554,6 +1554,7 @@ name = "novax-mocking"
 version = "0.0.17"
 dependencies = [
  "async-trait",
+ "base64 0.21.5",
  "futures",
  "hex",
  "multiversx-sc",
