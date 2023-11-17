@@ -2,15 +2,46 @@ use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use novax::errors::NovaXError;
-use novax_mocking::world::infos::ScenarioWorldInfos;
+use novax_mocking::world::infos::{ScenarioWorldInfosEsdtTokenAmount, ScenarioWorldInfos};
 use num_bigint::BigUint;
+use novax::Address;
 use novax::tester::tester::{CustomEnum, CustomEnumWithFields, CustomEnumWithValues, CustomStruct, CustomStructWithStructAndVec, TesterContract};
 use novax::executor::StandardMockExecutor;
 
 const TESTER_CONTRACT_ADDRESS: &str = "erd1qqqqqqqqqqqqqpgq9wmk04e90fkhcuzns0pgwm33sdtxze346vpsq0ka9p";
 
 fn get_executor() -> Arc<StandardMockExecutor> {
-    let infos = ScenarioWorldInfos::from_file(Path::new("tests/data/adder_world_dump.json")).unwrap();
+    let mut infos = ScenarioWorldInfos::from_file(Path::new("tests/data/adder_world_dump.json")).unwrap();
+
+    let tester_contract_address_bytes = Address::from_bech32_string(TESTER_CONTRACT_ADDRESS).unwrap().to_bytes();
+    let mut tester_contract_balances = infos.address_balances
+        .get(&tester_contract_address_bytes)
+        .cloned()
+        .unwrap_or_default();
+
+    tester_contract_balances.push(
+        ScenarioWorldInfosEsdtTokenAmount {
+            token_identifier: "TEST-abcdef".to_string(),
+            nonce: 0,
+            amount: BigUint::from(25u8),
+            opt_attributes_expr: None,
+        }
+    );
+
+    tester_contract_balances.push(
+        ScenarioWorldInfosEsdtTokenAmount {
+            token_identifier: "NFT-abcdef".to_string(),
+            nonce: 6,
+            amount: BigUint::from(1u8),
+            opt_attributes_expr: None,
+        }
+    );
+
+    infos.address_balances.insert(
+        tester_contract_address_bytes,
+        tester_contract_balances
+    );
+
     let world = infos.into_world(|_, code_expr, world| {
         world.register_contract(code_expr, tester_contract::ContractBuilder)
     });
@@ -73,6 +104,42 @@ async fn test_query_doesnt_modify_state() -> Result<(), NovaXError> {
         .await?;
 
     assert_eq!(result, BigUint::from(5u8));
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_query_sc_fungible_balance() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .query(executor)
+        .return_fungible_balance()
+        .await?;
+
+    let expected = BigUint::from(25u8);
+
+    assert_eq!(result, expected);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_query_sc_non_fungible_balance() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .query(executor)
+        .return_non_fungible_balance()
+        .await?;
+
+    let expected = BigUint::from(1u8);
+
+    assert_eq!(result, expected);
 
     Ok(())
 }

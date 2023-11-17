@@ -22,7 +22,7 @@ use crate::world::serde::ScenarioWorldInfosJson;
 type BalanceAsyncResults = Vec<Result<([u8;32], Vec<TokenInfos>), TokenError>>;
 
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
-pub(crate) struct EsdtTokenAmount {
+pub struct ScenarioWorldInfosEsdtTokenAmount {
     pub token_identifier: String,
     pub nonce: u64,
     pub amount: BigUint,
@@ -31,9 +31,9 @@ pub(crate) struct EsdtTokenAmount {
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct ScenarioWorldInfos {
-    pub(crate) address_keys: HashMap<[u8; 32], AddressKeys>,
-    pub(crate) address_balances: HashMap<[u8; 32], Vec<EsdtTokenAmount>>,
-    pub(crate) address_infos: Vec<AccountInfos>
+    pub address_keys: HashMap<[u8; 32], AddressKeys>,
+    pub address_balances: HashMap<[u8; 32], Vec<ScenarioWorldInfosEsdtTokenAmount>>,
+    pub address_infos: Vec<AccountInfos>
 }
 
 impl From<ScenarioWorldInfosJson> for ScenarioWorldInfos {
@@ -128,9 +128,9 @@ impl ScenarioWorldInfos {
                 for balance in balances {
                     let token_identifier = balance.token_identifier.as_bytes().to_vec();
                     if balance.nonce == 0 {
-                        account = account.esdt_nft_balance(token_identifier, balance.nonce, &balance.amount, balance.opt_attributes_expr.clone());
-                    } else {
                         account = account.esdt_balance(token_identifier, &balance.amount)
+                    } else {
+                        account = account.esdt_nft_balance(token_identifier, balance.nonce, &balance.amount, balance.opt_attributes_expr.clone());
                     }
                 }
             }
@@ -232,7 +232,7 @@ async fn get_addresses_keys(gateway_url: &str, addresses: &[Address]) -> Result<
     Ok(results)
 }
 
-async fn get_addresses_balances(gateway_url: &str, addresses: &[Address]) -> Result<HashMap<[u8; 32], Vec<EsdtTokenAmount>>, NovaXMockingError> {
+async fn get_addresses_balances(gateway_url: &str, addresses: &[Address]) -> Result<HashMap<[u8; 32], Vec<ScenarioWorldInfosEsdtTokenAmount>>, NovaXMockingError> {
     let mut balances_futures = vec![];
     for address in addresses {
         balances_futures.push(async {
@@ -250,9 +250,9 @@ async fn get_addresses_balances(gateway_url: &str, addresses: &[Address]) -> Res
 
     let result = balances.into_iter()
         .map(|e| {
-            let mut amounts: Vec<EsdtTokenAmount> = vec![];
+            let mut amounts: Vec<ScenarioWorldInfosEsdtTokenAmount> = vec![];
             for infos in e.1 {
-                amounts.push(EsdtTokenAmount {
+                amounts.push(ScenarioWorldInfosEsdtTokenAmount {
                     token_identifier: infos.token_identifier,
                     nonce: infos.nonce,
                     amount: infos.balance,
