@@ -13,6 +13,7 @@ use novax::errors::NovaXError;
 use serde::{Deserialize, Serialize};
 use novax::account::AccountInfos;
 use novax::Address;
+use novax::caching::CachingNone;
 use novax_token::account::balance::{FetchAllTokens, TokenInfos};
 use novax_token::error::token::TokenError;
 use crate::errors::mocking::NovaXMockingError;
@@ -243,7 +244,7 @@ async fn get_addresses_balances(gateway_url: &str, addresses: &[Address]) -> Res
     let mut balances_futures = vec![];
     for address in addresses {
         balances_futures.push(async {
-            let infos = address.fetch_all_tokens(gateway_url).await?;
+            let infos = address.fetch_all_tokens(gateway_url, &CachingNone).await?;
 
             Ok::<([u8; 32], Vec<TokenInfos>), TokenError>((address.to_bytes(), infos))
         })

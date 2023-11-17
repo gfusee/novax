@@ -1,9 +1,12 @@
+use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 use async_trait::async_trait;
 use num_bigint::BigUint;
 use novax_data::Address;
 use serde::{Deserialize, Serialize};
+use novax::caching::CachingStrategy;
 use novax::errors::NovaXError;
 use novax_request::gateway::client::GatewayClient;
 use crate::error::token::TokenError;
@@ -40,66 +43,81 @@ pub struct TokenInfos {
 
 #[async_trait]
 pub trait FetchAllTokens {
-    async fn fetch_all_tokens<Client>(&self, gateway_client: &Client) -> Result<Vec<TokenInfos>, TokenError>
+    async fn fetch_all_tokens<Client, Caching: CachingStrategy>(&self, gateway_client: &Client, caching: &Caching) -> Result<Vec<TokenInfos>, TokenError>
     where
-        Client: GatewayClient + ?Sized;
+        Client: GatewayClient + ?Sized,
+        Caching: CachingStrategy;
 }
 
 #[async_trait]
 impl FetchAllTokens for Address {
-    async fn fetch_all_tokens<Client>(&self, gateway_client: &Client) -> Result<Vec<TokenInfos>, TokenError> where Client: GatewayClient + ?Sized {
-        fetch_all_tokens_for_address(gateway_client, self).await
+    async fn fetch_all_tokens<Client, Caching: CachingStrategy>(&self, gateway_client: &Client, caching: &Caching) -> Result<Vec<TokenInfos>, TokenError>
+    where
+        Client: GatewayClient + ?Sized,
+        Caching: CachingStrategy
+    {
+        fetch_all_tokens_for_address(gateway_client, self, caching).await
     }
 }
 
-async fn fetch_all_tokens_for_address<Client>(gateway_client: &Client, address: &Address) -> Result<Vec<TokenInfos>, TokenError>
+async fn fetch_all_tokens_for_address<Client, Caching>(gateway_client: &Client, address: &Address, caching: &Caching) -> Result<Vec<TokenInfos>, TokenError>
     where
-        Client: GatewayClient + ?Sized
+        Client: GatewayClient + ?Sized,
+        Caching: CachingStrategy
 {
     let bech32_address = address.to_bech32_string().map_err(NovaXError::from)?;
     let client = gateway_client.with_appended_url(&format!("/address/{}/esdt", bech32_address));
+    let key = format!("fetch_all_tokens_for_address_{}_{bech32_address}", client.get_gateway_url());
+    let mut hasher = DefaultHasher::new();
+    key.hash(&mut hasher);
 
-    let Ok(response) = client.get().await else { return Err(TokenError::UnknownErrorWhileGettingEsdtInfosOfAddress { address: address.to_string() }) };
-    let Ok(response) = response.text().await else { return Err(TokenError::UnknownErrorWhileGettingEsdtInfosOfAddress { address: address.to_string() }) };
-    let Ok(decoded) = serde_json::from_str::<GatewayAllEsdtForAddress>(&response) else {
-        return Err(TokenError::CannotParseEsdtBalances { address: address.to_string() })
-    };
+    caching.get_or_set_cache(
+        hasher.finish(),
+        async {
+            let Ok(response) = client.get().await else { return Err(TokenError::UnknownErrorWhileGettingEsdtInfosOfAddress { address: address.to_string() }) };
+            let Ok(response) = response.text().await else { return Err(TokenError::UnknownErrorWhileGettingEsdtInfosOfAddress { address: address.to_string() }) };
+            let Ok(decoded) = serde_json::from_str::<GatewayAllEsdtForAddress>(&response) else {
+                return Err(TokenError::CannotParseEsdtBalances { address: address.to_string() })
+            };
 
-    let mut results = vec![];
+            let mut results = vec![];
 
-    for (_, raw_infos) in decoded.data.esdts {
-        let Ok(balance) = BigUint::from_str(&raw_infos.balance) else {
-            return Err(TokenError::UnableToParseBigUintBalanceForTokenAndAddress {
-                token_identifier: raw_infos.token_identifier,
-                address: bech32_address,
-                balance: raw_infos.balance,
-            })
-        };
+            for (_, raw_infos) in decoded.data.esdts {
+                let Ok(balance) = BigUint::from_str(&raw_infos.balance) else {
+                    return Err(TokenError::UnableToParseBigUintBalanceForTokenAndAddress {
+                        token_identifier: raw_infos.token_identifier,
+                        address: bech32_address,
+                        balance: raw_infos.balance,
+                    })
+                };
 
-        let infos = TokenInfos {
-            token_identifier: raw_infos.token_identifier,
-            nonce: raw_infos.nonce.unwrap_or(0),
-            balance,
-            attributes: raw_infos.attributes,
-        };
+                let infos = TokenInfos {
+                    token_identifier: raw_infos.token_identifier,
+                    nonce: raw_infos.nonce.unwrap_or(0),
+                    balance,
+                    attributes: raw_infos.attributes,
+                };
 
-        results.push(infos);
-    }
+                results.push(infos);
+            }
 
-    Ok(results)
+            Ok(results)
+        }
+    ).await
 }
 
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
     use num_bigint::BigUint;
+    use novax::caching::CachingNone;
     use novax_data::Address;
     use crate::account::balance::{fetch_all_tokens_for_address, FetchAllTokens, TokenInfos};
     use crate::mock::request::MockClient;
 
     #[tokio::test]
     pub async fn test_with_valid_address() {
-        let mut result = fetch_all_tokens_for_address(&MockClient::new(), &"erd1n7ed3f6rkqvwkpfevulvhyl4hskx2vqyleed5lqfq9jp2csfw8esg88f5g".into()).await.unwrap();
+        let mut result = fetch_all_tokens_for_address(&MockClient::new(), &"erd1n7ed3f6rkqvwkpfevulvhyl4hskx2vqyleed5lqfq9jp2csfw8esg88f5g".into(), &CachingNone).await.unwrap();
         result.sort_by(|a, b| a.token_identifier.partial_cmp(&b.token_identifier).unwrap());
 
         let expected_len = 60;
@@ -124,7 +142,7 @@ mod tests {
     #[tokio::test]
     pub async fn test_with_valid_address_on_struct() {
         let address: Address = "erd1n7ed3f6rkqvwkpfevulvhyl4hskx2vqyleed5lqfq9jp2csfw8esg88f5g".into();
-        let mut result = address.fetch_all_tokens(&MockClient::new()).await.unwrap();
+        let mut result = address.fetch_all_tokens(&MockClient::new(), &CachingNone).await.unwrap();
         result.sort_by(|a, b| a.token_identifier.partial_cmp(&b.token_identifier).unwrap());
 
         let expected_len = 60;
