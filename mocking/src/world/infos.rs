@@ -1,4 +1,5 @@
 use std::collections::{BTreeMap, HashMap};
+use std::fmt::format;
 use std::fs::OpenOptions;
 use std::future::join;
 use std::hash::Hash;
@@ -256,7 +257,11 @@ async fn get_addresses_balances(gateway_url: &str, addresses: &[Address]) -> Res
                     token_identifier: parse_token_identifier(&infos.token_identifier),
                     nonce: infos.nonce,
                     amount: infos.balance,
-                    opt_attributes_expr: infos.attributes.map(|e| e.as_bytes().to_vec())
+                    opt_attributes_expr: infos.attributes.map(|e| {
+                        let test = format!("0x{e}");
+                        println!("{test}");
+                        test.as_bytes().to_vec()
+                    })
                 })
             }
 
