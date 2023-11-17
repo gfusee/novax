@@ -256,7 +256,7 @@ async fn get_addresses_balances(gateway_url: &str, addresses: &[Address]) -> Res
                     token_identifier: parse_token_identifier(&infos.token_identifier),
                     nonce: infos.nonce,
                     amount: infos.balance,
-                    opt_attributes_expr: None, // TODO
+                    opt_attributes_expr: infos.attributes.map(|e| e.as_bytes().to_vec())
                 })
             }
 
