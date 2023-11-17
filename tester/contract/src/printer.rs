@@ -2,6 +2,12 @@ multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi)]
+pub struct TestTokenProperties<M: ManagedTypeApi> {
+    pub buffer: ManagedBuffer<M>,
+    pub integer: BigUint<M>
+}
+
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi)]
 pub struct CustomStruct<M: ManagedTypeApi> {
     pub first: ManagedBuffer<M>,
     pub second: u64,
@@ -36,6 +42,14 @@ pub enum CustomEnumWithFields<M: ManagedTypeApi> {
 
 #[multiversx_sc::module]
 pub trait PrinterModule: ContractBase {
+    #[endpoint(returnNftProperties)]
+    fn return_nft_properties(&self) -> TestTokenProperties<Self::Api> {
+        self.blockchain().get_token_attributes(
+            &TokenIdentifier::from("NFT-abcdef"),
+            6
+        )
+    }
+
     #[endpoint(returnFungibleBalance)]
     fn return_fungible_balance(&self) -> BigUint<Self::Api> {
         self.blockchain().get_sc_balance(

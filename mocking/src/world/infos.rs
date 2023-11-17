@@ -1,9 +1,9 @@
 use std::collections::{BTreeMap, HashMap};
-use std::fmt::format;
 use std::fs::OpenOptions;
 use std::future::join;
 use std::hash::Hash;
 use std::path::Path;
+use base64::Engine;
 use num_bigint::BigUint;
 use futures::future::join_all;
 use multiversx_sc_snippets::hex;
@@ -27,7 +27,7 @@ pub struct ScenarioWorldInfosEsdtTokenAmount {
     pub token_identifier: String,
     pub nonce: u64,
     pub amount: BigUint,
-    pub opt_attributes_expr: Option<Vec<u8>>
+    pub opt_attributes: Option<Vec<u8>>
 }
 
 #[derive(PartialEq, Clone, Debug)]
@@ -131,7 +131,13 @@ impl ScenarioWorldInfos {
                     if balance.nonce == 0 {
                         account = account.esdt_balance(token_identifier, &balance.amount)
                     } else {
-                        account = account.esdt_nft_balance(token_identifier, balance.nonce, &balance.amount, balance.opt_attributes_expr.clone());
+                        let opt_attributes_expr = balance.opt_attributes
+                            .as_deref()
+                            .map(|e| {
+                                base64::engine::general_purpose::STANDARD.decode(e).unwrap()
+                            });
+
+                        account = account.esdt_nft_balance(token_identifier, balance.nonce, &balance.amount, opt_attributes_expr);
                     }
                 }
             }
@@ -257,11 +263,7 @@ async fn get_addresses_balances(gateway_url: &str, addresses: &[Address]) -> Res
                     token_identifier: parse_token_identifier(&infos.token_identifier),
                     nonce: infos.nonce,
                     amount: infos.balance,
-                    opt_attributes_expr: infos.attributes.map(|e| {
-                        let test = format!("0x{e}");
-                        println!("{test}");
-                        test.as_bytes().to_vec()
-                    })
+                    opt_attributes: infos.attributes.map(|e| e.as_bytes().to_vec())
                 })
             }
 
