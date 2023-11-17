@@ -10,11 +10,11 @@
         "contractCrate": {
             "name": "tester-contract",
             "version": "0.0.0",
-            "gitVersion": "0.0.8-1-g3c497ab"
+            "gitVersion": "0.0.16-1-gecdcf08"
         },
         "framework": {
             "name": "multiversx-sc",
-            "version": "0.43.4"
+            "version": "0.43.3"
         }
     },
     "name": "Tester",
@@ -48,6 +48,26 @@
                 }
             ],
             "outputs": []
+        },
+        {
+            "name": "returnFungibleBalance",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "returnNonFungibleBalance",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
         },
         {
             "name": "noArgNoReturnEndpoint",

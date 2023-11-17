@@ -3,12 +3,12 @@ use multiversx_sdk::data::address::Address;
 use serde::{Deserialize, Serialize};
 use novax::account::AccountInfos;
 use crate::gateway::keys::AddressKeys;
-use crate::world::infos::{EsdtTokenAmount, ScenarioWorldInfos};
+use crate::world::infos::{ScenarioWorldInfosEsdtTokenAmount, ScenarioWorldInfos};
 
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub(crate) struct ScenarioWorldInfosJson {
     pub(crate) address_keys: HashMap<String, AddressKeys>,
-    pub(crate) address_balances: HashMap<String, Vec<EsdtTokenAmount>>,
+    pub(crate) address_balances: HashMap<String, Vec<ScenarioWorldInfosEsdtTokenAmount>>,
     pub(crate) address_infos: Vec<AccountInfos>
 }
 
@@ -39,7 +39,7 @@ mod test {
     use novax::account::{AccountInfos, AccountInfosAccountData, AccountInfosData};
     use crate::gateway::keys::{AddressKeys, AddressKeysData};
     use crate::world::serde::{convert_hashmap_address_keys_to_bech32, ScenarioWorldInfosJson};
-    use crate::world::infos::{EsdtTokenAmount, ScenarioWorldInfos};
+    use crate::world::infos::{ScenarioWorldInfosEsdtTokenAmount, ScenarioWorldInfos};
 
     #[test]
     fn test_from_scenario_world_infos_impl() {
@@ -65,7 +65,7 @@ mod test {
         address_balances.insert(
             first_address_bytes,
             vec![
-                EsdtTokenAmount {
+                ScenarioWorldInfosEsdtTokenAmount {
                     token_identifier: "WEGLD-abcdef".to_string(),
                     nonce: 0,
                     amount: BigUint::from(10u8),

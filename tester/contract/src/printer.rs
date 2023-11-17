@@ -36,6 +36,22 @@ pub enum CustomEnumWithFields<M: ManagedTypeApi> {
 
 #[multiversx_sc::module]
 pub trait PrinterModule: ContractBase {
+    #[endpoint(returnFungibleBalance)]
+    fn return_fungible_balance(&self) -> BigUint<Self::Api> {
+        self.blockchain().get_sc_balance(
+            &EgldOrEsdtTokenIdentifier::esdt(TokenIdentifier::from("TEST-abcdef")),
+            0
+        )
+    }
+
+    #[endpoint(returnNonFungibleBalance)]
+    fn return_non_fungible_balance(&self) -> BigUint<Self::Api> {
+        self.blockchain().get_sc_balance(
+            &EgldOrEsdtTokenIdentifier::esdt(TokenIdentifier::from("NFT-abcdef")),
+            6
+        )
+    }
+
     #[endpoint(noArgNoReturnEndpoint)]
     fn no_arg_no_return_endpoint(&self) {}
 
