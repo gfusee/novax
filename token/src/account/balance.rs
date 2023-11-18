@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 use async_trait::async_trait;
+use base64::Engine;
 use num_bigint::BigUint;
 use novax_data::Address;
 use serde::{Deserialize, Serialize};
@@ -37,9 +38,8 @@ pub struct TokenInfos {
     pub token_identifier: String,
     pub nonce: u64,
     pub balance: BigUint,
-    pub attributes: Option<String>,
+    pub attributes: Option<Vec<u8>>,
 }
-
 
 #[async_trait]
 pub trait FetchAllTokens {
@@ -91,11 +91,26 @@ async fn fetch_all_tokens_for_address<Client, Caching>(gateway_client: &Client, 
                     })
                 };
 
+                let decoded_attributes = if let Some(raw_attributes) = raw_infos.attributes {
+                    let Ok(decoded_attributes) = base64::engine::general_purpose::STANDARD.decode(
+                        raw_attributes
+                    ) else {
+                        return Err(TokenError::CannotDecodeBase64Attributes {
+                            token_identifier: raw_infos.token_identifier,
+                            nonce: raw_infos.nonce.unwrap_or_default()
+                        })
+                    };
+
+                    Some(decoded_attributes)
+                } else {
+                    None
+                };
+
                 let infos = TokenInfos {
                     token_identifier: raw_infos.token_identifier,
                     nonce: raw_infos.nonce.unwrap_or(0),
                     balance,
-                    attributes: raw_infos.attributes,
+                    attributes: decoded_attributes,
                 };
 
                 results.push(infos);
@@ -109,6 +124,7 @@ async fn fetch_all_tokens_for_address<Client, Caching>(gateway_client: &Client, 
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
+    use base64::Engine;
     use num_bigint::BigUint;
     use novax::caching::CachingNone;
     use novax_data::Address;
@@ -127,11 +143,13 @@ mod tests {
             balance: BigUint::from_str("71179029947004300508").unwrap(),
             attributes: None,
         };
+
+        let expected_attributes_bytes = base64::engine::general_purpose::STANDARD.decode("AAAABBQU4X0AAAAE7ydxXJ+y2KdDsBjrBTlnPsuT9bwsZTAE/nLafAkBZBViCXHzAAAACA3gtrOnZAAAAAAACA3gtrOnZAAAAAAAAA==").unwrap();
         let expected_non_fungible = TokenInfos {
             token_identifier: "FARM-c4c5ef-1f52".to_string(),
             nonce: 8018,
             balance: BigUint::from_str("1000000000000000000").unwrap(),
-            attributes: Some("AAAABBQU4X0AAAAE7ydxXJ+y2KdDsBjrBTlnPsuT9bwsZTAE/nLafAkBZBViCXHzAAAACA3gtrOnZAAAAAAACA3gtrOnZAAAAAAAAA==".to_string()),
+            attributes: Some(expected_attributes_bytes),
         };
 
         assert_eq!(result.len(), expected_len);
@@ -152,11 +170,13 @@ mod tests {
             balance: BigUint::from_str("71179029947004300508").unwrap(),
             attributes: None,
         };
+
+        let expected_attributes_bytes = base64::engine::general_purpose::STANDARD.decode("AAAABBQU4X0AAAAE7ydxXJ+y2KdDsBjrBTlnPsuT9bwsZTAE/nLafAkBZBViCXHzAAAACA3gtrOnZAAAAAAACA3gtrOnZAAAAAAAAA==").unwrap();
         let expected_non_fungible = TokenInfos {
             token_identifier: "FARM-c4c5ef-1f52".to_string(),
             nonce: 8018,
             balance: BigUint::from_str("1000000000000000000").unwrap(),
-            attributes: Some("AAAABBQU4X0AAAAE7ydxXJ+y2KdDsBjrBTlnPsuT9bwsZTAE/nLafAkBZBViCXHzAAAACA3gtrOnZAAAAAAACA3gtrOnZAAAAAAAAA==".to_string()),
+            attributes: Some(expected_attributes_bytes),
         };
 
         assert_eq!(result.len(), expected_len);

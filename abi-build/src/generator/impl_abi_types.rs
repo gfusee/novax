@@ -340,6 +340,30 @@ fn impl_abi_struct_type(name: &str, abi_type: &AbiType, all_abi_types: &AbiTypes
             /// Type alias for wrapping the managed API.
             type #managed_name_type_wrap_api = #managed_name_ident;
 
+            impl #native_name_ident {
+                /// Constructs an instance of `#native_name_ident` from ESDT token attributes.
+                ///
+                /// This function attempts to decode the provided ESDT attributes into an instance of `#native_name_ident`.
+                /// It is specifically designed to work with the attributes associated with ESDT tokens, which are typically
+                /// encoded in a binary format.
+                ///
+                /// # Arguments
+                /// - `attributes`: A byte slice (`&[u8]`) representing the ESDT token attributes to be decoded.
+                ///
+                /// # Returns
+                /// - `Ok(#native_name_ident)`: Successfully decoded instance of `#native_name_ident`.
+                /// - `Err(NovaXError)`: An error wrapped in `NovaXError`, specifically `CodingError::CannotDecodeEsdtAttributes`,
+                ///   if the decoding process fails. This error indicates that the provided attributes could not be properly
+                ///   decoded into the expected `#native_name_ident` type.
+                pub fn from_esdt_attributes(attributes: &[u8]) -> Result<#native_name_ident, NovaXError> {
+                    let Result::Ok(decoded) = #managed_name_ident::top_decode(attributes) else {
+                        return Result::Err(CodingError::CannotDecodeEsdtAttributes.into());
+                    };
+
+                    Result::Ok(decoded.to_native())
+                }
+            }
+
             /// Provides a mechanism for converting a `#native_name_ident` to its managed representation (`#managed_name_ident`).
             impl ManagedConvertible<#managed_name_ident> for #native_name_ident {
                 /// Converts the `#native_name_ident` to its managed representation.

@@ -4,6 +4,7 @@ use novax_executor::ExecutorError;
 use crate::errors::account_error::AccountError;
 use crate::errors::caching_error::CachingError;
 use crate::errors::code_error::CodeError;
+use crate::errors::CodingError;
 use crate::errors::date_error::DateError;
 
 /// The main error type for the `novax` crate.
@@ -20,6 +21,10 @@ pub enum NovaXError {
     Date(DateError),
     /// Errors related to fetching or parsing account information.
     Account(AccountError),
+    /// Errors occurring during the encoding or decoding of managed types. This variant encompasses issues
+    /// related to serialization and deserialization processes, which are fundamental in ensuring data
+    /// integrity and adherence to expected formats.
+    Coding(CodingError),
     /// Errors related to reading contract code from a file.
     Code(CodeError),
 }
