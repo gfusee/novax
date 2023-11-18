@@ -85,6 +85,7 @@ fn get_mod_imports() -> TokenStream {
         use multiversx_sdk::data::vm::VmValueRequest;
         use serde::{Deserialize, Serialize};
         use crate::errors::NovaXError;
+        use crate::errors::CodingError;
         use crate::caching::CachingStrategy;
         use crate::caching::CachingNone;
         use std::collections::hash_map::DefaultHasher;

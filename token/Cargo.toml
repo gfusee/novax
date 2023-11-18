@@ -20,6 +20,7 @@ async-trait = "0.1.73"
 multiversx-sc = "=0.43.3"
 multiversx-sc-scenario = "=0.43.3"
 multiversx-sc-codec = "=0.18.1"
+base64 = "0.21.5"
 
 [dev-dependencies]
 tokio = "1.32.0"

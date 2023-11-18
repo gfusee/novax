@@ -8,6 +8,17 @@ pub struct TestTokenProperties<M: ManagedTypeApi> {
 }
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi)]
+pub enum TestEnumProperties<M: ManagedTypeApi> {
+    First,
+    Second(ManagedBuffer<M>, BigUint<M>),
+}
+
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi)]
+pub enum TestEnumPropertiesWithFields<M: ManagedTypeApi> {
+    First { buffer_value: ManagedBuffer<M>, integer: BigUint<M> },
+}
+
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi)]
 pub struct CustomStruct<M: ManagedTypeApi> {
     pub first: ManagedBuffer<M>,
     pub second: u64,
@@ -44,6 +55,22 @@ pub enum CustomEnumWithFields<M: ManagedTypeApi> {
 pub trait PrinterModule: ContractBase {
     #[endpoint(returnNftProperties)]
     fn return_nft_properties(&self) -> TestTokenProperties<Self::Api> {
+        self.blockchain().get_token_attributes(
+            &TokenIdentifier::from("NFT-abcdef"),
+            6
+        )
+    }
+
+    #[endpoint(returnNftEnumProperties)]
+    fn return_nft_enum_properties(&self) -> TestEnumProperties<Self::Api> {
+        self.blockchain().get_token_attributes(
+            &TokenIdentifier::from("NFT-abcdef"),
+            6
+        )
+    }
+
+    #[endpoint(returnNftEnumFieldsProperties)]
+    fn return_nft_enum_fields_properties(&self) -> TestEnumPropertiesWithFields<Self::Api> {
         self.blockchain().get_token_attributes(
             &TokenIdentifier::from("NFT-abcdef"),
             6

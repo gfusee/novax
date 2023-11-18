@@ -10,7 +10,7 @@
         "contractCrate": {
             "name": "tester-contract",
             "version": "0.0.0",
-            "gitVersion": "0.0.17-4-g302e541"
+            "gitVersion": "0.0.19-2-gfed15eb"
         },
         "framework": {
             "name": "multiversx-sc",
@@ -56,6 +56,26 @@
             "outputs": [
                 {
                     "type": "TestTokenProperties"
+                }
+            ]
+        },
+        {
+            "name": "returnNftEnumProperties",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "TestEnumProperties"
+                }
+            ]
+        },
+        {
+            "name": "returnNftEnumFieldsProperties",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "TestEnumPropertiesWithFields"
                 }
             ]
         },
@@ -711,6 +731,48 @@
                 {
                     "name": "third",
                     "type": "CustomStruct"
+                }
+            ]
+        },
+        "TestEnumProperties": {
+            "type": "enum",
+            "variants": [
+                {
+                    "name": "First",
+                    "discriminant": 0
+                },
+                {
+                    "name": "Second",
+                    "discriminant": 1,
+                    "fields": [
+                        {
+                            "name": "0",
+                            "type": "bytes"
+                        },
+                        {
+                            "name": "1",
+                            "type": "BigUint"
+                        }
+                    ]
+                }
+            ]
+        },
+        "TestEnumPropertiesWithFields": {
+            "type": "enum",
+            "variants": [
+                {
+                    "name": "First",
+                    "discriminant": 0,
+                    "fields": [
+                        {
+                            "name": "buffer_value",
+                            "type": "bytes"
+                        },
+                        {
+                            "name": "integer",
+                            "type": "BigUint"
+                        }
+                    ]
                 }
             ]
         },

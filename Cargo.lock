@@ -1584,6 +1584,7 @@ name = "novax-token"
 version = "0.0.19"
 dependencies = [
  "async-trait",
+ "base64 0.21.5",
  "hex",
  "hyper 1.0.0-rc.4",
  "multiversx-sc",
@@ -2365,6 +2366,7 @@ name = "tester"
 version = "0.0.1"
 dependencies = [
  "async-trait",
+ "base64 0.21.5",
  "hex",
  "novax",
  "novax-mocking",

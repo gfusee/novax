@@ -5,6 +5,7 @@ use novax::errors::NovaXError;
 pub enum TokenError {
     TokenNotFound { token_identifier: String },
     UnknownErrorForToken { token_identifier: String },
+    CannotDecodeBase64Attributes { token_identifier: String, nonce: u64 },
     UnknownErrorWhileGettingEsdtInfosOfAddress { address: String },
     CannotParseEsdtBalances { address: String },
     UnableToParseBigUintBalanceForTokenAndAddress { token_identifier: String, address: String, balance: String },
