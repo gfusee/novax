@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           45
+// Endpoints:                           47
 // Async Callback:                       1
-// Total number of exported functions:  47
+// Total number of exported functions:  49
 
 #![no_std]
 
@@ -25,6 +25,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         getSum => sum
         add => add
         returnNftProperties => return_nft_properties
+        returnNftEnumProperties => return_nft_enum_properties
+        returnNftEnumFieldsProperties => return_nft_enum_fields_properties
         returnFungibleBalance => return_fungible_balance
         returnNonFungibleBalance => return_non_fungible_balance
         noArgNoReturnEndpoint => no_arg_no_return_endpoint
