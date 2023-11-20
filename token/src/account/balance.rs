@@ -11,6 +11,7 @@ use novax::caching::CachingStrategy;
 use novax::errors::NovaXError;
 use novax_request::gateway::client::GatewayClient;
 use crate::error::token::TokenError;
+use crate::utils::parse_identifier;
 
 #[derive(Serialize, Deserialize, Default)]
 struct GatewayAllEsdtsForAddressEsdtInfos {
@@ -106,9 +107,11 @@ async fn fetch_all_tokens_for_address<Client, Caching>(gateway_client: &Client, 
                     None
                 };
 
+                let (parsed_token_identifier, parsed_nonce) = parse_identifier(&raw_infos.token_identifier)?;
+
                 let infos = TokenInfos {
-                    token_identifier: raw_infos.token_identifier,
-                    nonce: raw_infos.nonce.unwrap_or(0),
+                    token_identifier: parsed_token_identifier,
+                    nonce: raw_infos.nonce.unwrap_or(parsed_nonce),
                     balance,
                     attributes: decoded_attributes,
                 };
@@ -146,7 +149,7 @@ mod tests {
 
         let expected_attributes_bytes = base64::engine::general_purpose::STANDARD.decode("AAAABBQU4X0AAAAE7ydxXJ+y2KdDsBjrBTlnPsuT9bwsZTAE/nLafAkBZBViCXHzAAAACA3gtrOnZAAAAAAACA3gtrOnZAAAAAAAAA==").unwrap();
         let expected_non_fungible = TokenInfos {
-            token_identifier: "FARM-c4c5ef-1f52".to_string(),
+            token_identifier: "FARM-c4c5ef".to_string(),
             nonce: 8018,
             balance: BigUint::from_str("1000000000000000000").unwrap(),
             attributes: Some(expected_attributes_bytes),
@@ -173,7 +176,7 @@ mod tests {
 
         let expected_attributes_bytes = base64::engine::general_purpose::STANDARD.decode("AAAABBQU4X0AAAAE7ydxXJ+y2KdDsBjrBTlnPsuT9bwsZTAE/nLafAkBZBViCXHzAAAACA3gtrOnZAAAAAAACA3gtrOnZAAAAAAAAA==").unwrap();
         let expected_non_fungible = TokenInfos {
-            token_identifier: "FARM-c4c5ef-1f52".to_string(),
+            token_identifier: "FARM-c4c5ef".to_string(),
             nonce: 8018,
             balance: BigUint::from_str("1000000000000000000").unwrap(),
             attributes: Some(expected_attributes_bytes),

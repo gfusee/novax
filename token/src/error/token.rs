@@ -9,6 +9,7 @@ pub enum TokenError {
     UnknownErrorWhileGettingEsdtInfosOfAddress { address: String },
     CannotParseEsdtBalances { address: String },
     UnableToParseBigUintBalanceForTokenAndAddress { token_identifier: String, address: String, balance: String },
+    InvalidTokenIdentifier { identifier: String },
     NestedAppError(NovaXError)
 }
 
