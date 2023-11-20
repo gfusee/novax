@@ -175,7 +175,7 @@ impl ScenarioWorldInfos {
                                 registered_codes.push(code.clone());
                             }
 
-                            let owner_address_expr = format!("address:{owner}");
+                            let owner_address_expr = format!("bech32:{owner}");
                             account = account.code(&*code_expr.clone());
                             account = account.owner(&*owner_address_expr);
                         }
