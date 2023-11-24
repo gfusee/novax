@@ -3,11 +3,11 @@
 Integrating NovaX into your Rust environment is straightforward. Just follow this four-step process:
 
 1. **Adding the NovaX Crate to Your Project**:
-   Start by including the "novax" crate in your `Cargo.toml`. Ensure you're referencing the correct version (0.0.1 for this guide).
+   Start by including the "novax" crate in your `Cargo.toml`. Ensure you're referencing the correct version (0.0.22 for this guide).
 
    ```toml
    [dependencies]
-   novax = "0.0.1"
+   novax = "0.0.22"
    ```
 
 2. **Setting Up Your ABIs**:
@@ -27,7 +27,7 @@ Integrating NovaX into your Rust environment is straightforward. Just follow thi
    Create a folder named `.novax` at the root of your project. Inside it, establish a mandatory sub-directory named "abis" where you'll place all your ABI files, like `my_first_abi.json` and `my_second_abi.json`.
 
 3. **Directing NovaX to Your ABIs**:
-   To help NovaX locate your `.novax` directory, set the `NOVAX_PATH` environment variable. The recommended way is by adjusting the Cargo configuration. Navigate to `.config/config.toml` at the root of your project and input:
+   To help NovaX locate your `.novax` directory, set the `NOVAX_PATH` environment variable. The recommended way is by adjusting the Cargo configuration. Navigate to `.cargo/config.toml` at the root of your project and input:
 
    ```toml
    [env]

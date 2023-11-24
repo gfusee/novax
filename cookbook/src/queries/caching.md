@@ -5,7 +5,7 @@ NovaX comes equipped with built-in capabilities for efficient caching. In this c
 Before diving in, ensure you've added the `novax-caching` crate to your `Cargo.toml`:
 
 ```toml
-novax-caching = "0.0.1"
+novax-caching = "0.0.22"
 ```
 
 **Note**: `novax-caching` is an extension of NovaX that provides common and tested caching strategies.
