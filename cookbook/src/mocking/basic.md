@@ -9,7 +9,7 @@ novax-mocking = "0.0.2"
 
 Now, let's proceed with how to execute mocked queries, calls, and deploys using NovaX.
 
-> **Note 1**: The Rust Testing Framework mandates that you possess the code of every contract you interact with. These contracts should align with the same version of `mx-sdk-rs` that NovaX uses. Specifically, NovaX 0.0.1 is in sync with `mx-sdk-rs` version 0.43.2.
+> **Note 1**: The Rust Testing Framework mandates that you possess the code of every contract you interact with. These contracts should align with the same version of `mx-sdk-rs` that NovaX uses. Specifically, NovaX 0.0.22 is in sync with `mx-sdk-rs` version 0.43.3.
 
 > **Note 2**: For those looking to replicate the real blockchain's state into a `ScenarioWorld`, NovaX furnishes tools designed for this intricate process. We'll explore this technique further in the subsequent chapter.
 

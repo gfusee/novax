@@ -6,8 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-novax = "0.0.1"
-novax-caching = "0.0.1"
+novax = "0.0.22"
+novax-caching = "0.0.22"
 novax-mocking = "0.0.2"
 tokio = "1.32.0"
 num-bigint = "0.4.4"
