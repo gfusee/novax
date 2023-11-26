@@ -39,6 +39,11 @@ use crate::types::native::NativeConvertible;
 #[derive(Serialize, Clone, Debug)]
 pub struct Address(SDKAddress);
 
+impl Default for Address {
+    fn default() -> Self {
+        Address::from_bytes([0; 32])
+    }
+}
 
 impl PartialEq for Address {
     fn eq(&self, other: &Self) -> bool {
