@@ -7,7 +7,7 @@ use num_bigint::BigUint;
 /// This struct is solely used for providing token transfer information as a parameter to a contract call. In case
 /// there is a token payment return from the contract, a different struct (which would be generated from the ABI along
 /// with the client) named `EsdtTokenPayment` would be used to represent that data.
-#[derive(Clone, Debug)]
+#[derive(PartialEq, Clone, Debug)]
 pub struct TokenTransfer {
     /// A string representing the identifier of the token to be transferred.
     ///

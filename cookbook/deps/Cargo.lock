@@ -1268,9 +1268,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc"
-version = "0.43.5"
+version = "0.43.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "adbdd41a744caa562646c6d593df35caed84889e0d35df8b9ad8efc45457b5bd"
+checksum = "5889db6e6f6814b221cf4c1cd2937aa047b419e2a80b08695d85b4a9f537bdfd"
 dependencies = [
  "bitflags 1.3.2",
  "hashbrown 0.13.2",
@@ -1305,9 +1305,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-derive"
-version = "0.43.5"
+version = "0.43.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ebdaec412a272d8fd6668bc0b4b8674a5e03148aa72041a4705d502b86f4d9ce"
+checksum = "23fead13b29d79f702e021926402588e9a7822ed9dfadfdfe71c436dce100e4f"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -1318,9 +1318,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-meta"
-version = "0.43.5"
+version = "0.43.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9578e4d3b8a9fd9b50b066630d2ec7d169a2c9e76fb129f47e6081e67f630fcd"
+checksum = "f19d1c0302123232c95305ffbdebda67eaca9699f2b4ab47dd8974c001d97b88"
 dependencies = [
  "anyhow",
  "clap",
@@ -1340,16 +1340,14 @@ dependencies = [
  "tempfile",
  "tokio",
  "toml",
- "wasmparser 0.113.3",
- "wasmprinter",
  "zip",
 ]
 
 [[package]]
 name = "multiversx-sc-scenario"
-version = "0.43.5"
+version = "0.43.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f07016e6a8dd2152327e4d2904cbeb1ec1b3edb98b01660bfbce0f56453c7b5"
+checksum = "b179cedb5cbc43173c513c70bab840fe66718a39db5a7b83c23980a17bf9f5ae"
 dependencies = [
  "base64 0.13.1",
  "bech32",
@@ -1375,9 +1373,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-snippets"
-version = "0.43.5"
+version = "0.43.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96cea4db7d6c4b9a68ecc4c487acef0ee275bff4ccad5f15263f5ef3e9ef8c4f"
+checksum = "d7f65ab411fde3f18813a5880b1b2113ebbd1cd62cafd4af5944e2a27dc7c26c"
 dependencies = [
  "base64 0.13.1",
  "env_logger",
@@ -1457,9 +1455,33 @@ dependencies = [
  "multiversx-sc-scenario",
  "multiversx-sc-snippets",
  "multiversx-sdk",
- "novax-abi-build",
- "novax-data",
- "novax-executor",
+ "novax-abi-build 0.0.1",
+ "novax-data 0.0.1",
+ "novax-executor 0.0.1",
+ "num-bigint",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "novax"
+version = "0.0.22"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b03bfe6caf3fd8b385b202ebdcbf0078c452890dc8558bc4290a79cf13f32e09"
+dependencies = [
+ "async-trait",
+ "hex",
+ "multiversx-sc",
+ "multiversx-sc-codec",
+ "multiversx-sc-codec-derive",
+ "multiversx-sc-scenario",
+ "multiversx-sc-snippets",
+ "multiversx-sdk",
+ "novax-abi-build 0.0.22",
+ "novax-data 0.0.22",
+ "novax-executor 0.0.22",
  "num-bigint",
  "reqwest",
  "serde",
@@ -1483,13 +1505,28 @@ dependencies = [
 ]
 
 [[package]]
-name = "novax-caching"
-version = "0.0.1"
+name = "novax-abi-build"
+version = "0.0.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aba02e49c85313397a15efd010164eaca26a60b0f1d45a0a7a8c74023c6aa149"
+checksum = "6e2d266b4eb5320807b43ad0d5f0d3b212f10ed28ac17b50409e6a981aa8ba96"
+dependencies = [
+ "convert_case",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "rust-format",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "novax-caching"
+version = "0.0.22"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "51408a0ae748df48d365c468df77680008b0347594942a542f0cd8d4006f6996"
 dependencies = [
  "async-trait",
- "novax",
+ "novax 0.0.22",
  "rmp-serde",
  "serde",
  "tokio",
@@ -1500,7 +1537,7 @@ name = "novax-cookbook-deps"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "novax",
+ "novax 0.0.22",
  "novax-caching",
  "novax-mocking",
  "num-bigint",
@@ -1524,6 +1561,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "novax-data"
+version = "0.0.22"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b2327b44a61fae9ca5818485d50bd09f8e714cac6b0a76bb5e7d2825a377efe4"
+dependencies = [
+ "base64 0.21.5",
+ "multiversx-sc",
+ "multiversx-sc-codec",
+ "multiversx-sc-scenario",
+ "multiversx-sdk",
+ "num-bigint",
+ "serde",
+]
+
+[[package]]
 name = "novax-executor"
 version = "0.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1536,7 +1588,26 @@ dependencies = [
  "multiversx-sc-scenario",
  "multiversx-sc-snippets",
  "multiversx-sdk",
- "novax-data",
+ "novax-data 0.0.1",
+ "num-bigint",
+ "serde",
+ "tokio",
+]
+
+[[package]]
+name = "novax-executor"
+version = "0.0.22"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a72cde93582a3b3a86639715ee3e51deaa982ffa231e07dc27321aeea6f81e1e"
+dependencies = [
+ "async-trait",
+ "base64 0.21.5",
+ "hex",
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "multiversx-sc-snippets",
+ "multiversx-sdk",
+ "novax-data 0.0.22",
  "num-bigint",
  "serde",
  "tokio",
@@ -1555,7 +1626,7 @@ dependencies = [
  "multiversx-sc-scenario",
  "multiversx-sc-snippets",
  "multiversx-sdk",
- "novax",
+ "novax 0.0.1",
  "novax-token",
  "num-bigint",
  "reqwest",
@@ -1586,8 +1657,8 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-codec",
  "multiversx-sc-scenario",
- "novax",
- "novax-data",
+ "novax 0.0.1",
+ "novax-data 0.0.1",
  "novax-request",
  "num-bigint",
  "serde",
@@ -2665,36 +2736,6 @@ name = "wasm-bindgen-shared"
 version = "0.2.88"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0d046c5d029ba91a1ed14da14dca44b68bf2f124cfbaf741c54151fdb3e0750b"
-
-[[package]]
-name = "wasmparser"
-version = "0.113.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "286049849b5a5bd09a8773171be96824afabffc7cc3df6caaf33a38db6cd07ae"
-dependencies = [
- "indexmap 2.1.0",
- "semver",
-]
-
-[[package]]
-name = "wasmparser"
-version = "0.116.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a58e28b80dd8340cb07b8242ae654756161f6fc8d0038123d679b7b99964fa50"
-dependencies = [
- "indexmap 2.1.0",
- "semver",
-]
-
-[[package]]
-name = "wasmprinter"
-version = "0.2.72"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9aff4df0cdf1906ec040e97d78c3fc8fd26d3f8d70adaac81f07f80957b63b54"
-dependencies = [
- "anyhow",
- "wasmparser 0.116.1",
-]
 
 [[package]]
 name = "web-sys"
