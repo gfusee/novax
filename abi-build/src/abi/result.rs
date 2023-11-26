@@ -21,7 +21,10 @@ impl Abi {
     }
 
     pub(crate) fn get_contract_name(&self) -> String {
-        self.name.clone() + "Contract"
+        match &self.name {
+            s if s.ends_with("Contract") => self.name.clone(),
+            _ =>  self.name.clone() + "Contract"
+        }
     }
 
     pub(crate) fn get_proxy_name(&self) -> String {
