@@ -229,6 +229,81 @@ async fn test_call_sum_multi_u64_args_result() -> Result<(), NovaXError> {
 }
 
 #[tokio::test]
+async fn test_return_optional_value_bool_arg_some_true() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .call(executor.clone(), 600000000)
+        .return_optional_value_bool_arg(&Some(true))
+        .await?;
+
+    let tx = executor.lock().await.get_transaction_details();
+
+    let expected = SendableTransaction {
+        receiver: TESTER_CONTRACT_ADDRESS.to_string(),
+        egld_value: 0u8.into(),
+        gas_limit: 600000000u64,
+        data: "returnOptionalValueBoolArg@01".to_string(),
+    };
+
+    assert_eq!(tx, expected);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_return_optional_value_bool_arg_some_false() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .call(executor.clone(), 600000000)
+        .return_optional_value_bool_arg(&Some(false))
+        .await?;
+
+    let tx = executor.lock().await.get_transaction_details();
+
+    let expected = SendableTransaction {
+        receiver: TESTER_CONTRACT_ADDRESS.to_string(),
+        egld_value: 0u8.into(),
+        gas_limit: 600000000u64,
+        data: "returnOptionalValueBoolArg@".to_string(),
+    };
+
+    assert_eq!(tx, expected);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_return_optional_value_bool_arg_none() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .call(executor.clone(), 600000000)
+        .return_optional_value_bool_arg(&None)
+        .await?;
+
+    let tx = executor.lock().await.get_transaction_details();
+
+    let expected = SendableTransaction {
+        receiver: TESTER_CONTRACT_ADDRESS.to_string(),
+        egld_value: 0u8.into(),
+        gas_limit: 600000000u64,
+        data: "returnOptionalValueBoolArg".to_string(),
+    };
+
+    assert_eq!(tx, expected);
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_call_sum_multi_biguint_args_result() -> Result<(), NovaXError> {
     let executor = get_executor();
 

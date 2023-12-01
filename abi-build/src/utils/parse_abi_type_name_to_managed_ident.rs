@@ -66,7 +66,7 @@ pub(crate) fn parse_abi_type_name_to_managed_ident(abi_type: &str, all_abi_types
         let sub_type_ident = parse_abi_type_name_to_managed_ident(sub_type, all_abi_types, api_generic)?;
 
         return Ok(
-            quote! { Option<#sub_type_ident> }
+            quote! { OptionalValue<#sub_type_ident> }
         )
     };
 

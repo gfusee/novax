@@ -1,16 +1,16 @@
 {
     "buildInfo": {
         "rustc": {
-            "version": "1.72.0-nightly",
-            "commitHash": "36fb58e433c782e27dd41034284e157cf86d587f",
-            "commitDate": "2023-06-26",
+            "version": "1.71.0-nightly",
+            "commitHash": "a2b1646c597329d0a25efa3889b66650f65de1de",
+            "commitDate": "2023-05-25",
             "channel": "Nightly",
-            "short": "rustc 1.72.0-nightly (36fb58e43 2023-06-26)"
+            "short": "rustc 1.71.0-nightly (a2b1646c5 2023-05-25)"
         },
         "contractCrate": {
             "name": "tester-contract",
             "version": "0.0.0",
-            "gitVersion": "0.0.19-2-gfed15eb"
+            "gitVersion": "0.0.24-3-g69f7638"
         },
         "framework": {
             "name": "multiversx-sc",
@@ -526,6 +526,34 @@
             "outputs": [
                 {
                     "type": "CustomEnumWithFields"
+                }
+            ]
+        },
+        {
+            "name": "returnOptionalValueBool",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "optional<bool>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "returnOptionalValueBoolArg",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "arg",
+                    "type": "optional<bool>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "optional<bool>",
+                    "multi_result": true
                 }
             ]
         },

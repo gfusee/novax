@@ -383,6 +383,16 @@ pub trait PrinterModule: ContractBase {
         arg
     }
 
+    #[endpoint(returnOptionalValueBool)]
+    fn return_optional_value_bool(&self) -> OptionalValue<bool> {
+        OptionalValue::Some(true)
+    }
+
+    #[endpoint(returnOptionalValueBoolArg)]
+    fn return_optional_value_bool_arg(&self, arg: OptionalValue<bool>) -> OptionalValue<bool> {
+        arg
+    }
+
     #[endpoint(returnMultiValueTwo)]
     fn return_optional_multi_value_three_arg(&self, arg: OptionalValue<MultiValue3<u64, u64, u64>>) -> OptionalValue<MultiValue3<u64, u64, u64>> {
         arg
