@@ -1498,12 +1498,13 @@ name = "novax-abi-build"
 version = "0.0.24"
 dependencies = [
  "convert_case",
+ "prettyplease",
  "proc-macro2",
  "quote",
  "regex",
- "rust-format",
  "serde",
  "serde_json",
+ "syn 2.0.39",
 ]
 
 [[package]]
@@ -1835,6 +1836,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b40af805b3121feab8a3c29f04d8ad262fa8e0561883e7653e024ae4479e6de"
 
 [[package]]
+name = "prettyplease"
+version = "0.2.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ae005bd773ab59b4725093fd7df83fd7892f7d8eafb48dbd7de6e024e4215f9d"
+dependencies = [
+ "proc-macro2",
+ "syn 2.0.39",
+]
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2012,12 +2023,6 @@ dependencies = [
  "ignore",
  "regex",
 ]
-
-[[package]]
-name = "rust-format"
-version = "0.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "60e7c00b6c3bf5e38a880eec01d7e829d12ca682079f8238a464def3c4b31627"
 
 [[package]]
 name = "rustc-demangle"
