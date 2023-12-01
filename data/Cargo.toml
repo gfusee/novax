@@ -1,6 +1,6 @@
 [package]
 name = "novax-data"
-version = "0.0.24"
+version = "0.0.25"
 edition = "2021"
 license = "GPL-3.0-only"
 description = "A foundational crate for the NovaX framework, providing essential data types and conversions necessary for working with smart contracts and blockchain interactions."
