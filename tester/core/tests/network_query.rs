@@ -107,6 +107,12 @@ impl BlockchainProxy for MockProxy {
             }
         } else if vm_request.func_name == "returnSumTwoBiguintArgs" && vm_request.args == vec!["0de0b6b3a7640000".to_string(), "1bc16d674ec80000".to_string()] {
             return_data = Some(vec!["KaIkGvYsAAA=".to_string()])
+        } else if vm_request.func_name == "returnOptionalValueBoolArg" && vm_request.args == vec!["01".to_string()] {
+            return_data = Some(vec!["AQ==".to_string()])
+        } else if vm_request.func_name == "returnOptionalValueBoolArg" && vm_request.args == vec!["".to_string()] {
+            return_data = Some(vec!["".to_string()])
+        } else if vm_request.func_name == "returnOptionalValueBoolArg" && vm_request.args.is_empty() {
+            return_data = Some(vec![])
         }
 
         let Some(return_data) = return_data else {
@@ -547,6 +553,60 @@ async fn test_query_sum_multi_biguint_args_result() -> Result<(), NovaXError> {
         .await?;
 
     let expected = first_arg + second_arg;
+
+    assert_eq!(result, expected);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_return_optional_value_bool_arg_some_true() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .query(executor.clone())
+        .return_optional_value_bool_arg(&Some(true))
+        .await?;
+
+    let expected = Some(true);
+
+    assert_eq!(result, expected);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_return_optional_value_bool_arg_some_false() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .query(executor.clone())
+        .return_optional_value_bool_arg(&Some(false))
+        .await?;
+
+    let expected = Some(false);
+
+    assert_eq!(result, expected);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_return_optional_value_bool_arg_none() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .query(executor.clone())
+        .return_optional_value_bool_arg(&None)
+        .await?;
+
+    let expected = None;
 
     assert_eq!(result, expected);
 

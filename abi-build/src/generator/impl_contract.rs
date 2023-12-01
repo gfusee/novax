@@ -77,7 +77,7 @@ pub(crate) fn impl_contract(mod_name: &str, abi: &Abi) -> Result<TokenStream, Bu
             /// # Note
             ///
             /// The actual method signatures and types will be generated based on the ABI provided.
-            #[derive(Clone)]
+            #[derive(Copy, Clone)]
             pub struct #name<A>
             where
                 A: Deref + Send + Sync,

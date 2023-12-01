@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           47
+// Endpoints:                           49
 // Async Callback:                       1
-// Total number of exported functions:  49
+// Total number of exported functions:  51
 
 #![no_std]
 
@@ -64,6 +64,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         returnFirstCustomEnumWithFields => return_first_custom_enum_with_fields
         returnSecondCustomEnumWithFields => return_second_custom_enum_with_fields
         returnCustomEnumWithFieldsArg => return_custom_enum_with_fields_arg
+        returnOptionalValueBool => return_optional_value_bool
+        returnOptionalValueBoolArg => return_optional_value_bool_arg
         returnMultiValueTwo => return_optional_multi_value_three_arg
         callAnotherContractReturnTwoU64 => call_another_contract_return_u64
         asyncCallAnotherContractReturnTwoU64NoCallback => async_call_another_contract_return_u64_no_callback

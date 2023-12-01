@@ -528,6 +528,66 @@ async fn test_call_sum_multi_biguint_args_result() -> Result<(), NovaXError> {
 }
 
 #[tokio::test]
+async fn test_return_optional_value_bool_arg_some_true() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .call(executor.clone(), 600000000)
+        .return_optional_value_bool_arg(&Some(true))
+        .await?
+        .result
+        .unwrap();
+
+    let expected = Some(true);
+
+    assert_eq!(result, expected);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_return_optional_value_bool_arg_some_false() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .call(executor.clone(), 600000000)
+        .return_optional_value_bool_arg(&Some(false))
+        .await?
+        .result
+        .unwrap();
+
+    let expected = Some(false);
+
+    assert_eq!(result, expected);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_return_optional_value_bool_arg_none() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .call(executor.clone(), 600000000)
+        .return_optional_value_bool_arg(&None)
+        .await?
+        .result
+        .unwrap();
+
+    let expected = None;
+
+    assert_eq!(result, expected);
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_call_custom_struct_result() -> Result<(), NovaXError> {
     let executor = get_executor();
 

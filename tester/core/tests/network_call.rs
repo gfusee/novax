@@ -101,6 +101,12 @@ impl BlockchainInteractor for MockInteractor {
             return_data = Some("@6f6b@0218711a0a".to_string())
         } else if data == "returnSumTwoBiguintArgs@0de0b6b3a7640000@1bc16d674ec80000" {
             return_data = Some("@6f6b@29a2241af62c0000".to_string())
+        } else if data == "returnOptionalValueBoolArg@01" {
+            return_data = Some("@6f6b@01".to_string())
+        } else if data == "returnOptionalValueBoolArg@" {
+            return_data = Some("@6f6b@".to_string())
+        } else if data == "returnOptionalValueBoolArg" {
+            return_data = Some("@6f6b".to_string())
         }
 
         let Some(return_data) = return_data else {
@@ -205,8 +211,15 @@ async fn test_call_with_biguint_argument() -> Result<(), NovaXError> {
 async fn test_call_buffer_result() -> Result<(), NovaXError> {
     let executor = get_executor();
 
-    let result = TesterContract::new(
+    let contract = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
+    );
+
+    contract.call(executor.clone(), 600000000);
+    contract.call(executor.clone(), 600000000);
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS.to_string()
     )
         .call(executor, 600000000)
         .return_managed_buffer()
@@ -579,6 +592,66 @@ async fn test_call_sum_multi_biguint_args_result() -> Result<(), NovaXError> {
     let expected = first_arg + second_arg;
 
     assert_eq!(result.result.unwrap(), expected);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_return_optional_value_bool_arg_some_true() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .call(executor.clone(), 600000000)
+        .return_optional_value_bool_arg(&Some(true))
+        .await?
+        .result
+        .unwrap();
+
+    let expected = Some(true);
+
+    assert_eq!(result, expected);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_return_optional_value_bool_arg_some_false() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .call(executor.clone(), 600000000)
+        .return_optional_value_bool_arg(&Some(false))
+        .await?
+        .result
+        .unwrap();
+
+    let expected = Some(false);
+
+    assert_eq!(result, expected);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_return_optional_value_bool_arg_none() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .call(executor.clone(), 600000000)
+        .return_optional_value_bool_arg(&None)
+        .await?
+        .result
+        .unwrap();
+
+    let expected = None;
+
+    assert_eq!(result, expected);
 
     Ok(())
 }
