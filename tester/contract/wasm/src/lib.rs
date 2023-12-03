@@ -5,15 +5,15 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           49
+// Endpoints:                           50
 // Async Callback:                       1
-// Total number of exported functions:  51
+// Total number of exported functions:  52
 
 #![no_std]
 
-// Configuration that works with rustc < 1.73.0.
+// Configuration that works with rustc < 1.71.0.
 // TODO: Recommended rustc version: 1.73.0 or newer.
-#![feature(lang_items)]
+#![feature(alloc_error_handler, lang_items)]
 
 multiversx_sc_wasm_adapter::allocator!();
 multiversx_sc_wasm_adapter::panic_handler!();
@@ -67,6 +67,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         returnOptionalValueBool => return_optional_value_bool
         returnOptionalValueBoolArg => return_optional_value_bool_arg
         returnMultiValueTwo => return_optional_multi_value_three_arg
+        returnBigIntArg => return_big_int_arg
         callAnotherContractReturnTwoU64 => call_another_contract_return_u64
         asyncCallAnotherContractReturnTwoU64NoCallback => async_call_another_contract_return_u64_no_callback
         asyncCallAnotherContractReturnTwoU64WithReturningCallback => async_call_another_contract_return_u64_with_returning_callback

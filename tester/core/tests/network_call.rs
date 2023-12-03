@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use tokio::sync::Mutex;
 use novax::{Address, Wallet};
 use novax::errors::NovaXError;
-use num_bigint::BigUint;
+use num_bigint::{BigInt, BigUint};
 use novax::tester::tester::{CustomEnum, CustomEnumWithFields, CustomEnumWithValues, CustomStruct, CustomStructWithStructAndVec, TesterContract};
 use novax::executor::{BaseTransactionNetworkExecutor, BlockchainInteractor, NetworkExecutor, SendableTransactionConvertible};
 use novax_mocking::{ScCallStep, ScDeployStep, TxResponse};
@@ -107,6 +107,8 @@ impl BlockchainInteractor for MockInteractor {
             return_data = Some("@6f6b@".to_string())
         } else if data == "returnOptionalValueBoolArg" {
             return_data = Some("@6f6b".to_string())
+        } else if data == "returnBigIntArg@2b" {
+            return_data = Some("@6f6b@2b".to_string())
         }
 
         let Some(return_data) = return_data else {
@@ -1014,6 +1016,23 @@ async fn test_call_second_custom_enum_with_fields_arg_result() -> Result<(), Nov
     let expected = input;
 
     assert_eq!(result.result.unwrap(), expected);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_call_with_bigint_argument_and_result() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .call(executor, 600000000)
+        .return_big_int_arg(&BigInt::from(43i8))
+        .await?;
+
+    assert!(result.response.is_success());
+    assert_eq!(result.result, Some(BigInt::from(43i8)));
 
     Ok(())
 }

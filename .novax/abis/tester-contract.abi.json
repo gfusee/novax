@@ -1,16 +1,16 @@
 {
     "buildInfo": {
         "rustc": {
-            "version": "1.71.0-nightly",
-            "commitHash": "a2b1646c597329d0a25efa3889b66650f65de1de",
-            "commitDate": "2023-05-25",
+            "version": "1.70.0-nightly",
+            "commitHash": "8a73f50d875840b8077b8ec080fa41881d7ce40d",
+            "commitDate": "2023-03-11",
             "channel": "Nightly",
-            "short": "rustc 1.71.0-nightly (a2b1646c5 2023-05-25)"
+            "short": "rustc 1.70.0-nightly (8a73f50d8 2023-03-11)"
         },
         "contractCrate": {
             "name": "tester-contract",
             "version": "0.0.0",
-            "gitVersion": "0.0.24-3-g69f7638"
+            "gitVersion": "0.0.25-1-gb35f7e9"
         },
         "framework": {
             "name": "multiversx-sc",
@@ -571,6 +571,21 @@
                 {
                     "type": "optional<multi<u64,u64,u64>>",
                     "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "returnBigIntArg",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "value",
+                    "type": "BigInt"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "BigInt"
                 }
             ]
         },

@@ -4,7 +4,7 @@ use tokio::sync::Mutex;
 use novax::Address;
 use novax::errors::NovaXError;
 use novax_mocking::world::infos::ScenarioWorldInfos;
-use num_bigint::BigUint;
+use num_bigint::{BigInt, BigUint};
 use novax::tester::tester::{CustomEnum, CustomEnumWithFields, CustomEnumWithValues, CustomStruct, CustomStructWithStructAndVec, TesterContract};
 use novax::executor::StandardMockExecutor;
 use novax_mocking::ScenarioWorld;
@@ -945,6 +945,27 @@ async fn test_call_second_custom_enum_with_fields_arg_result() -> Result<(), Nov
     let expected = input;
 
     assert_eq!(result.result.unwrap(), expected);
+
+    Ok(())
+}
+
+
+#[tokio::test]
+async fn test_return_big_int_arg() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .call(executor.clone(), 600000000)
+        .return_big_int_arg(&BigInt::from(42i8))
+        .await?
+        .result
+        .unwrap();
+
+    let expected = BigInt::from(42 as u8);
+
+    assert_eq!(result, expected);
 
     Ok(())
 }
