@@ -963,7 +963,7 @@ async fn test_return_big_int_arg() -> Result<(), NovaXError> {
         .result
         .unwrap();
 
-    let expected = BigInt::from(42 as u8);
+    let expected = BigInt::from(42i8);
 
     assert_eq!(result, expected);
 
