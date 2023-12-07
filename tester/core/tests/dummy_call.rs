@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use num_bigint::BigUint;
+use num_bigint::{BigInt, BigUint};
 use tokio::sync::Mutex;
 use novax::Address;
 use novax::errors::NovaXError;
@@ -562,6 +562,31 @@ async fn test_call_second_custom_enum_with_fields_arg_result() -> Result<(), Nov
         egld_value: 0u8.into(),
         gas_limit: 600000000u64,
         data: "returnCustomEnumWithFieldsArg@0100000002000000000000000a0000000218711a000000000200000005746573743100000005746573743200000004746573740000000218711a00000000080de0b6b3a7640000".to_string(),
+    };
+
+    assert_eq!(tx, expected);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_call_with_bigint_arg_result() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .call(executor.clone(), 600000000)
+        .return_big_int_arg(&BigInt::from(44i8))
+        .await?;
+
+    let tx = executor.lock().await.get_transaction_details();
+
+    let expected = SendableTransaction {
+        receiver: TESTER_CONTRACT_ADDRESS.to_string(),
+        egld_value: 0u8.into(),
+        gas_limit: 600000000u64,
+        data: "returnBigIntArg@2c".to_string(),
     };
 
     assert_eq!(tx, expected);

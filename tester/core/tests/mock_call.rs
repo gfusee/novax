@@ -951,7 +951,7 @@ async fn test_call_second_custom_enum_with_fields_arg_result() -> Result<(), Nov
 
 
 #[tokio::test]
-async fn test_return_big_int_arg() -> Result<(), NovaXError> {
+async fn test_call_big_int_arg_result() -> Result<(), NovaXError> {
     let executor = get_executor();
 
     let result = TesterContract::new(

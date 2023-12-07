@@ -3,7 +3,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use novax::errors::NovaXError;
 use novax_mocking::world::infos::{ScenarioWorldInfosEsdtTokenAmount, ScenarioWorldInfos};
-use num_bigint::BigUint;
+use num_bigint::{BigInt, BigUint};
 use novax::Address;
 use novax::tester::tester::{CustomEnum, CustomEnumWithFields, CustomEnumWithValues, CustomStruct, CustomStructWithStructAndVec, TesterContract, TestTokenProperties};
 use novax::executor::StandardMockExecutor;
@@ -957,6 +957,24 @@ async fn test_query_second_custom_enum_with_fields_arg_result() -> Result<(), No
         .await?;
 
     let expected = input;
+
+    assert_eq!(result, expected);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_query_bigint_arg_result() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .query(executor)
+        .return_big_int_arg(&BigInt::from(45i8))
+        .await?;
+
+    let expected = BigInt::from(45i8);
 
     assert_eq!(result, expected);
 
