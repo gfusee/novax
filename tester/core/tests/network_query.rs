@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use async_trait::async_trait;
 use novax::errors::NovaXError;
-use num_bigint::BigUint;
+use num_bigint::{BigInt, BigUint};
 use novax::{VMOutputApi, VmValueRequest, VmValuesResponseData};
 use novax::tester::tester::{CustomEnum, CustomEnumWithFields, CustomEnumWithValues, CustomStruct, CustomStructWithStructAndVec, TesterContract};
 use novax::executor::{BlockchainProxy, ExecutorError, QueryNetworkExecutor};
@@ -113,6 +113,10 @@ impl BlockchainProxy for MockProxy {
             return_data = Some(vec!["".to_string()])
         } else if vm_request.func_name == "returnOptionalValueBoolArg" && vm_request.args.is_empty() {
             return_data = Some(vec![])
+        } else if vm_request.func_name == "returnBigIntArg" {
+            if vm_request.args == vec!["2e".to_string()] {
+                return_data = Some(vec!["Lg==".to_string()])
+            }
         }
 
         let Some(return_data) = return_data else {
@@ -969,6 +973,24 @@ async fn test_query_second_custom_enum_with_fields_arg_result() -> Result<(), No
         .await?;
 
     let expected = input;
+
+    assert_eq!(result, expected);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_query_big_int_arg_result() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .query(executor)
+        .return_big_int_arg(&BigInt::from(46i8))
+        .await?;
+
+    let expected = BigInt::from(46i8);
 
     assert_eq!(result, expected);
 

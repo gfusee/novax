@@ -107,6 +107,7 @@ pub(crate) fn parse_abi_type_name_to_managed_ident(abi_type: &str, all_abi_types
         "TokenIdentifier" => Ok(quote! {TokenIdentifier<#api_generic>}),
         "EgldOrEsdtTokenIdentifier" => Ok(quote! {EgldOrEsdtTokenIdentifier<#api_generic>}),
         "BigUint" => Ok(quote! {BigUint<#api_generic>}),
+        "BigInt" => Ok(quote! {BigInt<#api_generic>}),
         "u64" => Ok(quote! {u64}),
         "u32" => Ok(quote! {u32}),
         "u16" => Ok(quote! {u16}),

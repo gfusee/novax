@@ -397,4 +397,9 @@ pub trait PrinterModule: ContractBase {
     fn return_optional_multi_value_three_arg(&self, arg: OptionalValue<MultiValue3<u64, u64, u64>>) -> OptionalValue<MultiValue3<u64, u64, u64>> {
         arg
     }
+
+    #[endpoint(returnBigIntArg)]
+    fn return_bigint_arg(&self, value: BigInt<Self::Api>) -> BigInt<Self::Api> {
+        value
+    }
 }
