@@ -2372,6 +2372,7 @@ dependencies = [
  "num-bigint",
  "reqwest",
  "serde",
+ "serde_json",
  "tester-contract",
  "tokio",
 ]

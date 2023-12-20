@@ -1,5 +1,6 @@
 use std::fmt::{Debug, Formatter};
 use async_trait::async_trait;
+use base64::Engine;
 use multiversx_sc_scenario::scenario_model::{TxResponse, TypedScCall};
 use multiversx_sdk::data::transaction::ApiSmartContractResult;
 use multiversx_sdk::data::vm::CallType;
@@ -50,7 +51,7 @@ impl<Client: GatewayClient> BaseSimulationNetworkExecutor<Client> {
             sender: data.sender,
             gas_price: network_config.erd_min_gas_price,
             gas_limit: data.gas_limit,
-            data: data.data,
+            data: base64::engine::general_purpose::STANDARD.encode(data.data),
             chain_id: network_config.erd_chain_id,
             version: network_config.erd_min_transaction_version,
         };
