@@ -2,136 +2,92 @@ mod utils;
 
 use std::sync::Arc;
 use async_trait::async_trait;
+use hyper::StatusCode;
 use tokio::sync::Mutex;
-use novax::{Address, Wallet};
+use novax::Address;
 use novax::errors::NovaXError;
 use num_bigint::{BigInt, BigUint};
+use reqwest::{Error, Response};
+use serde::Serialize;
 use novax::tester::tester::{CustomEnum, CustomEnumWithFields, CustomEnumWithValues, CustomStruct, CustomStructWithStructAndVec, TesterContract};
-use novax::executor::{BaseTransactionNetworkExecutor, BlockchainInteractor, ExecutorError, NetworkExecutor, SendableTransactionConvertible, SimulationGatewayRequest, SimulationGatewayResponse};
-use novax_mocking::{ScCallStep, ScDeployStep, TxResponse};
+use novax::executor::{BaseSimulationNetworkExecutor, BlockchainInteractor, SendableTransactionConvertible, SimulationNetworkExecutor};
 use novax_request::gateway::client::GatewayClient;
-use crate::utils::decode_scr_data::decode_scr_data_or_panic;
 
-const CALLER_PRIVATE_KEY: &str = "69417ce717e43d0d3a598f68b5e562d7d2a532a5a3ac1e8b3342515e0b2d950f"; // to anyone reading : this has been generated only for the tests below
 const CALLER: &str = "erd12wf7tlsk2z895vwmndheaknkp3uaqa7xuq847numkwlmcvy60wxql2ndlk";
 const TESTER_CONTRACT_ADDRESS: &str = "erd1qqqqqqqqqqqqqpgq9wmk04e90fkhcuzns0pgwm33sdtxze346vpsq0ka9p";
 
-struct MockInteractor;
+fn get_response_from_data(status: StatusCode, data: String) -> Response {
+    let hyper_response = hyper::Response::builder()
+        .status(status)
+        .body(data)
+        .unwrap();
+
+    Response::from(hyper_response)
+}
+
+fn get_caller_infos() -> Response {
+    let status = StatusCode::OK;
+    let data = r#"{"data":{"account":{"address":"erd12wf7tlsk2z895vwmndheaknkp3uaqa7xuq847numkwlmcvy60wxql2ndlk","nonce":5,"balance":"0","username":"","code":"","codeHash":null,"rootHash":null,"codeMetadata":null,"developerReward":"0","ownerAddress":""},"blockInfo":{"nonce":1513859,"hash":"d124dfc26cf602d6fcb650555812c5a187105d23a51411c0a2b4da5ea93157c8","rootHash":"9265a279c47bdbbea0c7d17b7248d0931680d9f460b7442c04b8e4f038257ef7"}},"error":"","code":"successful"}"#.to_string();
+
+    get_response_from_data(status, data)
+}
+
+fn get_network_config() -> Response {
+    let status = StatusCode::OK;
+    let data = r#"{"data":{"config":{"erd_adaptivity":"false","erd_chain_id":"D","erd_denomination":18,"erd_extra_gas_limit_guarded_tx":50000,"erd_gas_per_data_byte":1500,"erd_gas_price_modifier":"0.01","erd_hysteresis":"0.200000","erd_latest_tag_software_version":"D1.6.6.1","erd_max_gas_per_transaction":600000000,"erd_meta_consensus_group_size":58,"erd_min_gas_limit":50000,"erd_min_gas_price":1000000000,"erd_min_transaction_version":1,"erd_num_metachain_nodes":58,"erd_num_nodes_in_shard":58,"erd_num_shards_without_meta":3,"erd_rewards_top_up_gradient_point":"2000000000000000000000000","erd_round_duration":6000,"erd_rounds_per_epoch":2400,"erd_shard_consensus_group_size":21,"erd_start_time":1694000000,"erd_top_up_factor":"0.500000"}},"error":"","code":"successful"}"#.to_string();
+
+    get_response_from_data(status, data)
+}
+
+struct MockClient {
+    url: String
+}
+
+impl MockClient {
+    pub fn new() -> Self {
+        Self {
+            url: "".to_string(),
+        }
+    }
+}
 
 #[async_trait]
-impl BlockchainInteractor for MockInteractor {
-    async fn new(_gateway_url: &str) -> Self {
-        MockInteractor
+impl GatewayClient for MockClient {
+    type Owned = Self;
+
+    fn get_gateway_url(&self) -> &str {
+        &self.url
     }
 
-    fn register_wallet(&mut self, _wallet: Wallet) -> Address {
-        Address::from_bech32_string(CALLER).unwrap()
-    }
-
-    async fn sc_call<S>(&mut self, mut sc_call_step: S) where S: AsMut<ScCallStep> + Send {
-        let mut return_data: Option<String> = None;
-        let call_step = sc_call_step.as_mut();
-        let sendable_transaction = call_step.tx.to_sendable_transaction();
-        let data = sendable_transaction.data;
-        if data == "returnCaller" {
-            return_data = Some("@6f6b@5393e5fe16508e5a31db9b6f9eda760c79d077c6e00f5f4f9bb3bfbc309a7b8c".to_string());
-        } else if data == "getSum" {
-            return_data = Some("@6f6b@05".to_string());
-        } else if data == "add@0a" {
-            return_data = Some("@6f6b@".to_string())
-        } else if data == "returnManagedBuffer" {
-            return_data = Some("@6f6b@74657374".to_string())
-        } else if data == "returnBiguint" {
-            return_data = Some("@6f6b@0de0b6b3a7640000".to_string())
-        } else if data == "returnBiguintVec" {
-            return_data = Some("@6f6b@000000080de0b6b3a7640000000000081bc16d674ec80000".to_string())
-        } else if data == "returnBufferVec" {
-            return_data = Some("@6f6b@000000057465737431000000057465737432".to_string())
-        } else if data == "returnCustomEnum" {
-            return_data = Some("@6f6b@01".to_string())
-        } else if data == "returnCustomStruct" {
-            return_data = Some("@6f6b@00000004746573740000000218711a00000000080de0b6b3a7640000".to_string())
-        } else if data == "returnCustomStructWithStructAndVec" {
-            return_data = Some("@6f6b@00000002000000000000000a0000000218711a000000000200000005746573743100000005746573743200000004746573740000000218711a00000000080de0b6b3a7640000".to_string())
-        } else if data == "returnFirstCustomEnumWithFields" || data == "returnFirstCustomEnumWithValues" {
-            return_data = Some("@6f6b@0000000004746573740000000218711a00000000080de0b6b3a7640000".to_string())
-        } else if data == "returnOneBufferOneU64AndOneBiguint" {
-            return_data = Some("@6f6b@7465737431@0218711a00@0de0b6b3a7640000".to_string())
-        } else if data == "returnSecondCustomEnumWithFields" || data == "returnSecondCustomEnumWithValues" {
-            return_data = Some("@6f6b@0100000002000000000000000a0000000218711a000000000200000005746573743100000005746573743200000004746573740000000218711a00000000080de0b6b3a7640000".to_string())
-        } else if data == "returnTwoBuffers" {
-            return_data = Some("@6f6b@7465737431@7465737432".to_string())
-        } else if data == "returnTwoU64" {
-            return_data = Some("@6f6b@0a@0218711a00".to_string())
-        } else if data == "returnU16" {
-            return_data = Some("@6f6b@01f4".to_string())
-        } else if data == "returnU32" {
-            return_data = Some("@6f6b@030d40".to_string())
-        } else if data == "returnU32Vec" {
-            return_data = Some("@6f6b@0000000a00030d40".to_string())
-        } else if data == "returnU64" {
-            return_data = Some("@6f6b@0218711a00".to_string())
-        } else if data == "returnU64Vec" {
-            return_data = Some("@6f6b@000000000000000a0000000218711a00".to_string())
-        } else if data == "returnU8" {
-            return_data = Some("@6f6b@03".to_string())
-        } else if data == "returnAppendedBufferArg@7465737421" {
-            return_data = Some("@6f6b@746573742174657374".to_string())
-        } else if data == "returnConcatMultiBufferArgs@7465737431@7465737432" {
-            return_data = Some("@6f6b@74657374317465737432".to_string())
-        } else if data == "returnCustomEnumArg@02" {
-            return_data = Some("@6f6b@02".to_string())
-        } else if data == "returnCustomStructArg@00000004746573740000000218711a00000000080de0b6b3a7640000" {
-            return_data = Some("@6f6b@00000004746573740000000218711a00000000080de0b6b3a7640000".to_string())
-        } else if data == "returnCustomStructWithStructAndVecArg@00000002000000000000000a0000000218711a000000000200000005746573743100000005746573743200000004746573740000000218711a00000000080de0b6b3a7640000" {
-            return_data = Some("@6f6b@00000002000000000000000a0000000218711a000000000200000005746573743100000005746573743200000004746573740000000218711a00000000080de0b6b3a7640000".to_string())
-        } else if data == "returnDoubleOfBiguintArg@0de0b6b3a7640000" {
-            return_data = Some("@6f6b@1bc16d674ec80000".to_string())
-        } else if data == "returnDoubleOfU64Arg@0218711a00" {
-            return_data = Some("@6f6b@0430e23400".to_string())
-        } else if data == "returnCustomEnumWithFieldsArg@0000000004746573740000000218711a00000000080de0b6b3a7640000" {
-            return_data = Some("@6f6b@0000000004746573740000000218711a00000000080de0b6b3a7640000".to_string())
-        } else if data == "returnCustomEnumWithValuesArg@0100000002000000000000000a0000000218711a000000000200000005746573743100000005746573743200000004746573740000000218711a00000000080de0b6b3a7640000"
-            || data == "returnCustomEnumWithFieldsArg@0100000002000000000000000a0000000218711a000000000200000005746573743100000005746573743200000004746573740000000218711a00000000080de0b6b3a7640000" {
-            return_data = Some("@6f6b@0100000002000000000000000a0000000218711a000000000200000005746573743100000005746573743200000004746573740000000218711a00000000080de0b6b3a7640000".to_string())
-        } else if data == "returnCustomEnumWithValuesArg@0000000004746573740000000218711a00000000080de0b6b3a7640000" {
-            return_data = Some("@6f6b@0000000004746573740000000218711a00000000080de0b6b3a7640000".to_string())
-        } else if data == "returnSumMultiBiguintArgs@0de0b6b3a7640000@1bc16d674ec80000" {
-            return_data = Some("@6f6b@29a2241af62c0000".to_string())
-        } else if data == "returnSumMultiU64Args@0a@0218711a00" {
-            return_data = Some("@6f6b@0218711a0a".to_string())
-        } else if data == "returnSumTwoBiguintArgs@0de0b6b3a7640000@1bc16d674ec80000" {
-            return_data = Some("@6f6b@29a2241af62c0000".to_string())
-        } else if data == "returnOptionalValueBoolArg@01" {
-            return_data = Some("@6f6b@01".to_string())
-        } else if data == "returnOptionalValueBoolArg@" {
-            return_data = Some("@6f6b@".to_string())
-        } else if data == "returnOptionalValueBoolArg" {
-            return_data = Some("@6f6b".to_string())
-        } else if data == "returnBigIntArg@2b" {
-            return_data = Some("@6f6b@2b".to_string())
+    fn with_appended_url(&self, url: &str) -> Self::Owned {
+        Self {
+            url: format!("{}{}", self.url, url),
         }
+    }
 
-        let Some(return_data) = return_data else {
-            panic!("Unknown data for : \"{data}\"");
+    async fn get(&self) -> Result<Response, Error> {
+        let url = self.get_gateway_url();
+
+        let response = if url == format!("/address/{CALLER}") {
+            get_caller_infos()
+        } else if url == "/network/config" {
+            get_network_config()
+        } else {
+            todo!()
         };
 
-        let response = TxResponse::from_raw_results(decode_scr_data_or_panic(&return_data));
-
-        call_step.response = Some(response);
+        Ok(response)
     }
 
-    async fn sc_deploy<S>(&mut self, _sc_deploy_step: S) where S: AsMut<ScDeployStep> + Send {
+    async fn post<Body>(&self, body: &Body) -> Result<Response, Error> where Body: Serialize + Send + Sync {
         todo!()
     }
 }
 
-fn get_executor() -> Arc<Mutex<BaseTransactionNetworkExecutor<MockInteractor>>> {
-    let wallet = Wallet::from_private_key(CALLER_PRIVATE_KEY).unwrap();
-
-    let executor = BaseTransactionNetworkExecutor::new(
-        "",
-        &wallet
+fn get_executor() -> Arc<Mutex<BaseSimulationNetworkExecutor<MockClient>>> {
+    let executor = BaseSimulationNetworkExecutor::new(
+        MockClient::new(),
+        Address::from_bech32_string(CALLER).unwrap()
     );
 
     Arc::new(Mutex::new(executor))
@@ -139,9 +95,8 @@ fn get_executor() -> Arc<Mutex<BaseTransactionNetworkExecutor<MockInteractor>>> 
 
 // The below test is a success if it compiles
 #[tokio::test]
-async fn test_clone_network_executor() -> Result<(), NovaXError> {
-    let wallet = Wallet::from_private_key(CALLER_PRIVATE_KEY).unwrap();
-    let executor = NetworkExecutor::new("", &wallet);
+async fn test_clone_simulation_executor() -> Result<(), NovaXError> {
+    let executor = SimulationNetworkExecutor::new("".to_string(), Address::from(CALLER));
     #[allow(clippy::redundant_clone)]
     let _executor2 = executor.clone();
 
@@ -151,8 +106,7 @@ async fn test_clone_network_executor() -> Result<(), NovaXError> {
 // The below test is a success if it compiles
 #[tokio::test]
 async fn test_debug_network_executor() -> Result<(), NovaXError> {
-    let wallet = Wallet::from_private_key(CALLER_PRIVATE_KEY).unwrap();
-    let executor = NetworkExecutor::new("", &wallet);
+    let executor = SimulationNetworkExecutor::new("".to_string(), Address::from(CALLER));
 
     println!("{executor:?}");
 

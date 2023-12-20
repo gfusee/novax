@@ -2,7 +2,15 @@ use async_trait::async_trait;
 use multiversx_sc_scenario::scenario_model::{ScCallStep, ScDeployStep};
 use multiversx_sc_snippets::Interactor;
 use multiversx_sdk::wallet::Wallet;
+use tokio::join;
 use novax_data::Address;
+use novax_request::gateway::client::GatewayClient;
+use crate::error::gateway::GatewayError;
+use crate::ExecutorError;
+use crate::network::models::simulate::request::{SimulationGatewayRequest, SimulationGatewayRequestBody};
+use crate::network::models::simulate::response::SimulationGatewayResponse;
+use crate::network::utils::address::get_address_info;
+use crate::network::utils::network::get_network_config;
 
 /// A trait defining the interaction interface with the blockchain.
 /// This trait abstracts the blockchain interaction, enabling developers to either use the provided `Interactor` struct from the `multiversx-sdk` crate or mock it for testing purposes.

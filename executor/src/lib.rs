@@ -54,6 +54,8 @@ mod utils;
 pub use error::executor::ExecutorError;
 pub use error::network::NetworkQueryError;
 pub use error::mock_deploy::MockDeployError;
+pub use error::gateway::GatewayError;
+pub use error::simulation::SimulationError;
 
 pub use base::query::QueryExecutor;
 pub use base::transaction::TransactionExecutor;
@@ -65,6 +67,10 @@ pub use network::transaction::NetworkExecutor;
 pub use network::transaction::BaseTransactionNetworkExecutor;
 pub use network::interactor::BlockchainInteractor;
 pub use network::proxy::BlockchainProxy;
+pub use network::simulate::SimulationNetworkExecutor;
+pub use network::simulate::BaseSimulationNetworkExecutor;
+pub use network::models::simulate::request::SimulationGatewayRequest;
+pub use network::models::simulate::response::SimulationGatewayResponse;
 
 pub use mocking::executor::StandardMockExecutor;
 pub use mocking::executor::MockExecutor;
