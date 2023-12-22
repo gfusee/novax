@@ -6,10 +6,9 @@ use novax::errors::NovaXError;
 use novax::tester::tester::TesterContract;
 use novax::testerwithreturningdeploy::testerwithreturningdeploy::TesterWithReturningDeployContract;
 use novax::transaction::CallResult;
-use novax::executor::{BlockchainInteractor, ExecutorError, SimulationGatewayRequest, SimulationGatewayResponse};
+use novax::executor::BlockchainInteractor;
 use novax::executor::BaseTransactionNetworkExecutor;
 use novax_mocking::{ScCallStep, ScDeployStep, TxResponse};
-use novax_request::gateway::client::GatewayClient;
 use crate::utils::decode_scr_data::decode_scr_data_or_panic;
 
 mod utils;

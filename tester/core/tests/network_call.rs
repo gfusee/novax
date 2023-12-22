@@ -7,9 +7,8 @@ use novax::{Address, Wallet};
 use novax::errors::NovaXError;
 use num_bigint::{BigInt, BigUint};
 use novax::tester::tester::{CustomEnum, CustomEnumWithFields, CustomEnumWithValues, CustomStruct, CustomStructWithStructAndVec, TesterContract};
-use novax::executor::{BaseTransactionNetworkExecutor, BlockchainInteractor, ExecutorError, NetworkExecutor, SendableTransactionConvertible, SimulationGatewayRequest, SimulationGatewayResponse};
+use novax::executor::{BaseTransactionNetworkExecutor, BlockchainInteractor, NetworkExecutor, SendableTransactionConvertible};
 use novax_mocking::{ScCallStep, ScDeployStep, TxResponse};
-use novax_request::gateway::client::GatewayClient;
 use crate::utils::decode_scr_data::decode_scr_data_or_panic;
 
 const CALLER_PRIVATE_KEY: &str = "69417ce717e43d0d3a598f68b5e562d7d2a532a5a3ac1e8b3342515e0b2d950f"; // to anyone reading : this has been generated only for the tests below

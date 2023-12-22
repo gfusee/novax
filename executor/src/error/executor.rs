@@ -13,7 +13,16 @@ pub enum ExecutorError {
     /// the nature of the network-related error that occurred.
     NetworkQuery(NetworkQueryError),
 
+    /// Represents errors specifically related to interactions with the MultiversX gateway. This can include
+    /// HTTP request issues, response parsing errors, and other anomalies encountered while communicating
+    /// with the gateway. The contained `GatewayError` elaborates on the specifics of the encountered issue,
+    /// aiding in diagnosis and resolution.
     Gateway(GatewayError),
+
+    /// Represents errors that occur during the simulation of blockchain transactions. These simulations are run on real nodes using actual data,
+    /// providing a realistic environment for transaction execution without committing the results to the blockchain.
+    /// The wrapped `SimulationError` offers detailed information about issues encountered during this simulation process,
+    /// enabling developers to understand and rectify potential problems before live deployment.
     Simulation(SimulationError),
 
     /// Wraps errors related to data operations, usually arising from the `novax-data` crate. These may include errors

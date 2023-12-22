@@ -1,4 +1,5 @@
 // copied from mx-sdk-rs for convenience
+#[allow(dead_code)]
 pub fn decode_scr_data_or_panic(data: &str) -> Vec<Vec<u8>> {
     let mut split = data.split('@');
     let _ = split.next().expect("SCR data should start with '@'");
