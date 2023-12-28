@@ -11,7 +11,7 @@ pub(crate) fn parse_identifier(token_identifier: &str) -> Result<(String, u64), 
             0
         } else {
             let Ok(nonce) = u64::from_str_radix(parts[2], 16) else {
-                return Err(TokenError::InvalidTokenIdentifier { identifier: token_identifier.to_string() }.into())
+                return Err(TokenError::InvalidTokenIdentifier { identifier: token_identifier.to_string() })
             };
 
             nonce
@@ -19,7 +19,7 @@ pub(crate) fn parse_identifier(token_identifier: &str) -> Result<(String, u64), 
 
         (identifier, nonce)
     } else {
-        return Err(TokenError::InvalidTokenIdentifier { identifier: token_identifier.to_string() }.into())
+        return Err(TokenError::InvalidTokenIdentifier { identifier: token_identifier.to_string() })
     };
 
     Ok((identifier, nonce))
@@ -70,7 +70,7 @@ mod tests {
     fn test_non_fungible_invalid_hex_nonce() {
         let result = parse_identifier("LKMEX-abcdef-test").unwrap_err();
 
-        let expected: TokenError = TokenError::InvalidTokenIdentifier { identifier: "LKMEX-abcdef-test".to_string() }.into();
+        let expected: TokenError = TokenError::InvalidTokenIdentifier { identifier: "LKMEX-abcdef-test".to_string() };
 
         assert_eq!(result, expected)
     }
@@ -79,7 +79,7 @@ mod tests {
     fn test_too_short_identifier() {
         let result = parse_identifier("WEGLD").unwrap_err();
 
-        let expected: TokenError = TokenError::InvalidTokenIdentifier { identifier: "WEGLD".to_string() }.into();
+        let expected: TokenError = TokenError::InvalidTokenIdentifier { identifier: "WEGLD".to_string() };
 
         assert_eq!(result, expected)
     }
@@ -88,7 +88,7 @@ mod tests {
     fn test_too_long_identifier() {
         let result = parse_identifier("WEGLD-abcdef-05-a").unwrap_err();
 
-        let expected: TokenError = TokenError::InvalidTokenIdentifier { identifier: "WEGLD-abcdef-05-a".to_string() }.into();
+        let expected: TokenError = TokenError::InvalidTokenIdentifier { identifier: "WEGLD-abcdef-05-a".to_string() };
 
         assert_eq!(result, expected)
     }

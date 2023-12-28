@@ -93,7 +93,6 @@ async fn test_query_doesnt_modify_state() -> Result<(), NovaXError> {
     );
 
     contract
-        .clone()
         .query(executor.clone())
         .add(&BigUint::from(10u8))
         .await?;
