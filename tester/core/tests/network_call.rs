@@ -201,7 +201,6 @@ async fn test_call_with_biguint_argument() -> Result<(), NovaXError> {
     );
 
     contract
-        .clone()
         .call(executor, 600000000)
         .add(&BigUint::from(10u8))
         .await?;

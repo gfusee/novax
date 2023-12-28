@@ -113,10 +113,8 @@ impl BlockchainProxy for MockProxy {
             return_data = Some(vec!["".to_string()])
         } else if vm_request.func_name == "returnOptionalValueBoolArg" && vm_request.args.is_empty() {
             return_data = Some(vec![])
-        } else if vm_request.func_name == "returnBigIntArg" {
-            if vm_request.args == vec!["2e".to_string()] {
-                return_data = Some(vec!["Lg==".to_string()])
-            }
+        } else if vm_request.func_name == "returnBigIntArg" && vm_request.args == vec!["2e".to_string()] {
+            return_data = Some(vec!["Lg==".to_string()])
         }
 
         let Some(return_data) = return_data else {
