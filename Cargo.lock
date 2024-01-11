@@ -1236,7 +1236,7 @@ dependencies = [
 
 [[package]]
 name = "novax"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "hex",
@@ -1258,7 +1258,7 @@ dependencies = [
 
 [[package]]
 name = "novax-abi-build"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "convert_case",
  "prettyplease",
@@ -1272,7 +1272,7 @@ dependencies = [
 
 [[package]]
 name = "novax-caching"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "novax",
@@ -1284,7 +1284,7 @@ dependencies = [
 
 [[package]]
 name = "novax-data"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "base64",
  "multiversx-sc",
@@ -1297,7 +1297,7 @@ dependencies = [
 
 [[package]]
 name = "novax-executor"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "base64",
@@ -1316,7 +1316,7 @@ dependencies = [
 
 [[package]]
 name = "novax-mocking"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "base64",
@@ -1337,7 +1337,7 @@ dependencies = [
 
 [[package]]
 name = "novax-request"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "reqwest",
@@ -1346,7 +1346,7 @@ dependencies = [
 
 [[package]]
 name = "novax-token"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "base64",
