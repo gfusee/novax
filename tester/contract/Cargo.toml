@@ -10,10 +10,10 @@ license = "GPL-3.0-only"
 path = "src/lib.rs"
 
 [dependencies]
-multiversx-sc = "=0.46.1"
+multiversx-sc = "=0.47.3"
 
 [dev-dependencies]
-multiversx-sc-scenario = "=0.46.1"
+multiversx-sc-scenario = "=0.47.3"
 
 [package.metadata.release]
 release = false
