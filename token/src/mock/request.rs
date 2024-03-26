@@ -80,14 +80,14 @@ mod token {
     use serde_json::Value;
 
     pub fn get_token_properties_vm_query_response(json: &Value) -> Option<(StatusCode, String)> {
-        let Some(sc_address) = json.get("scAddress") else { return None };
-        let Some(sc_address) = sc_address.as_str() else { return None };
+        let sc_address = json.get("scAddress")?;
+        let sc_address = sc_address.as_str()?;
 
-        let Some(func_name) = json.get("funcName") else { return None };
-        let Some(func_name) = func_name.as_str() else { return None };
+        let func_name = json.get("funcName")?;
+        let func_name = func_name.as_str()?;
 
-        let Some(args) = json.get("args") else { return None };
-        let Some(args) = args.as_array() else { return None };
+        let args = json.get("args")?;
+        let args = args.as_array()?;
 
         let args: Vec<String> = args
             .iter()

@@ -312,7 +312,7 @@ fn impl_proxy_endpoint(abi_endpoint: &AbiEndpoint, abi_types: &AbiTypes) -> Resu
     let function_managed_outputs = if abi_endpoint.outputs.is_empty() {
         quote! {}
     } else if abi_endpoint.outputs.len() == 1 {
-        let managed_output_ident = managed_outputs_idents.get(0).unwrap();
+        let managed_output_ident = managed_outputs_idents.first().unwrap();
         quote! { -> #managed_output_ident}
     } else {
         let length = format_ident!("MultiValue{}", abi_endpoint.outputs.len());
@@ -580,8 +580,8 @@ fn impl_endpoint_outputs(outputs: &AbiOutputs, abi_types: &AbiTypes, api_generic
     let (function_managed_outputs, function_native_outputs) = if outputs.is_empty() {
         (quote! {()}, quote!{()})
     } else if outputs.len() == 1 {
-        let managed_output_ident = managed_outputs_idents.get(0).unwrap();
-        let native_output_ident = native_outputs_idents.get(0).unwrap();
+        let managed_output_ident = managed_outputs_idents.first().unwrap();
+        let native_output_ident = native_outputs_idents.first().unwrap();
         (quote! {#managed_output_ident}, quote!{#native_output_ident})
     } else {
         let length = format_ident!("MultiValue{}", outputs.len());

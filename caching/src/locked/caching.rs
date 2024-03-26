@@ -76,6 +76,10 @@ impl<C: CachingStrategy> CachingStrategy for CachingLocked<C> {
         result
     }
 
+    async fn clear(&self) -> Result<(), NovaXError> {
+        self.caching.clear().await
+    }
+
     fn with_duration(&self, duration: u64) -> Self {
         CachingLocked::new(self.caching.with_duration(duration))
     }
@@ -133,6 +137,10 @@ mod test {
             self.caching.get_or_set_cache(key, getter).await
         }
 
+        async fn clear(&self) -> Result<(), NovaXError> {
+            self.caching.clear().await
+        }
+
         fn with_duration(&self, duration: u64) -> Self {
             CachingLocalDelayedSet {
                 caching: self.caching.with_duration(duration)
@@ -172,6 +180,25 @@ mod test {
         let expected = Some("test".to_string());
 
         assert_eq!(result, expected);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_clear() -> Result<(), NovaXError> {
+        let caching_local = CachingLocal::empty();
+        let caching = CachingLocked::new(caching_local);
+
+        caching.set_cache(1, &"test".to_string()).await?;
+        caching.set_cache(2, &"test2".to_string()).await?;
+        caching.clear().await.unwrap();
+
+        let first_result = caching.get_cache::<String>(1).await?;
+        let second_result = caching.get_cache::<String>(2).await?;
+        let expected = None;
+
+        assert_eq!(first_result, expected);
+        assert_eq!(second_result, expected);
 
         Ok(())
     }

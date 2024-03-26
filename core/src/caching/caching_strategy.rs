@@ -54,6 +54,12 @@ pub trait CachingStrategy: Clone + Send + Sync + Debug {
             FutureGetter: Future<Output=Result<T, Error>> + Send,
             Error: From<NovaXError>;
 
+    /// Clear the entire cache.
+    ///
+    /// # Returns
+    /// - A `Result` indicating success or an error if the operation fails.
+    async fn clear(&self) -> Result<(), NovaXError>;
+
     /// Creates a new `CachingStrategy` instance with a specified cache duration.
     ///
     /// # Parameters

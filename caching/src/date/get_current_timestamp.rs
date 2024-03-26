@@ -12,6 +12,11 @@ mod implementation {
     }
 }
 
+pub(crate) use implementation::get_current_timestamp;
+
+#[cfg(test)]
+pub(crate) use implementation::set_mock_time;
+
 #[cfg(test)]
 mod implementation {
     use novax::errors::NovaXError;
@@ -37,8 +42,3 @@ mod implementation {
         });
     }
 }
-
-pub(crate) use implementation::get_current_timestamp;
-
-#[cfg(test)]
-pub(crate) use implementation::set_mock_time;
