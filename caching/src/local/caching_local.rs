@@ -33,6 +33,11 @@ impl CachingLocal {
         let _ = self.value_map.lock().await.remove(&key);
     }
 
+    async fn clear(&self) {
+        self.expiration_timestamp_map.lock().await.clear();
+        self.value_map.lock().await.clear();
+    }
+
     async fn set_value<T: Serialize + DeserializeOwned>(&self, key: u64, value: &T) -> Result<(), NovaXError> {
         let current_timestamp = get_current_timestamp()?;
         let expiration_timestamp = if self.until_next_block {
@@ -87,6 +92,12 @@ impl CachingStrategy for CachingLocal {
             self.set_cache(key, &value).await?;
             Ok(value)
         }
+    }
+
+    async fn clear(&self) -> Result<(), NovaXError> {
+        self.clear().await;
+
+        Ok(())
     }
 
     fn with_duration(&self, duration: u64) -> Self {
@@ -296,6 +307,20 @@ mod test {
         let expected = "test".to_string();
 
         assert_eq!(result, expected);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_clear() -> Result<(), NovaXError> {
+        let caching = CachingLocal::empty();
+
+        caching.set_cache(1, &"test".to_string()).await?;
+        caching.set_cache(2, &"test2".to_string()).await?;
+        caching.clear().await;
+
+        assert!(caching.value_map.lock().await.is_empty());
+        assert!(caching.expiration_timestamp_map.lock().await.is_empty());
 
         Ok(())
     }

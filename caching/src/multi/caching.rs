@@ -72,6 +72,21 @@ where
         }
     }
 
+    async fn clear(&self) -> Result<(), NovaXError> {
+        let (
+            first_clear_result,
+            second_clear_result
+        ) = join!(
+            self.first.clear(),
+            self.second.clear()
+        );
+
+        first_clear_result?;
+        second_clear_result?;
+
+        Ok(())
+    }
+
     fn with_duration(&self, duration: u64) -> Self {
         CachingMulti::new(
             self.first.with_duration(duration),
@@ -186,6 +201,27 @@ mod test {
         let first_result = first_caching.get_cache::<String>(key).await?;
         let second_result = second_caching.get_cache::<String>(key).await?;
         let expected: Option<String> = Some("test".to_string());
+
+        assert_eq!(first_result, expected);
+        assert_eq!(second_result, expected);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_clear() -> Result<(), NovaXError> {
+        let first_caching = CachingLocal::empty();
+        let second_caching = CachingLocal::empty();
+
+        let caching = CachingMulti::new(first_caching.clone(), second_caching.clone());
+
+        caching.set_cache(1, &"test".to_string()).await?;
+        caching.set_cache(2, &"test2".to_string()).await?;
+        caching.clear().await.unwrap();
+
+        let first_result = first_caching.get_cache::<String>(1).await?;
+        let second_result = second_caching.get_cache::<String>(2).await?;
+        let expected: Option<String> = None;
 
         assert_eq!(first_result, expected);
         assert_eq!(second_result, expected);

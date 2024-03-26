@@ -25,6 +25,12 @@ impl CachingStrategy for CachingNone {
         Ok(())
     }
 
+    /// Attempts to clear the cache, but does nothing
+    /// since `CachingNone` does not perform any caching.
+    async fn clear(&self) -> Result<(), NovaXError> {
+        Ok(())
+    }
+
     /// Either retrieves a cached value or sets a new cache value based on a key,
     /// but simply calls the provided value function since `CachingNone` does not perform any caching.
     async fn get_or_set_cache<T, FutureGetter, Error>(&self, _key: u64, value_fn: FutureGetter) -> Result<T, Error>
