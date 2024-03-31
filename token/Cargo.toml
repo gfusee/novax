@@ -17,8 +17,8 @@ novax-data = { path = "../data", version = "0.1.3" }
 novax-request = { path = "../request", version = "0.1.3" }
 num-bigint = "0.4.4"
 async-trait = "0.1.73"
-multiversx-sc = "=0.47.3"
-multiversx-sc-scenario = "=0.47.3"
+multiversx-sc = "=0.47.5"
+multiversx-sc-scenario = "=0.47.5"
 multiversx-sc-codec = "=0.18.6"
 base64 = "0.21.5"
 
