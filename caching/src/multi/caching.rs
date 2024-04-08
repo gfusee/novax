@@ -1,4 +1,5 @@
 use std::future::Future;
+use std::time::Duration;
 use async_trait::async_trait;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -87,7 +88,7 @@ where
         Ok(())
     }
 
-    fn with_duration(&self, duration: u64) -> Self {
+    fn with_duration(&self, duration: Duration) -> Self {
         CachingMulti::new(
             self.first.with_duration(duration),
             self.second.with_duration(duration)
@@ -104,6 +105,7 @@ where
 
 #[cfg(test)]
 mod test {
+    use std::time::Duration;
     use novax::caching::CachingStrategy;
     use novax::errors::NovaXError;
     use crate::local::caching_local::CachingLocal;
@@ -241,10 +243,10 @@ mod test {
             first_caching.clone(),
             second_caching.clone()
         )
-            .with_duration(10);
+            .with_duration(Duration::from_secs(10));
         caching.set_cache(key, &value).await?;
 
-        set_mock_time(10);
+        set_mock_time(Duration::from_secs(10));
 
         let first_result = first_caching.get_cache::<String>(key).await?;
         let second_result = second_caching.get_cache::<String>(key).await?;
@@ -268,10 +270,10 @@ mod test {
             first_caching.clone(),
             second_caching.clone()
         )
-            .with_duration(10);
+            .with_duration(Duration::from_secs(10));
         caching.set_cache(key, &value).await?;
 
-        set_mock_time(11);
+        set_mock_time(Duration::from_secs(11));
 
         let first_result = first_caching.get_cache::<String>(key).await?;
         let second_result = second_caching.get_cache::<String>(key).await?;
@@ -285,7 +287,7 @@ mod test {
 
     #[tokio::test]
     async fn test_until_next_block_current_block() -> Result<(), NovaXError> {
-        set_mock_time(3);
+        set_mock_time(Duration::from_secs(3));
         let key = 1u64;
         let value = "test".to_string();
 
@@ -299,7 +301,7 @@ mod test {
             .until_next_block();
         caching.set_cache(key, &value).await?;
 
-        set_mock_time(5);
+        set_mock_time(Duration::from_secs(5));
 
         let first_result = first_caching.get_cache::<String>(key).await?;
         let second_result = second_caching.get_cache::<String>(key).await?;
@@ -313,7 +315,7 @@ mod test {
 
     #[tokio::test]
     async fn test_until_next_block_next_block() -> Result<(), NovaXError> {
-        set_mock_time(3);
+        set_mock_time(Duration::from_secs(3));
         let key = 1u64;
         let value = "test".to_string();
 
@@ -327,7 +329,7 @@ mod test {
             .until_next_block();
         caching.set_cache(key, &value).await?;
 
-        set_mock_time(6);
+        set_mock_time(Duration::from_secs(6));
 
         let first_result = first_caching.get_cache::<String>(key).await?;
         let second_result = second_caching.get_cache::<String>(key).await?;

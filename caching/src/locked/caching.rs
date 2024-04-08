@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::future::Future;
 use std::sync::Arc;
+use std::time::Duration;
 use async_trait::async_trait;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -80,7 +81,7 @@ impl<C: CachingStrategy> CachingStrategy for CachingLocked<C> {
         self.caching.clear().await
     }
 
-    fn with_duration(&self, duration: u64) -> Self {
+    fn with_duration(&self, duration: Duration) -> Self {
         CachingLocked::new(self.caching.with_duration(duration))
     }
 
@@ -141,7 +142,7 @@ mod test {
             self.caching.clear().await
         }
 
-        fn with_duration(&self, duration: u64) -> Self {
+        fn with_duration(&self, duration: Duration) -> Self {
             CachingLocalDelayedSet {
                 caching: self.caching.with_duration(duration)
             }
@@ -205,14 +206,14 @@ mod test {
 
     #[tokio::test]
     async fn test_get_cache_before_expiration() -> Result<(), NovaXError> {
-        let caching_local = CachingLocal::empty().with_duration(10);
+        let caching_local = CachingLocal::empty().with_duration(Duration::from_secs(10));
         let caching = CachingLocked::new(caching_local);
         let key = 1;
         let value = "test".to_string();
 
         caching.set_cache(key, &value).await?;
 
-        set_mock_time(10);
+        set_mock_time(Duration::from_secs(10));
 
         let result = caching.get_cache::<String>(key).await?;
         let expected = Some("test".to_string());
@@ -225,14 +226,14 @@ mod test {
 
     #[tokio::test]
     async fn test_get_cache_after_expiration() -> Result<(), NovaXError> {
-        let caching_local = CachingLocal::empty().with_duration(10);
+        let caching_local = CachingLocal::empty().with_duration(Duration::from_secs(10));
         let caching = CachingLocked::new(caching_local);
         let key = 1;
         let value = "test".to_string();
 
         caching.set_cache(key, &value).await?;
 
-        set_mock_time(11);
+        set_mock_time(Duration::from_secs(11));
 
         let result = caching.get_cache::<String>(key).await?;
         let expected = None;
@@ -244,7 +245,7 @@ mod test {
 
     #[tokio::test]
     async fn test_get_cache_start_of_block() -> Result<(), NovaXError> {
-        set_mock_time(0);
+        set_mock_time(Duration::from_secs(0));
         let caching_local = CachingLocal::empty().until_next_block();
         let caching = CachingLocked::new(caching_local);
         let key = 1;
@@ -252,7 +253,7 @@ mod test {
 
         caching.set_cache(key, &value).await?;
 
-        set_mock_time(5);
+        set_mock_time(Duration::from_secs(5));
 
         let result = caching.get_cache::<String>(key).await?;
         let expected = Some("test".to_string());
@@ -264,7 +265,7 @@ mod test {
 
     #[tokio::test]
     async fn test_get_cache_same_block() -> Result<(), NovaXError> {
-        set_mock_time(3);
+        set_mock_time(Duration::from_secs(3));
         let caching_local = CachingLocal::empty().until_next_block();
         let caching = CachingLocked::new(caching_local);
         let key = 1;
@@ -272,7 +273,7 @@ mod test {
 
         caching.set_cache(key, &value).await?;
 
-        set_mock_time(5);
+        set_mock_time(Duration::from_secs(5));
 
         let result = caching.get_cache::<String>(key).await?;
         let expected = Some("test".to_string());
@@ -284,7 +285,7 @@ mod test {
 
     #[tokio::test]
     async fn test_get_cache_next_block() -> Result<(), NovaXError> {
-        set_mock_time(3);
+        set_mock_time(Duration::from_secs(3));
         let caching_local = CachingLocal::empty().until_next_block();
         let caching = CachingLocked::new(caching_local);
         let key = 1;
@@ -292,7 +293,7 @@ mod test {
 
         caching.set_cache(key, &value).await?;
 
-        set_mock_time(6);
+        set_mock_time(Duration::from_secs(6));
 
         let result = caching.get_cache::<String>(key).await?;
         let expected = None;
@@ -346,13 +347,13 @@ mod test {
 
     #[tokio::test]
     async fn test_get_or_set_cache_with_previous_value_after_expiration() -> Result<(), NovaXError> {
-        let caching_local = CachingLocal::empty().with_duration(10);
+        let caching_local = CachingLocal::empty().with_duration(Duration::from_secs(10));
         let caching = CachingLocked::new(caching_local);
         let key = 1;
 
         caching.set_cache(key, &"old value".to_string()).await?;
 
-        set_mock_time(11);
+        set_mock_time(Duration::from_secs(11));
 
         let result = caching.get_or_set_cache(
             key,
