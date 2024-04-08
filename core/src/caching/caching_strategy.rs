@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 use std::future::Future;
+use std::time::Duration;
 use async_trait::async_trait;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -63,11 +64,11 @@ pub trait CachingStrategy: Clone + Send + Sync + Debug {
     /// Creates a new `CachingStrategy` instance with a specified cache duration.
     ///
     /// # Parameters
-    /// - `duration`: The duration for which cache entries should be kept, in seconds.
+    /// - `duration`: The duration for which cache entries should be kept.
     ///
     /// # Returns
     /// - A new `CachingStrategy` instance with the specified cache duration.
-    fn with_duration(&self, duration: u64) -> Self;
+    fn with_duration(&self, duration: Duration) -> Self;
 
     /// Creates a new `CachingStrategy` instance that caches values until the next blockchain block.
     ///

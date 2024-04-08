@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use std::future::Future;
+use std::time::Duration;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use crate::caching::caching_strategy::CachingStrategy;
@@ -44,7 +45,7 @@ impl CachingStrategy for CachingNone {
 
     /// Attempts to create a new `CachingNone` instance with a specified cache duration,
     /// but returns a new unchanged `CachingNone` instance since `CachingNone` does not support cache duration.
-    fn with_duration(&self, _duration: u64) -> Self {
+    fn with_duration(&self, _duration: Duration) -> Self {
         CachingNone
     }
 
