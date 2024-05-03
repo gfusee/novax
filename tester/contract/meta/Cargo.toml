@@ -8,7 +8,7 @@ authors = [ "you",]
 [dev-dependencies]
 
 [dependencies]
-multiversx-sc-meta = "=0.47.5"
+multiversx-sc-meta = "=0.48.1"
 tester-contract = { path = ".." }
 
 [package.metadata.release]

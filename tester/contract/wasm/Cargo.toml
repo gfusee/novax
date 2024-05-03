@@ -22,4 +22,4 @@ panic = "abort"
 
 [dependencies]
 tester-contract = { path = ".." }
-multiversx-sc-wasm-adapter = "=0.47.5"
+multiversx-sc-wasm-adapter = "=0.48.1"

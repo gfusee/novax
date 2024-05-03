@@ -375,6 +375,8 @@ fn impl_abi_endpoint_call_query(contract_info_name: &str, abi_endpoint: &AbiEndp
     let (endpoint_args_let_statements, endpoint_args_inputs) = impl_endpoint_args_for_call(&abi_endpoint.inputs, abi_types)?;
 
     let common_token = quote! {
+        let _novax_request_arc = crate::utils::static_request_arc::get_static_request_arc_clone();
+
         let _novax_contract_address_value: AddressValue = (&Address::from(&self.contract_address)).into();
         let mut _novax_contract = #contract_info_ident::new(&_novax_contract_address_value); // unnecessary clone when calling
 
