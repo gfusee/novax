@@ -60,6 +60,11 @@ pub mod code;
 /// The `account` module provides structures and functionalities for handling and obtaining account information.
 pub mod account;
 
+/// The `utils` module provides some helpers to make the framework working.
+pub mod utils;
+
+
+
 // Include the generated client code from the output directory.
 include!(concat!(env!("OUT_DIR"), "/generated_lib.rs"));
 
