@@ -2,7 +2,9 @@ use std::mem;
 use std::ops::Deref;
 use std::sync::Arc;
 use async_trait::async_trait;
+use multiversx_sc::api::{HandleTypeInfo, VMApi};
 use multiversx_sc::codec::{TopDecodeMulti, TopEncodeMulti};
+use multiversx_sc::imports::{TxEnv, TxFrom, TxGas, TxPayment, TxTo, TxTypedCall};
 use crate::{ScCallStep, ScDeployStep, ScQueryStep, TxQuery, TypedScCall, TypedScDeploy, TypedScQuery};
 use crate::ScenarioWorld;
 use tokio::sync::{Mutex, MutexGuard};
@@ -74,7 +76,17 @@ impl<A> TransactionExecutor for MockExecutor<A>
     /// # Returns
     /// - A `Result` object with an empty `Ok(())` value if the call is successful,
     ///   or an `Err(ExecutorError)` if the call fails for any reason.
-    async fn sc_call<OriginalResult: Send>(&mut self, sc_call_step: &mut TypedScCall<OriginalResult>) -> Result<(), ExecutorError> {
+    async fn sc_call<Env, From, To, Payment, Gas, ResultType>(&mut self, typed_call: TxTypedCall<Env, From, To, Payment, Gas, ResultType>) -> Result<(), ExecutorError>
+        where
+            Env: TxEnv + Send + Sync,
+            Env::Api: VMApi + Send + Sync,
+            <Env::Api as HandleTypeInfo>::ManagedBufferHandle: Send + Sync,
+            From: TxFrom<Env> + Send + Sync,
+            To: TxTo<Env> + Send + Sync,
+            Payment: TxPayment<Env> + Send + Sync,
+            Gas: TxGas<Env> + Send + Sync,
+            ResultType: Send + Sync {
+        /*
         let caller: Address = if let Some(caller) = self.opt_caller.as_deref() {
             caller.into()
         } else {
@@ -90,6 +102,10 @@ impl<A> TransactionExecutor for MockExecutor<A>
         }
 
         Ok(())
+
+         */
+
+        todo!()
     }
 
     /// Specifies whether deserialization should be skipped during the smart contract call execution.

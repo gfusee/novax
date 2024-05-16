@@ -10,10 +10,10 @@ license = "GPL-3.0-only"
 path = "src/lib.rs"
 
 [dependencies]
-multiversx-sc = "=0.48.1"
+multiversx-sc = { path = "../../../mx-sdk-rs/framework/base" }
 
 [dev-dependencies]
-multiversx-sc-scenario = "=0.48.1"
+multiversx-sc-scenario = { path = "../../../mx-sdk-rs/framework/scenario" }
 
 [package.metadata.release]
 release = false

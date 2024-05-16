@@ -132,7 +132,7 @@ fn impl_abi_enum_to_discriminant(name: &String, abi_type: &AbiType) -> TokenStre
 
 fn impl_abi_enum_managed_derives(variants: &AbiTypeVariants) -> TokenStream {
     let mut derive_idents: Vec<Ident> = vec![];
-    for derive in ["TopEncode", "TopDecode", "NestedEncode", "NestedDecode", "Clone", "Debug"] {
+    for derive in ["TopEncode", "TopDecode", "NestedEncode", "NestedDecode", "TypeAbi", "Clone", "Debug"] {
         let ident = format_ident!("{}", derive);
         derive_idents.push(ident);
     }
@@ -406,7 +406,7 @@ fn impl_abi_struct_type(name: &str, abi_type: &AbiType, all_abi_types: &AbiTypes
 
 fn impl_abi_struct_derive(abi_fields: &AbiTypeFields, abi_types: &AbiTypes) -> TokenStream {
     let mut derive_idents: Vec<Ident> = vec![];
-    for derive in ["TopEncode", "TopDecode", "NestedEncode", "NestedDecode", "Clone", "Debug"] {
+    for derive in ["TopEncode", "TopDecode", "NestedEncode", "NestedDecode", "TypeAbi", "Clone", "Debug"] {
         let ident = format_ident!("{}", derive);
         derive_idents.push(ident);
     }

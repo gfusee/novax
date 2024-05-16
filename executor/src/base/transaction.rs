@@ -1,6 +1,10 @@
 use std::sync::Arc;
 use async_trait::async_trait;
+use multiversx_sc::api::{HandleTypeInfo, VMApi};
+use multiversx_sc::imports::{FunctionCall, TxEnv, TxFrom, TxGas, TxPayment, TxTo};
+use multiversx_sc::types::TxTypedCall;
 use multiversx_sc_scenario::scenario_model::TypedScCall;
+use multiversx_sc_snippets::Interactor;
 use tokio::sync::Mutex;
 use crate::error::executor::ExecutorError;
 
@@ -19,7 +23,16 @@ pub trait TransactionExecutor: Send + Sync {
     ///
     /// # Returns
     /// - A `Result` with an empty `Ok(())` value if the call is successful, or an `Err(ExecutorError)` if the call fails.
-    async fn sc_call<OriginalResult: Send>(&mut self, sc_call_step: &mut TypedScCall<OriginalResult>) -> Result<(), ExecutorError>;
+    async fn sc_call<Env, From, To, Payment, Gas, ResultType>(&mut self, typed_call: TxTypedCall<Env, From, To, Payment, Gas, ResultType>) -> Result<(), ExecutorError>
+    where
+        Env: TxEnv + Send + Sync,
+        Env::Api: VMApi + Send + Sync,
+        <Env::Api as HandleTypeInfo>::ManagedBufferHandle: Send + Sync,
+        From: TxFrom<Env> + Send + Sync,
+        To: TxTo<Env> + Send + Sync,
+        Payment: TxPayment<Env> + Send + Sync,
+        Gas: TxGas<Env> + Send + Sync,
+        ResultType: Send + Sync;
 
     /// Determines whether deserialization should be skipped during the smart contract call execution.
     ///
@@ -30,6 +43,10 @@ pub trait TransactionExecutor: Send + Sync {
     /// # Returns
     /// - A `bool` indicating whether deserialization should be skipped.
     async fn should_skip_deserialization(&self) -> bool;
+
+    async fn get_interactor(&self) -> Interactor {
+        todo!()
+    }
 }
 
 /// An implementation of `TransactionExecutor` trait for types wrapped in `Arc<Mutex<T>>`.
@@ -38,11 +55,20 @@ pub trait TransactionExecutor: Send + Sync {
 #[async_trait]
 impl<T: TransactionExecutor> TransactionExecutor for Arc<Mutex<T>> {
     /// Executes a smart contract call using the underlying `TransactionExecutor` implementation.
-    async fn sc_call<OriginalResult: Send>(&mut self, sc_call_step: &mut TypedScCall<OriginalResult>) -> Result<(), ExecutorError> {
+    async fn sc_call<Env, From, To, Payment, Gas, ResultType>(&mut self, typed_call: TxTypedCall<Env, From, To, Payment, Gas, ResultType>) -> Result<(), ExecutorError>
+        where
+            Env: TxEnv + Send + Sync,
+            Env::Api: VMApi + Send + Sync,
+            <Env::Api as HandleTypeInfo>::ManagedBufferHandle: Send + Sync,
+            From: TxFrom<Env> + Send + Sync,
+            To: TxTo<Env> + Send + Sync,
+            Payment: TxPayment<Env> + Send + Sync,
+            Gas: TxGas<Env> + Send + Sync,
+            ResultType: Send + Sync {
         {
             // Acquire a lock to ensure exclusive access to the executor during the call execution.
             let mut executor = self.lock().await;
-            executor.sc_call(sc_call_step).await
+            executor.sc_call(typed_call).await
         }
     }
 

@@ -16,12 +16,18 @@ pub(crate) fn impl_contract(mod_name: &str, abi: &Abi) -> Result<TokenStream, Bu
     let name = format_ident!("{}", abi.get_contract_name());
     let proxy_name = abi.get_proxy_name();
     let proxy_name_ident = format_ident!("{}", proxy_name);
-    let proxy_mod_name_ident = format_ident!("{}", proxy_name.to_case(Case::Snake));
+    let proxy_mod_name = proxy_name.to_case(Case::Snake);
+    let proxy_mod_name_ident = format_ident!("{}", proxy_mod_name);
     let contract_info_name = format!("{name}Infos");
     let contract_info_ident = format_ident!("{}", contract_info_name);
     let call_name = format_ident!("{}", abi.get_call_name());
     let query_name = format_ident!("{}", abi.get_query_name());
-    let (calls_impls, queries_impls) = impl_abi_endpoints(&contract_info_name, &abi.endpoints, &abi.types)?;
+    let (calls_impls, queries_impls) = impl_abi_endpoints(
+        &contract_info_name,
+        &proxy_mod_name,
+        &abi.endpoints,
+        &abi.types
+    )?;
     let deploy_impl = impl_abi_constructor(&contract_info_name, &abi.constructor, &abi.types)?;
     let proxy_impls = impl_proxy_functions(&abi.constructor, &abi.endpoints, &abi.types)?;
 
@@ -334,11 +340,21 @@ fn impl_proxy_endpoint(abi_endpoint: &AbiEndpoint, abi_types: &AbiTypes) -> Resu
 }
 
 // (TokenStream, TokenStream) = (calls, queries)
-fn impl_abi_endpoints(contract_info_name: &str, abi_endpoints: &AbiEndpoints, abi_types: &AbiTypes) -> Result<(TokenStream, TokenStream), BuildError> {
+fn impl_abi_endpoints(
+    contract_info_name: &str,
+    proxy_mod_name: &str,
+    abi_endpoints: &AbiEndpoints,
+    abi_types: &AbiTypes
+) -> Result<(TokenStream, TokenStream), BuildError> {
     let mut calls_impls: Vec<TokenStream> = vec![];
     let mut queries_impls: Vec<TokenStream> = vec![];
     for endpoint in abi_endpoints {
-        let endpoint_impls = impl_abi_endpoint_call_query(contract_info_name, endpoint, abi_types)?;
+        let endpoint_impls = impl_abi_endpoint_call_query(
+            contract_info_name,
+            proxy_mod_name,
+            endpoint,
+            abi_types
+        )?;
 
         calls_impls.push(endpoint_impls.0);
         queries_impls.push(endpoint_impls.1);
@@ -356,8 +372,14 @@ fn impl_abi_endpoints(contract_info_name: &str, abi_endpoints: &AbiEndpoints, ab
     )
 }
 
-fn impl_abi_endpoint_call_query(contract_info_name: &str, abi_endpoint: &AbiEndpoint, abi_types: &AbiTypes) -> Result<(TokenStream, TokenStream), BuildError> {
+fn impl_abi_endpoint_call_query(
+    contract_info_name: &str,
+    proxy_mod_name: &str,
+    abi_endpoint: &AbiEndpoint,
+    abi_types: &AbiTypes
+) -> Result<(TokenStream, TokenStream), BuildError> {
     let debug_api = get_api_generic_ident();
+    let proxy_mod_ident = format_ident!("{proxy_mod_name}");
     let contract_info_ident = format_ident!("{}", contract_info_name);
     let function_name = format_ident!("{}", abi_endpoint.name.to_case(Case::Snake));
     let function_inputs = impl_endpoint_inputs(true, &abi_endpoint.inputs, abi_types)?;
@@ -382,20 +404,19 @@ fn impl_abi_endpoint_call_query(contract_info_name: &str, abi_endpoint: &AbiEndp
 
         #endpoint_args_let_statements
 
-        let _novax_contract_call = _novax_contract
-            .#function_name(#endpoint_args_inputs);
+        let _novax_payment = if self.egld_value > num_bigint::BigUint::from(0u8) {
+            EgldOrMultiEsdtPayment::Egld(BigUint::<#debug_api>::from(self.egld_value.clone()))
+        } else {
+            EgldOrMultiEsdtPayment::Egld(BigUint::<#debug_api>::from(0u8))
+        };
 
-        let mut _novax_tx: TypedScCall<#function_managed_outputs> = ScCallStep::new()
-            .call(_novax_contract_call)
-            .into();
+        let interactor: Interactor = todo!();
+        let mut _novax_tx = interactor
+            .tx()
+            .to(Bech32Address::from_bech32_string(Address::from(&self.contract_address).to_bech32_string().unwrap()))
+            .egld_or_multi_esdt(_novax_payment);
 
-        if self.egld_value > num_bigint::BigUint::from(0u8) {
-            _novax_tx = _novax_tx
-            .egld_value(self.egld_value.clone());
-        }
-
-        _novax_tx = _novax_tx
-            .expect(TxExpect::ok());
+        #(_novax_tx.argument(#endpoint_args_inputs)); *;
     };
 
     let call_token = quote! {
@@ -470,7 +491,7 @@ fn impl_abi_endpoint_call_query(contract_info_name: &str, abi_endpoint: &AbiEndp
             self.caching.get_or_set_cache(
                 _novax_key,
                 async {
-                    let result = self.executor.execute::<#function_managed_outputs>(&_novax_tx.sc_call_step).await;
+                    let result = self.executor.execute::<#function_managed_outputs>(&_novax_tx).await;
 
                     if let Result::Ok(result) = result {
                         Result::Ok::<_, NovaXError>(result)
@@ -530,7 +551,7 @@ fn impl_abi_constructor(contract_info_name: &str, abi_constructor: &AbiConstruct
             let _novax_code_bytes = _novax_deploy_data.code.into_bytes_value().await?;
 
             let mut _novax_deploy_step = ScDeployStep::new()
-                .call(_novax_contract.init(#endpoint_args_inputs))
+                .call(_novax_contract.init(#(#endpoint_args_inputs), *))
                 .gas_limit(gas_limit)
                 .code(_novax_code_bytes)
                 .code_metadata(_novax_deploy_data.metadata);
@@ -629,7 +650,7 @@ fn impl_endpoint_key_for_query(endpoint_name: &str, abi_inputs: &AbiInputs) -> T
 }
 
 // (TokenStream, TokenStream) = (let statements, function params)
-fn impl_endpoint_args_for_call(abi_inputs: &AbiInputs, all_abi_types: &AbiTypes) -> Result<(TokenStream, TokenStream), BuildError> {
+fn impl_endpoint_args_for_call(abi_inputs: &AbiInputs, all_abi_types: &AbiTypes) -> Result<(TokenStream, Vec<TokenStream>), BuildError> {
     let static_api = get_api_generic_ident();
     let mut inputs_let_idents: Vec<TokenStream> = vec![];
     let mut inputs_function_arg_idents: Vec<TokenStream> = vec![];
@@ -645,13 +666,10 @@ fn impl_endpoint_args_for_call(abi_inputs: &AbiInputs, all_abi_types: &AbiTypes)
     let let_statements_result = quote! {
         #(#inputs_let_idents)*
     };
-    let function_inputs_result = quote! {
-        #(#inputs_function_arg_idents), *
-    };
 
     Ok((
         let_statements_result,
-        function_inputs_result
+        inputs_function_arg_idents
     ))
 }
 

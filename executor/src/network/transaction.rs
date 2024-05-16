@@ -2,7 +2,9 @@ use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use std::mem;
 use async_trait::async_trait;
+use multiversx_sc::api::{HandleTypeInfo, VMApi};
 use multiversx_sc::codec::TopEncodeMulti;
+use multiversx_sc::imports::{TxEnv, TxFrom, TxGas, TxPayment, TxTo, TxTypedCall};
 use multiversx_sc_scenario::scenario_model::{ScCallStep, ScDeployStep, TypedScCall, TypedScDeploy};
 use multiversx_sc_snippets::Interactor;
 use multiversx_sdk::wallet::Wallet;
@@ -96,15 +98,32 @@ impl<Interactor: BlockchainInteractor> TransactionExecutor for BaseTransactionNe
     ///
     /// # Returns
     /// - A `Result` with an empty `Ok(())` value if the call is successful, or an `Err(ExecutorError)` if the call fails.
-    async fn sc_call<OriginalResult: Send>(&mut self, sc_call_step: &mut TypedScCall<OriginalResult>) -> Result<(), ExecutorError> {
-        let owned_sc_call_step = mem::replace(sc_call_step, ScCallStep::new().into());
+    async fn sc_call<Env, From, To, Payment, Gas, ResultType>(&mut self, typed_call: TxTypedCall<Env, From, To, Payment, Gas, ResultType>) -> Result<(), ExecutorError>
+        where
+            Env: TxEnv + Send + Sync,
+            Env::Api: VMApi + Send + Sync,
+            <Env::Api as HandleTypeInfo>::ManagedBufferHandle: Send + Sync,
+            From: TxFrom<Env> + Send + Sync,
+            To: TxTo<Env> + Send + Sync,
+            Payment: TxPayment<Env> + Send + Sync,
+            Gas: TxGas<Env> + Send + Sync,
+            ResultType: Send + Sync {
+        /*
         let mut interactor = Interactor::new(&self.gateway_url).await;
         let sender_address = interactor.register_wallet(self.wallet);
-        *sc_call_step = owned_sc_call_step.from(&multiversx_sc::types::Address::from(sender_address.to_bytes()));
 
-        interactor.sc_call(sc_call_step).await;
+        typed_call.from = sender_address;
+
+        typed_call
+            .prepare_async()
+            .run()
+            .await;
 
         Ok(())
+
+         */
+
+        todo!()
     }
 
     /// Indicates whether deserialization should be skipped during smart contract call execution.

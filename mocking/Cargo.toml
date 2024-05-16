@@ -15,9 +15,9 @@ tokio = "1.30.0"
 novax = { path = "../core", version = "0.1.6" }
 novax-token = { path = "../token", version = "0.1.6" }
 novax-executor = { path = "../executor", version = "0.1.6" }
-multiversx-sc = "=0.48.1"
-multiversx-sc-snippets = "=0.48.1"
-multiversx-sdk = "=0.3.2"
+multiversx-sc = { path = "../../mx-sdk-rs/framework/base" }
+multiversx-sc-snippets = { path = "../../mx-sdk-rs/framework/snippets" }
+multiversx-sdk = { path = "../../mx-sdk-rs/sdk/core" }
 reqwest = "0.11.18"
 serde = "1.0.180"
 serde_json = "1.0.104"

@@ -7,11 +7,7 @@ use crate::network::models::address::info::{AddressGatewayInfo, AddressGatewayRe
 pub async fn get_address_info<Client: GatewayClient>(client: &Client, address: Address) -> Result<AddressGatewayInfo, ExecutorError> {
     let address_bech32 = address.to_bech32_string()?;
 
-    let Ok(response) = client.with_appended_url(&format!("/address/{address_bech32}")).get().await else {
-        return Err(GatewayError::CannotFetchAddressInfo { address: address_bech32 }.into())
-    };
-
-    let Ok(text) = response.text().await else {
+    let Ok((_, Some(text))) = client.with_appended_url(&format!("/address/{address_bech32}")).get().await else {
         return Err(GatewayError::CannotFetchAddressInfo { address: address_bech32 }.into())
     };
 

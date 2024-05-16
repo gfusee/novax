@@ -1,6 +1,8 @@
 use std::fmt::{Debug, Formatter};
 use async_trait::async_trait;
 use base64::Engine;
+use multiversx_sc::api::{HandleTypeInfo, VMApi};
+use multiversx_sc::imports::{TxEnv, TxFrom, TxGas, TxPayment, TxTo, TxTypedCall};
 use multiversx_sc_scenario::scenario_model::{TxResponse, TypedScCall};
 use multiversx_sdk::data::transaction::ApiSmartContractResult;
 use multiversx_sdk::data::vm::CallType;
@@ -76,11 +78,7 @@ impl<Client: GatewayClient> BaseSimulationNetworkExecutor<Client> {
             version: network_config.erd_min_transaction_version,
         };
 
-        let Ok(response) = self.client.with_appended_url("/transaction/cost").post(&body).await else {
-            return Err(GatewayError::CannotSimulateTransaction.into())
-        };
-
-        let Ok(text) = response.text().await else {
+        let Ok((_, Some(text))) = self.client.with_appended_url("/transaction/cost").post(&body).await else {
             return Err(GatewayError::CannotSimulateTransaction.into())
         };
 
@@ -130,7 +128,17 @@ impl<Client: GatewayClient> TransactionExecutor for BaseSimulationNetworkExecuto
     ///
     /// # Returns
     /// A `Result` indicating the success or failure of the smart contract call execution.
-    async fn sc_call<OriginalResult: Send>(&mut self, sc_call_step: &mut TypedScCall<OriginalResult>) -> Result<(), ExecutorError> {
+    async fn sc_call<Env, From, To, Payment, Gas, ResultType>(&mut self, typed_call: TxTypedCall<Env, From, To, Payment, Gas, ResultType>) -> Result<(), ExecutorError>
+        where
+            Env: TxEnv + Send + Sync,
+            Env::Api: VMApi + Send + Sync,
+            <Env::Api as HandleTypeInfo>::ManagedBufferHandle: Send + Sync,
+            From: TxFrom<Env> + Send + Sync,
+            To: TxTo<Env> + Send + Sync,
+            Payment: TxPayment<Env> + Send + Sync,
+            Gas: TxGas<Env> + Send + Sync,
+            ResultType: Send + Sync {
+        /*
         let sendable_transaction = sc_call_step.to_sendable_transaction();
 
         let simulation_data = SimulationGatewayRequest {
@@ -189,6 +197,10 @@ impl<Client: GatewayClient> TransactionExecutor for BaseSimulationNetworkExecuto
         sc_call_step.sc_call_step.save_response(tx_response);
 
         Ok(())
+
+         */
+
+        todo!()
     }
 
     /// Indicates whether deserialization should be skipped during execution.

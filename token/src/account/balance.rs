@@ -75,9 +75,8 @@ async fn fetch_all_tokens_for_address<Client, Caching>(gateway_client: &Client, 
     caching.get_or_set_cache(
         hasher.finish(),
         async {
-            let Ok(response) = client.get().await else { return Err(TokenError::UnknownErrorWhileGettingEsdtInfosOfAddress { address: address.to_string() }) };
-            let Ok(response) = response.text().await else { return Err(TokenError::UnknownErrorWhileGettingEsdtInfosOfAddress { address: address.to_string() }) };
-            let Ok(decoded) = serde_json::from_str::<GatewayAllEsdtForAddress>(&response) else {
+            let Ok((_, Some(text))) = client.get().await else { return Err(TokenError::UnknownErrorWhileGettingEsdtInfosOfAddress { address: address.to_string() }) };
+            let Ok(decoded) = serde_json::from_str::<GatewayAllEsdtForAddress>(&text) else {
                 return Err(TokenError::CannotParseEsdtBalances { address: address.to_string() })
             };
 

@@ -1,6 +1,8 @@
 use std::mem;
 use async_trait::async_trait;
+use multiversx_sc::api::{HandleTypeInfo, VMApi};
 use multiversx_sc::codec::TopEncodeMulti;
+use multiversx_sc::imports::{TxEnv, TxFrom, TxGas, TxPayment, TxTo, TxTypedCall};
 use multiversx_sc_scenario::scenario_model::{ScCallStep, ScDeployStep, TypedScCall, TypedScDeploy};
 use novax_data::Address;
 use crate::base::deploy::DeployExecutor;
@@ -47,7 +49,17 @@ impl<Tx: SendableTransactionConvertible + Default> DummyExecutor<Tx> {
 #[async_trait]
 impl TransactionExecutor for DummyExecutor<ScCallStep> {
     /// Captures the smart contract call details.
-    async fn sc_call<OriginalResult: Send>(&mut self, sc_call_step: &mut TypedScCall<OriginalResult>) -> Result<(), ExecutorError> {
+    async fn sc_call<Env, From, To, Payment, Gas, ResultType>(&mut self, typed_call: TxTypedCall<Env, From, To, Payment, Gas, ResultType>) -> Result<(), ExecutorError>
+        where
+            Env: TxEnv + Send + Sync,
+            Env::Api: VMApi + Send + Sync,
+            <Env::Api as HandleTypeInfo>::ManagedBufferHandle: Send + Sync,
+            From: TxFrom<Env> + Send + Sync,
+            To: TxTo<Env> + Send + Sync,
+            Payment: TxPayment<Env> + Send + Sync,
+            Gas: TxGas<Env> + Send + Sync,
+            ResultType: Send + Sync {
+        /*
         let mut owned_sc_call_step = mem::replace(sc_call_step, ScCallStep::new().into());
 
         if let Some(caller) = &self.caller {
@@ -57,6 +69,10 @@ impl TransactionExecutor for DummyExecutor<ScCallStep> {
         self.tx = owned_sc_call_step.sc_call_step;
 
         Ok(())
+
+         */
+
+        todo!()
     }
 
     /// Indicates that deserialization should be skipped as there is no actual execution.

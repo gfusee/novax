@@ -13,6 +13,11 @@ pub fn generate_from_abi(abi: &Abi) -> Result<GeneratedFile, BuildError> {
     let content = if let Ok(content_file) = syn::parse_file(&content) {
         prettyplease::unparse(&content_file)
     } else {
+        match syn::parse_file(&content) {
+            Err(error) => println!("hey!!! {}", error.to_string()),
+            _ => todo!()
+        }
+        println!("{content}");
         return Err(crate::generator::generator_error::GeneratorError::UnableToFormatRustCode.into())
     };
 
@@ -119,5 +124,7 @@ fn get_mod_imports() -> TokenStream {
         use std::ops::Deref;
         use multiversx_sc_scenario::scenario_model::AddressValue;
         use novax_data::Address;
+        use multiversx_sc_scenario::imports::Bech32Address;
+        use core::marker::PhantomData;
    }
 }
