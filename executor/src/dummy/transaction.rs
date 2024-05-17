@@ -1,14 +1,17 @@
 use std::mem;
 use async_trait::async_trait;
 use multiversx_sc::api::{HandleTypeInfo, VMApi};
-use multiversx_sc::codec::TopEncodeMulti;
+use multiversx_sc::codec::{TopDecodeMulti, TopEncodeMulti};
 use multiversx_sc::imports::{TxEnv, TxFrom, TxGas, TxPayment, TxTo, TxTypedCall};
 use multiversx_sc_scenario::scenario_model::{ScCallStep, ScDeployStep, TypedScCall, TypedScDeploy};
-use novax_data::Address;
+use num_bigint::BigUint;
+use novax_data::{Address, NativeConvertible};
 use crate::base::deploy::DeployExecutor;
 use crate::base::transaction::TransactionExecutor;
+use crate::call_result::CallResult;
 use crate::error::executor::ExecutorError;
 use crate::utils::transaction::data::{SendableTransaction, SendableTransactionConvertible};
+use crate::utils::transaction::token_transfer::TokenTransfer;
 
 /// A type alias for `DummyExecutor` handling `ScCallStep`.
 pub type DummyTransactionExecutor = DummyExecutor<ScCallStep>;
@@ -49,16 +52,18 @@ impl<Tx: SendableTransactionConvertible + Default> DummyExecutor<Tx> {
 #[async_trait]
 impl TransactionExecutor for DummyExecutor<ScCallStep> {
     /// Captures the smart contract call details.
-    async fn sc_call<Env, From, To, Payment, Gas, ResultType>(&mut self, typed_call: TxTypedCall<Env, From, To, Payment, Gas, ResultType>) -> Result<(), ExecutorError>
+    async fn sc_call<OutputManaged>(
+        &mut self,
+        to: &Address,
+        function: &str,
+        arguments: &[&[u8]],
+        gas_limit: u64,
+        egld_value: &BigUint,
+        esdt_transfers: &[TokenTransfer]
+    ) -> Result<CallResult<OutputManaged::Native>, ExecutorError>
         where
-            Env: TxEnv + Send + Sync,
-            Env::Api: VMApi + Send + Sync,
-            <Env::Api as HandleTypeInfo>::ManagedBufferHandle: Send + Sync,
-            From: TxFrom<Env> + Send + Sync,
-            To: TxTo<Env> + Send + Sync,
-            Payment: TxPayment<Env> + Send + Sync,
-            Gas: TxGas<Env> + Send + Sync,
-            ResultType: Send + Sync {
+            OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
+    {
         /*
         let mut owned_sc_call_step = mem::replace(sc_call_step, ScCallStep::new().into());
 

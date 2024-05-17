@@ -5,9 +5,9 @@ use novax::{Address, CodeMetadata, Wallet};
 use novax::errors::NovaXError;
 use novax::tester::tester::TesterContract;
 use novax::testerwithreturningdeploy::testerwithreturningdeploy::TesterWithReturningDeployContract;
-use novax::transaction::CallResult;
 use novax::executor::BlockchainInteractor;
 use novax::executor::BaseTransactionNetworkExecutor;
+use novax::executor::call_result::CallResult;
 use novax_mocking::{ScCallStep, ScDeployStep, TxResponse};
 use crate::utils::decode_scr_data::decode_scr_data_or_panic;
 

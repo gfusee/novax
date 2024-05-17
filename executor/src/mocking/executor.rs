@@ -5,6 +5,7 @@ use async_trait::async_trait;
 use multiversx_sc::api::{HandleTypeInfo, VMApi};
 use multiversx_sc::codec::{TopDecodeMulti, TopEncodeMulti};
 use multiversx_sc::imports::{TxEnv, TxFrom, TxGas, TxPayment, TxTo, TxTypedCall};
+use num_bigint::BigUint;
 use crate::{ScCallStep, ScDeployStep, ScQueryStep, TxQuery, TypedScCall, TypedScDeploy, TypedScQuery};
 use crate::ScenarioWorld;
 use tokio::sync::{Mutex, MutexGuard};
@@ -14,8 +15,10 @@ use novax_data::parse_query_return_bytes_data;
 use crate::base::deploy::DeployExecutor;
 use crate::base::query::QueryExecutor;
 use crate::base::transaction::TransactionExecutor;
+use crate::call_result::CallResult;
 use crate::error::executor::ExecutorError;
 use crate::error::mock_deploy::MockDeployError;
+use crate::utils::transaction::token_transfer::TokenTransfer;
 
 /// A convenient type alias for `MockExecutor` with `String` as the generic type.
 pub type StandardMockExecutor = MockExecutor<String>;
@@ -76,16 +79,18 @@ impl<A> TransactionExecutor for MockExecutor<A>
     /// # Returns
     /// - A `Result` object with an empty `Ok(())` value if the call is successful,
     ///   or an `Err(ExecutorError)` if the call fails for any reason.
-    async fn sc_call<Env, From, To, Payment, Gas, ResultType>(&mut self, typed_call: TxTypedCall<Env, From, To, Payment, Gas, ResultType>) -> Result<(), ExecutorError>
+    async fn sc_call<OutputManaged>(
+        &mut self,
+        to: &Address,
+        function: &str,
+        arguments: &[&[u8]],
+        gas_limit: u64,
+        egld_value: &BigUint,
+        esdt_transfers: &[TokenTransfer]
+    ) -> Result<CallResult<OutputManaged::Native>, ExecutorError>
         where
-            Env: TxEnv + Send + Sync,
-            Env::Api: VMApi + Send + Sync,
-            <Env::Api as HandleTypeInfo>::ManagedBufferHandle: Send + Sync,
-            From: TxFrom<Env> + Send + Sync,
-            To: TxTo<Env> + Send + Sync,
-            Payment: TxPayment<Env> + Send + Sync,
-            Gas: TxGas<Env> + Send + Sync,
-            ResultType: Send + Sync {
+            OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
+    {
         /*
         let caller: Address = if let Some(caller) = self.opt_caller.as_deref() {
             caller.into()
@@ -216,10 +221,18 @@ impl<A> QueryExecutor for MockExecutor<A>
     ///
     /// * `Result<OutputManaged::Native, ExecutorError>`: On successful execution, returns a `Result` containing the native converted query output.
     ///   On failure, returns a `Result` containing an `ExecutorError`.
-    async fn execute<OutputManaged>(&self, request: &ScCallStep) -> Result<OutputManaged::Native, ExecutorError>
+    async fn execute<OutputManaged>(
+        &self,
+        to: &Address,
+        function: &str,
+        arguments: &[&[u8]],
+        egld_value: &BigUint,
+        esdt_transfers: &[TokenTransfer]
+    ) -> Result<OutputManaged::Native, ExecutorError>
         where
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
     {
+        /*
         // Convert the smart contract query step to a call step.
         let query = convert_sc_query_step_to_call_step(request);
         // Create a TypedScQuery from the query.
@@ -239,6 +252,10 @@ impl<A> QueryExecutor for MockExecutor<A>
         let parsed = parse_query_return_bytes_data::<OutputManaged>(&mut out)?;
         // Convert the parsed data to its native type and return it.
         Ok(parsed.to_native())
+
+         */
+
+        todo!()
     }
 }
 

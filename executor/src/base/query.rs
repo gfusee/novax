@@ -2,9 +2,11 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use multiversx_sc_scenario::multiversx_sc::codec::TopDecodeMulti;
 use multiversx_sc_scenario::scenario_model::ScCallStep;
+use num_bigint::BigUint;
 use tokio::sync::Mutex;
-use novax_data::NativeConvertible;
+use novax_data::{Address, NativeConvertible};
 use crate::error::executor::ExecutorError;
+use crate::TokenTransfer;
 
 /// A trait representing the execution of smart contract queries.
 ///
@@ -29,7 +31,14 @@ pub trait QueryExecutor: Clone + Send + Sync {
     ///
     /// A [`Result`] containing the native representation of the query result,
     /// or an [`ExecutorError`] if the query execution fails.
-    async fn execute<OutputManaged>(&self, request: &ScCallStep) -> Result<OutputManaged::Native, ExecutorError>
+    async fn execute<OutputManaged>(
+        &self,
+        to: &Address,
+        function: &str,
+        arguments: &[&[u8]],
+        egld_value: &BigUint,
+        esdt_transfers: &[TokenTransfer]
+    ) -> Result<OutputManaged::Native, ExecutorError>
         where
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync;
 }
@@ -39,8 +48,25 @@ pub trait QueryExecutor: Clone + Send + Sync {
 /// This implementation allows shared access to an executor instance.
 #[async_trait]
 impl<T: QueryExecutor> QueryExecutor for Arc<T> {
-    async fn execute<OutputManaged>(&self, request: &ScCallStep) -> Result<OutputManaged::Native, ExecutorError> where OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync {
-        T::execute::<OutputManaged>(self, request).await
+    async fn execute<OutputManaged>(
+        &self,
+        to: &Address,
+        function: &str,
+        arguments: &[&[u8]],
+        egld_value: &BigUint,
+        esdt_transfers: &[TokenTransfer]
+    ) -> Result<OutputManaged::Native, ExecutorError>
+        where
+            OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
+    {
+        T::execute::<OutputManaged>(
+            self,
+            to,
+            function,
+            arguments,
+            egld_value,
+            esdt_transfers
+        ).await
     }
 }
 
@@ -49,10 +75,26 @@ impl<T: QueryExecutor> QueryExecutor for Arc<T> {
 /// This implementation allows exclusive access to an executor instance, ensuring safe mutable access.
 #[async_trait]
 impl<T: QueryExecutor> QueryExecutor for Arc<Mutex<T>> {
-    async fn execute<OutputManaged>(&self, request: &ScCallStep) -> Result<OutputManaged::Native, ExecutorError> where OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync {
+    async fn execute<OutputManaged>(
+        &self,
+        to: &Address,
+        function: &str,
+        arguments: &[&[u8]],
+        egld_value: &BigUint,
+        esdt_transfers: &[TokenTransfer]
+    ) -> Result<OutputManaged::Native, ExecutorError>
+        where
+            OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
+    {
         {
             let executor = self.lock().await;
-            executor.execute::<OutputManaged>(request).await
+            executor.execute::<OutputManaged>(
+                to,
+                function,
+                arguments,
+                egld_value,
+                esdt_transfers
+            ).await
         }
     }
 }

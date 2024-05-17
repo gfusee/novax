@@ -51,9 +51,6 @@ pub mod caching;
 /// The `errors` module centralizes various error types encountered within the `novax` crate's operations.
 pub mod errors;
 
-/// The `transaction` module contains essential structs and types for handling blockchain transactions.
-pub mod transaction;
-
 /// The `code` module facilitates reading and handling of smart contract code.
 pub mod code;
 

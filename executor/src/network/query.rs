@@ -5,11 +5,13 @@ use multiversx_sc_scenario::scenario_model::ScCallStep;
 use multiversx_sdk::blockchain::CommunicationProxy;
 use multiversx_sdk::data::address::Address;
 use multiversx_sdk::data::vm::VmValueRequest;
+use num_bigint::BigUint;
 use novax_data::{NativeConvertible, parse_query_return_string_data};
 use crate::base::query::QueryExecutor;
 use crate::error::executor::ExecutorError;
 use crate::error::network::NetworkQueryError;
 use crate::network::proxy::BlockchainProxy;
+use crate::TokenTransfer;
 use crate::utils::transaction::data::SendableTransactionConvertible;
 
 /// A convenient type alias for `QueryNetworkExecutor` with `CommunicationProxy` as the generic type.
@@ -49,10 +51,18 @@ impl<Proxy: BlockchainProxy> QueryExecutor for QueryNetworkExecutor<Proxy> {
     ///
     /// This method constructs a VM request from the provided `ScCallStep`, sends it to the blockchain network
     /// via the blockchain proxy, and processes the result to return it in a native format.
-    async fn execute<OutputManaged>(&self, request: &ScCallStep) -> Result<OutputManaged::Native, ExecutorError>
+    async fn execute<OutputManaged>(
+        &self,
+        to: &novax_data::Address,
+        function: &str,
+        arguments: &[&[u8]],
+        egld_value: &BigUint,
+        esdt_transfers: &[TokenTransfer]
+    ) -> Result<OutputManaged::Native, ExecutorError>
         where
-            OutputManaged: TopDecodeMulti + NativeConvertible
+            OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
     {
+        /*
         let sendable_tx = request.to_sendable_transaction();
         let receiver = Address::from_bech32_string(&sendable_tx.receiver).unwrap();
         let mut arguments: Vec<String> = sendable_tx.data.split('@').map(|e| e.to_string()).collect();
@@ -75,6 +85,10 @@ impl<Proxy: BlockchainProxy> QueryExecutor for QueryNetworkExecutor<Proxy> {
 
         let data: Vec<&str> = result.data.return_data.iter().map(AsRef::as_ref).collect();
         Ok(parse_query_return_string_data::<OutputManaged>(data.as_slice())?.to_native())
+
+         */
+
+        todo!()
     }
 }
 
@@ -84,8 +98,22 @@ impl QueryExecutor for &str {
     ///
     /// This implementation creates a new `ProxyQueryExecutor` instance using the string as the gateway URL,
     /// and delegates the query execution to it.
-    async fn execute<OutputManaged>(&self, request: &ScCallStep) -> Result<OutputManaged::Native, ExecutorError> where OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync {
+    async fn execute<OutputManaged>(
+        &self,
+        to: &novax_data::Address,
+        function: &str,
+        arguments: &[&[u8]],
+        egld_value: &BigUint,
+        esdt_transfers: &[TokenTransfer]
+    ) -> Result<OutputManaged::Native, ExecutorError>
+        where
+            OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
+    {
+        /*
         ProxyQueryExecutor::new(self).execute::<OutputManaged>(request).await
+
+         */
+        todo!()
     }
 }
 
@@ -95,7 +123,22 @@ impl QueryExecutor for String {
     ///
     /// This implementation creates a new `ProxyQueryExecutor` instance using the string as the gateway URL,
     /// and delegates the query execution to it.
-    async fn execute<OutputManaged>(&self, request: &ScCallStep) -> Result<OutputManaged::Native, ExecutorError> where OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync {
+    async fn execute<OutputManaged>(
+        &self,
+        to: &novax_data::Address,
+        function: &str,
+        arguments: &[&[u8]],
+        egld_value: &BigUint,
+        esdt_transfers: &[TokenTransfer]
+    ) -> Result<OutputManaged::Native, ExecutorError>
+        where
+            OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
+    {
+        /*
         self.as_str().execute::<OutputManaged>(request).await
+
+         */
+
+        todo!()
     }
 }

@@ -2,17 +2,21 @@ use std::fmt::{Debug, Formatter};
 use async_trait::async_trait;
 use base64::Engine;
 use multiversx_sc::api::{HandleTypeInfo, VMApi};
+use multiversx_sc::codec::TopDecodeMulti;
 use multiversx_sc::imports::{TxEnv, TxFrom, TxGas, TxPayment, TxTo, TxTypedCall};
 use multiversx_sc_scenario::scenario_model::{TxResponse, TypedScCall};
 use multiversx_sdk::data::transaction::ApiSmartContractResult;
 use multiversx_sdk::data::vm::CallType;
+use num_bigint::BigUint;
 use tokio::join;
-use novax_data::Address;
+use novax_data::{Address, NativeConvertible};
 use novax_request::gateway::client::GatewayClient;
 use crate::{ExecutorError, GatewayError, SendableTransactionConvertible, SimulationError, SimulationGatewayRequest, SimulationGatewayResponse, TransactionExecutor};
+use crate::call_result::CallResult;
 use crate::network::models::simulate::request::SimulationGatewayRequestBody;
 use crate::network::utils::address::get_address_info;
 use crate::network::utils::network::get_network_config;
+use crate::utils::transaction::token_transfer::TokenTransfer;
 
 /// Type alias for `BaseSimulationNetworkExecutor` with the `String` type as the generic `Client`.
 pub type SimulationNetworkExecutor = BaseSimulationNetworkExecutor<String>;
@@ -128,16 +132,18 @@ impl<Client: GatewayClient> TransactionExecutor for BaseSimulationNetworkExecuto
     ///
     /// # Returns
     /// A `Result` indicating the success or failure of the smart contract call execution.
-    async fn sc_call<Env, From, To, Payment, Gas, ResultType>(&mut self, typed_call: TxTypedCall<Env, From, To, Payment, Gas, ResultType>) -> Result<(), ExecutorError>
+    async fn sc_call<OutputManaged>(
+        &mut self,
+        to: &Address,
+        function: &str,
+        arguments: &[&[u8]],
+        gas_limit: u64,
+        egld_value: &BigUint,
+        esdt_transfers: &[TokenTransfer]
+    ) -> Result<CallResult<OutputManaged::Native>, ExecutorError>
         where
-            Env: TxEnv + Send + Sync,
-            Env::Api: VMApi + Send + Sync,
-            <Env::Api as HandleTypeInfo>::ManagedBufferHandle: Send + Sync,
-            From: TxFrom<Env> + Send + Sync,
-            To: TxTo<Env> + Send + Sync,
-            Payment: TxPayment<Env> + Send + Sync,
-            Gas: TxGas<Env> + Send + Sync,
-            ResultType: Send + Sync {
+            OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
+    {
         /*
         let sendable_transaction = sc_call_step.to_sendable_transaction();
 

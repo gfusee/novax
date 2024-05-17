@@ -3,15 +3,19 @@ use std::marker::PhantomData;
 use std::mem;
 use async_trait::async_trait;
 use multiversx_sc::api::{HandleTypeInfo, VMApi};
-use multiversx_sc::codec::TopEncodeMulti;
+use multiversx_sc::codec::{TopDecodeMulti, TopEncodeMulti};
 use multiversx_sc::imports::{TxEnv, TxFrom, TxGas, TxPayment, TxTo, TxTypedCall};
 use multiversx_sc_scenario::scenario_model::{ScCallStep, ScDeployStep, TypedScCall, TypedScDeploy};
 use multiversx_sc_snippets::Interactor;
 use multiversx_sdk::wallet::Wallet;
+use num_bigint::BigUint;
+use novax_data::{Address, NativeConvertible};
 use crate::base::deploy::DeployExecutor;
 use crate::base::transaction::TransactionExecutor;
+use crate::call_result::CallResult;
 use crate::error::executor::ExecutorError;
 use crate::network::interactor::BlockchainInteractor;
+use crate::utils::transaction::token_transfer::TokenTransfer;
 
 /// Alias for the `BaseTransactionNetworkExecutor` struct, parameterized with the `Interactor` type.
 pub type NetworkExecutor = BaseTransactionNetworkExecutor<Interactor>;
@@ -98,16 +102,18 @@ impl<Interactor: BlockchainInteractor> TransactionExecutor for BaseTransactionNe
     ///
     /// # Returns
     /// - A `Result` with an empty `Ok(())` value if the call is successful, or an `Err(ExecutorError)` if the call fails.
-    async fn sc_call<Env, From, To, Payment, Gas, ResultType>(&mut self, typed_call: TxTypedCall<Env, From, To, Payment, Gas, ResultType>) -> Result<(), ExecutorError>
+    async fn sc_call<OutputManaged>(
+        &mut self,
+        to: &Address,
+        function: &str,
+        arguments: &[&[u8]],
+        gas_limit: u64,
+        egld_value: &BigUint,
+        esdt_transfers: &[TokenTransfer]
+    ) -> Result<CallResult<OutputManaged::Native>, ExecutorError>
         where
-            Env: TxEnv + Send + Sync,
-            Env::Api: VMApi + Send + Sync,
-            <Env::Api as HandleTypeInfo>::ManagedBufferHandle: Send + Sync,
-            From: TxFrom<Env> + Send + Sync,
-            To: TxTo<Env> + Send + Sync,
-            Payment: TxPayment<Env> + Send + Sync,
-            Gas: TxGas<Env> + Send + Sync,
-            ResultType: Send + Sync {
+            OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
+    {
         /*
         let mut interactor = Interactor::new(&self.gateway_url).await;
         let sender_address = interactor.register_wallet(self.wallet);
