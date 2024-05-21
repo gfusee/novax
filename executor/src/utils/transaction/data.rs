@@ -1,6 +1,10 @@
+use std::convert::From;
 use std::str::FromStr;
 use multiversx_sc::api::CallTypeApi;
-use multiversx_sc::types::ContractCallWithEgld;
+use multiversx_sc::imports::{Tx, TxData, TxDataFunctionCall, TxEnv, TxFrom, TxGas, TxPayment, TxResultHandler, TxTo};
+use multiversx_sc::types::{ContractCallWithEgld, ManagedAddress};
+use multiversx_sc_scenario::api::StaticApi;
+use multiversx_sc_scenario::imports::Bech32Address;
 use multiversx_sc_scenario::scenario_model::{ScCallStep, ScDeployStep, TxCall, TxDeploy, TypedScCall, TypedScDeploy};
 use multiversx_sdk::data::address::Address;
 use num_bigint::BigUint;
@@ -34,6 +38,12 @@ pub trait SendableTransactionConvertible {
 }
 
 // Implementations of `SendableTransactionConvertible` for various types, enabling them to be converted into `SendableTransaction`s.
+
+impl SendableTransactionConvertible for SendableTransaction {
+    fn to_sendable_transaction(&self) -> SendableTransaction {
+        self.clone() // TODO: evil clone
+    }
+}
 
 impl<SA, T> SendableTransactionConvertible for ContractCallWithEgld<SA, T>
     where
@@ -95,6 +105,32 @@ impl SendableTransactionConvertible for ScDeployStep {
 impl<T> SendableTransactionConvertible for TypedScDeploy<T> {
     fn to_sendable_transaction(&self) -> SendableTransaction {
         self.sc_deploy_step.to_sendable_transaction()
+    }
+}
+
+impl<Env, From, Payment, Gas, Data, RH> SendableTransactionConvertible for Tx<Env, From, ManagedAddress<Env::Api>, Payment, Gas, Data, RH>
+    where
+        Env: TxEnv,
+        From: TxFrom<Env>,
+        Payment: TxPayment<Env> + Clone, // TODO: evil clone
+        Gas: TxGas<Env>,
+        Data: TxDataFunctionCall<Env>,
+        RH: TxResultHandler<Env>,
+{
+    fn to_sendable_transaction(&self) -> SendableTransaction {
+        let receiver = Address::from_bytes(self.to.to_byte_array()).to_bech32_string().unwrap();
+        let egld_value = self.payment
+            .clone() // TODO: evil clone
+            .into_full_payment_data(&self.env).egld
+            .map(|v| BigUint::from_bytes_be(v.value.to_bytes_be().as_slice()))
+            .unwrap_or_default();
+
+        SendableTransaction {
+            receiver,
+            egld_value,
+            gas_limit: self.gas.gas_value(&self.env),
+            data: self.to_call_data_string().to_string(),
+        }
     }
 }
 

@@ -1,8 +1,15 @@
 use async_trait::async_trait;
+use multiversx_sc::codec::TopDecodeMulti;
+use multiversx_sc::imports::EgldOrMultiEsdtPayment;
+use multiversx_sc_scenario::api::StaticApi;
+use multiversx_sc_scenario::imports::{AddressValue, Bech32Address};
 use multiversx_sc_scenario::scenario_model::{ScCallStep, ScDeployStep};
 use multiversx_sc_snippets::Interactor;
 use multiversx_sdk::wallet::Wallet;
-use novax_data::Address;
+use num_bigint::BigUint;
+use novax_data::{Address, NativeConvertible};
+use crate::call_result::CallResult;
+use crate::{ExecutorError, TokenTransfer};
 
 /// A trait defining the interaction interface with the blockchain.
 /// This trait abstracts the blockchain interaction, enabling developers to either use the provided `Interactor` struct from the `multiversx-sdk` crate or mock it for testing purposes.
@@ -40,9 +47,17 @@ pub trait BlockchainInteractor: Send + Sync {
     /// # Parameters
     ///
     /// * `sc_call_step`: An instance of `S` representing the smart contract call step.
-    async fn sc_call<S>(&mut self, sc_call_step: S)
+    async fn sc_call<OutputManaged>(
+        &mut self,
+        from: &Address,
+        to: &Address,
+        function: &str,
+        arguments: &[Vec<u8>],
+        gas_limit: u64,
+        payment: EgldOrMultiEsdtPayment<StaticApi>
+    ) -> Result<CallResult<OutputManaged::Native>, ExecutorError>
         where
-            S: AsMut<ScCallStep> + Send;
+            OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync;
 
     /// Deploys a smart contract on the blockchain.
     ///
@@ -108,8 +123,31 @@ impl BlockchainInteractor for Interactor {
     /// # Parameters
     ///
     /// * `sc_call_step`: An instance of `S` representing the smart contract call step.
-    async fn sc_call<S>(&mut self, sc_call_step: S) where S: AsMut<ScCallStep> + Send {
-        self.sc_call(sc_call_step).await;
+    async fn sc_call<OutputManaged>(
+        &mut self,
+        from: &Address,
+        to: &Address,
+        function: &str,
+        arguments: &[Vec<u8>],
+        gas_limit: u64,
+        payment: EgldOrMultiEsdtPayment<StaticApi>
+    ) -> Result<CallResult<OutputManaged::Native>, ExecutorError>
+        where
+            OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
+    {
+        let mut tx = self
+            .tx()
+            .from(AddressValue::from(from))
+            .to(Bech32Address::from_bech32_string(to.to_bech32_string()?))
+            .gas(gas_limit)
+            .egld_or_multi_esdt(payment)
+            .raw_call(function);
+
+        for argument in arguments {
+            tx = tx.argument(argument)
+        }
+
+        todo!()
     }
 
     /// Implements the `sc_deploy` method from the [`BlockchainInteractor`] trait.

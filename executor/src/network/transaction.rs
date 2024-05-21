@@ -4,7 +4,9 @@ use std::mem;
 use async_trait::async_trait;
 use multiversx_sc::api::{HandleTypeInfo, VMApi};
 use multiversx_sc::codec::{TopDecodeMulti, TopEncodeMulti};
-use multiversx_sc::imports::{TxEnv, TxFrom, TxGas, TxPayment, TxTo, TxTypedCall};
+use multiversx_sc::imports::{EgldOrMultiEsdtPayment, EsdtTokenPayment, TxEnv, TxFrom, TxGas, TxPayment, TxTo, TxTypedCall};
+use multiversx_sc::types::{ManagedVec, TokenIdentifier};
+use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::scenario_model::{ScCallStep, ScDeployStep, TypedScCall, TypedScDeploy};
 use multiversx_sc_snippets::Interactor;
 use multiversx_sdk::wallet::Wallet;
@@ -14,8 +16,10 @@ use crate::base::deploy::DeployExecutor;
 use crate::base::transaction::TransactionExecutor;
 use crate::call_result::CallResult;
 use crate::error::executor::ExecutorError;
+use crate::error::transaction::TransactionError;
 use crate::network::interactor::BlockchainInteractor;
 use crate::utils::transaction::token_transfer::TokenTransfer;
+use crate::utils::transaction::transfers::get_egld_or_esdt_transfers;
 
 /// Alias for the `BaseTransactionNetworkExecutor` struct, parameterized with the `Interactor` type.
 pub type NetworkExecutor = BaseTransactionNetworkExecutor<Interactor>;
@@ -106,7 +110,7 @@ impl<Interactor: BlockchainInteractor> TransactionExecutor for BaseTransactionNe
         &mut self,
         to: &Address,
         function: &str,
-        arguments: &[&[u8]],
+        arguments: &[Vec<u8>],
         gas_limit: u64,
         egld_value: &BigUint,
         esdt_transfers: &[TokenTransfer]
@@ -114,22 +118,23 @@ impl<Interactor: BlockchainInteractor> TransactionExecutor for BaseTransactionNe
         where
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
     {
-        /*
         let mut interactor = Interactor::new(&self.gateway_url).await;
-        let sender_address = interactor.register_wallet(self.wallet);
+        let from = interactor.register_wallet(self.wallet);
 
-        typed_call.from = sender_address;
+        let payment = get_egld_or_esdt_transfers(
+            egld_value,
+            esdt_transfers
+        )?;
 
-        typed_call
-            .prepare_async()
-            .run()
-            .await;
-
-        Ok(())
-
-         */
-
-        todo!()
+        interactor.sc_call::<OutputManaged>(
+            &from,
+            to,
+            function,
+            arguments,
+            gas_limit,
+            payment
+        )
+            .await
     }
 
     /// Indicates whether deserialization should be skipped during smart contract call execution.

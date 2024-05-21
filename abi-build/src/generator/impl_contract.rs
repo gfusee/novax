@@ -379,9 +379,9 @@ fn impl_abi_endpoint_call_query(
     abi_types: &AbiTypes
 ) -> Result<(TokenStream, TokenStream), BuildError> {
     let debug_api = get_api_generic_ident();
-    let proxy_mod_ident = format_ident!("{proxy_mod_name}");
     let contract_info_ident = format_ident!("{}", contract_info_name);
-    let function_name = format_ident!("{}", abi_endpoint.name.to_case(Case::Snake));
+    let endpoint_name = abi_endpoint.name.as_str();
+    let function_name_ident = format_ident!("{}", abi_endpoint.name.to_case(Case::Snake));
     let function_inputs = impl_endpoint_inputs(true, &abi_endpoint.inputs, abi_types)?;
     let mut managed_outputs_idents: Vec<TokenStream> = vec![];
     let mut native_outputs_idents: Vec<TokenStream> = vec![];
@@ -410,6 +410,9 @@ fn impl_abi_endpoint_call_query(
         } else {
             EgldOrMultiEsdtPayment::Egld(BigUint::<#debug_api>::from(0u8))
         };
+
+        let mut _novax_bytes_args: std::vec::Vec<std::vec::Vec<u8>> = vec![];
+        #(#endpoint_args_inputs) *
     };
 
     let call_token = quote! {
@@ -423,16 +426,16 @@ fn impl_abi_endpoint_call_query(
         ///
         /// # Returns
         /// A `Result` containing a `CallResult` with the `#function_native_outputs` or a `NovaXError` if the call fails.
-        pub async fn #function_name(#function_inputs) -> Result<CallResult<#function_native_outputs>, NovaXError> {
+        pub async fn #function_name_ident(#function_inputs) -> Result<CallResult<#function_native_outputs>, NovaXError> {
             #common_token
 
             let result = self.executor.sc_call::<#function_managed_outputs>(
                     &_novax_contract_address,
-                    "todo",
-                    &vec![], // TODO
-                    0, // TODO
-                    &num_bigint::BigUint::from(0u8), // TODO
-                    &vec![], // TODO
+                    #endpoint_name,
+                    &_novax_bytes_args,
+                    self.gas_limit,
+                    &self.egld_value,
+                    &self.token_transfers,
             ).await?;
 
             Result::Ok(result)
@@ -450,7 +453,7 @@ fn impl_abi_endpoint_call_query(
         ///
         /// # Returns
         /// A `Result` containing the `#function_native_outputs` or a `NovaXError` if the query fails.
-        pub async fn #function_name(#function_inputs) -> Result<#function_native_outputs, NovaXError> {
+        pub async fn #function_name_ident(#function_inputs) -> Result<#function_native_outputs, NovaXError> {
             #common_token
             #endpoint_query_key
             self.caching.get_or_set_cache(
@@ -459,7 +462,7 @@ fn impl_abi_endpoint_call_query(
                     let result = self.executor
                         .execute::<#function_managed_outputs>(
                             &_novax_contract_address,
-                            "todo",
+                            #endpoint_name,
                             &vec![], // TODO
                             &num_bigint::BigUint::from(0u8), // TODO
                             &vec![], // TODO
@@ -522,6 +525,9 @@ fn impl_abi_constructor(contract_info_name: &str, abi_constructor: &AbiConstruct
 
             let _novax_code_bytes = _novax_deploy_data.code.into_bytes_value().await?;
 
+            todo!();
+
+            /*
             let mut _novax_deploy_step = ScDeployStep::new()
                 .call(_novax_contract.init(#(#endpoint_args_inputs), *))
                 .gas_limit(gas_limit)
@@ -557,6 +563,8 @@ fn impl_abi_constructor(contract_info_name: &str, abi_constructor: &AbiConstruct
             };
 
             Result::Ok((_novax_new_address, _novax_call_result))
+
+             */
         }
     };
 
@@ -633,7 +641,17 @@ fn impl_endpoint_args_for_call(abi_inputs: &AbiInputs, all_abi_types: &AbiTypes)
         inputs_let_idents.push(quote! {
             let #input_managed_name_ident: #input_managed_type = #input_name_ident.to_managed();
         });
-        inputs_function_arg_idents.push(input_managed_name_ident.into_token_stream());
+        inputs_function_arg_idents.push(quote! {
+            {
+                let mut _novax_top_encoded_args = ManagedVec::<#static_api, ManagedBuffer<#static_api>>::new();
+                #input_managed_name_ident.multi_encode(&mut _novax_top_encoded_args);
+
+                for _novax_top_encoded_arg in _novax_top_encoded_args.into_iter() {
+                    _novax_bytes_args.push(_novax_top_encoded_arg.to_boxed_bytes().into_vec());
+                }
+            }
+
+        });
     }
     let let_statements_result = quote! {
         #(#inputs_let_idents)*

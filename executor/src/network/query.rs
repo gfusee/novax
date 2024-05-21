@@ -55,7 +55,7 @@ impl<Proxy: BlockchainProxy> QueryExecutor for QueryNetworkExecutor<Proxy> {
         &self,
         to: &novax_data::Address,
         function: &str,
-        arguments: &[&[u8]],
+        arguments: &[Vec<u8>],
         egld_value: &BigUint,
         esdt_transfers: &[TokenTransfer]
     ) -> Result<OutputManaged::Native, ExecutorError>
@@ -102,7 +102,7 @@ impl QueryExecutor for &str {
         &self,
         to: &novax_data::Address,
         function: &str,
-        arguments: &[&[u8]],
+        arguments: &[Vec<u8>],
         egld_value: &BigUint,
         esdt_transfers: &[TokenTransfer]
     ) -> Result<OutputManaged::Native, ExecutorError>
@@ -127,7 +127,7 @@ impl QueryExecutor for String {
         &self,
         to: &novax_data::Address,
         function: &str,
-        arguments: &[&[u8]],
+        arguments: &[Vec<u8>],
         egld_value: &BigUint,
         esdt_transfers: &[TokenTransfer]
     ) -> Result<OutputManaged::Native, ExecutorError>

@@ -32,7 +32,7 @@ pub trait TransactionExecutor: Send + Sync {
         &mut self,
         to: &Address,
         function: &str,
-        arguments: &[&[u8]],
+        arguments: &[Vec<u8>],
         gas_limit: u64,
         egld_value: &BigUint,
         esdt_transfers: &[TokenTransfer]
@@ -61,7 +61,7 @@ impl<T: TransactionExecutor> TransactionExecutor for Arc<Mutex<T>> {
         &mut self,
         to: &Address,
         function: &str,
-        arguments: &[&[u8]],
+        arguments: &[Vec<u8>],
         gas_limit: u64,
         egld_value: &BigUint,
         esdt_transfers: &[TokenTransfer]

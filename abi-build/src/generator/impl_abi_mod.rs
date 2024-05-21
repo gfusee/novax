@@ -126,5 +126,6 @@ fn get_mod_imports() -> TokenStream {
         use novax_data::Address;
         use multiversx_sc_scenario::imports::Bech32Address;
         use core::marker::PhantomData;
+        use multiversx_sc_codec::TopEncodeMulti;
    }
 }

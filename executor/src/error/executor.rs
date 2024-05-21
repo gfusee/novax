@@ -1,8 +1,10 @@
 use crate::error::network::NetworkQueryError;
 use serde::{Deserialize, Serialize};
 use novax_data::DataError;
+use crate::error::dummy::DummyExecutorError;
 use crate::error::gateway::GatewayError;
 use crate::error::mock_deploy::MockDeployError;
+use crate::error::transaction::TransactionError;
 use crate::SimulationError;
 
 /// An enumeration representing the various types of errors that can be encountered within the executor context.
@@ -12,6 +14,8 @@ pub enum ExecutorError {
     /// failures or malformed requests. The wrapped `NetworkQueryError` provides more detailed information about
     /// the nature of the network-related error that occurred.
     NetworkQuery(NetworkQueryError),
+
+    Dummy(DummyExecutorError),
 
     /// Represents errors specifically related to interactions with the MultiversX gateway. This can include
     /// HTTP request issues, response parsing errors, and other anomalies encountered while communicating
@@ -34,6 +38,8 @@ pub enum ExecutorError {
     /// `MockExecutor` for testing or simulation purposes. The wrapped `MockDeployError` provides more detailed
     /// information about the nature of the mock deployment-related error that occurred.
     MockDeploy(MockDeployError),
+
+    Transaction(TransactionError),
 }
 
 /// An implementation of the `From` trait to allow for easy conversions from `DataError` to `ExecutorError`.

@@ -35,7 +35,7 @@ pub trait QueryExecutor: Clone + Send + Sync {
         &self,
         to: &Address,
         function: &str,
-        arguments: &[&[u8]],
+        arguments: &[Vec<u8>],
         egld_value: &BigUint,
         esdt_transfers: &[TokenTransfer]
     ) -> Result<OutputManaged::Native, ExecutorError>
@@ -52,7 +52,7 @@ impl<T: QueryExecutor> QueryExecutor for Arc<T> {
         &self,
         to: &Address,
         function: &str,
-        arguments: &[&[u8]],
+        arguments: &[Vec<u8>],
         egld_value: &BigUint,
         esdt_transfers: &[TokenTransfer]
     ) -> Result<OutputManaged::Native, ExecutorError>
@@ -79,7 +79,7 @@ impl<T: QueryExecutor> QueryExecutor for Arc<Mutex<T>> {
         &self,
         to: &Address,
         function: &str,
-        arguments: &[&[u8]],
+        arguments: &[Vec<u8>],
         egld_value: &BigUint,
         esdt_transfers: &[TokenTransfer]
     ) -> Result<OutputManaged::Native, ExecutorError>

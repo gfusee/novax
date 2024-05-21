@@ -6,8 +6,10 @@ use tokio::sync::Mutex;
 use novax::{Address, Wallet};
 use novax::errors::NovaXError;
 use num_bigint::{BigInt, BigUint};
+use novax::data::NativeConvertible;
 use novax::tester::tester::{CustomEnum, CustomEnumWithFields, CustomEnumWithValues, CustomStruct, CustomStructWithStructAndVec, TesterContract};
-use novax::executor::{BaseTransactionNetworkExecutor, BlockchainInteractor, NetworkExecutor, SendableTransactionConvertible};
+use novax::executor::{BaseTransactionNetworkExecutor, BlockchainInteractor, ExecutorError, NetworkExecutor, SendableTransactionConvertible, TokenTransfer, TopDecodeMulti};
+use novax::executor::call_result::CallResult;
 use novax_mocking::{ScCallStep, ScDeployStep, TxResponse};
 use crate::utils::decode_scr_data::decode_scr_data_or_panic;
 
@@ -27,7 +29,18 @@ impl BlockchainInteractor for MockInteractor {
         Address::from_bech32_string(CALLER).unwrap()
     }
 
-    async fn sc_call<S>(&mut self, mut sc_call_step: S) where S: AsMut<ScCallStep> + Send {
+    async fn sc_call<OutputManaged>(
+        &mut self,
+        to: &Address,
+        function: &str,
+        arguments: &[Vec<u8>],
+        gas_limit: u64,
+        egld_value: &BigUint,
+        esdt_transfers: &[TokenTransfer]
+    ) -> Result<CallResult<OutputManaged::Native>, ExecutorError>
+        where
+            OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
+    {
         let mut return_data: Option<String> = None;
         let call_step = sc_call_step.as_mut();
         let sendable_transaction = call_step.tx.to_sendable_transaction();
