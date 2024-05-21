@@ -72,6 +72,9 @@ pub use multiversx_sdk::data::vm::VMOutputApi;
 pub use multiversx_sdk::wallet::Wallet;
 pub use novax_data::Address;
 pub use multiversx_sc::types::CodeMetadata;
+use multiversx_sc_scenario::imports::StaticApi;
+
+pub type EgldOrMultiEsdtPayment = multiversx_sc::types::EgldOrMultiEsdtPayment<StaticApi>;
 
 /// The `executor` module provides re-exports of functionalities from the `novax_executor` crate.
 ///

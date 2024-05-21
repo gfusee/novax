@@ -3,12 +3,12 @@ mod utils;
 use std::sync::Arc;
 use async_trait::async_trait;
 use tokio::sync::Mutex;
-use novax::{Address, Wallet};
+use novax::{Address, EgldOrMultiEsdtPayment, Wallet};
 use novax::errors::NovaXError;
 use num_bigint::{BigInt, BigUint};
 use novax::data::NativeConvertible;
 use novax::tester::tester::{CustomEnum, CustomEnumWithFields, CustomEnumWithValues, CustomStruct, CustomStructWithStructAndVec, TesterContract};
-use novax::executor::{BaseTransactionNetworkExecutor, BlockchainInteractor, ExecutorError, NetworkExecutor, SendableTransactionConvertible, TokenTransfer, TopDecodeMulti};
+use novax::executor::{BaseTransactionNetworkExecutor, BlockchainInteractor, DummyTransactionExecutor, ExecutorError, NetworkExecutor, SendableTransactionConvertible, TokenTransfer, TopDecodeMulti, TransactionExecutor};
 use novax::executor::call_result::CallResult;
 use novax_mocking::{ScCallStep, ScDeployStep, TxResponse};
 use crate::utils::decode_scr_data::decode_scr_data_or_panic;
@@ -31,20 +31,51 @@ impl BlockchainInteractor for MockInteractor {
 
     async fn sc_call<OutputManaged>(
         &mut self,
+        from: &Address,
         to: &Address,
         function: &str,
         arguments: &[Vec<u8>],
         gas_limit: u64,
-        egld_value: &BigUint,
-        esdt_transfers: &[TokenTransfer]
+        payment: EgldOrMultiEsdtPayment
     ) -> Result<CallResult<OutputManaged::Native>, ExecutorError>
         where
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
     {
+        let (egld_value, esdt_transfers) = match payment {
+            EgldOrMultiEsdtPayment::Egld(value) => (value.to_alloc(), vec![]),
+            EgldOrMultiEsdtPayment::MultiEsdt(transfers) => {
+                let payments: Vec<TokenTransfer> = transfers
+                    .into_iter()
+                    .map(|transfer| {
+                        TokenTransfer {
+                            identifier: transfer.token_identifier.to_string(),
+                            nonce: transfer.token_nonce,
+                            amount: transfer.amount.to_alloc(),
+                        }
+                    })
+                    .collect();
+
+                (BigUint::from(0u8), payments)
+            }
+        };
+        let mut dummy_executor = DummyTransactionExecutor::new(&None);
+        _ = dummy_executor.sc_call::<OutputManaged>(
+            to,
+            function,
+            arguments,
+            gas_limit,
+            &egld_value,
+            &esdt_transfers
+        )
+            .await
+            .unwrap();
+
+        let data = dummy_executor
+            .get_transaction_details()
+            .unwrap()
+            .data;
         let mut return_data: Option<String> = None;
-        let call_step = sc_call_step.as_mut();
-        let sendable_transaction = call_step.tx.to_sendable_transaction();
-        let data = sendable_transaction.data;
+
         if data == "returnCaller" {
             return_data = Some("@6f6b@5393e5fe16508e5a31db9b6f9eda760c79d077c6e00f5f4f9bb3bfbc309a7b8c".to_string());
         } else if data == "getSum" {
@@ -128,9 +159,15 @@ impl BlockchainInteractor for MockInteractor {
             panic!("Unknown data for : \"{data}\"");
         };
 
-        let response = TxResponse::from_raw_results(decode_scr_data_or_panic(&return_data));
+        let mut return_data_bytes= decode_scr_data_or_panic(&return_data);
 
-        call_step.response = Some(response);
+        let response = TxResponse::from_raw_results(return_data_bytes.clone());
+        let decoded = OutputManaged::multi_decode(&mut return_data_bytes).unwrap();
+
+        return Ok(CallResult {
+            response,
+            result: Some(decoded.to_native()),
+        })
     }
 
     async fn sc_deploy<S>(&mut self, _sc_deploy_step: S) where S: AsMut<ScDeployStep> + Send {
