@@ -138,8 +138,8 @@ impl<Client: GatewayClient> TransactionExecutor for BaseSimulationNetworkExecuto
         function: &str,
         arguments: &[Vec<u8>],
         gas_limit: u64,
-        egld_value: &BigUint,
-        esdt_transfers: &[TokenTransfer]
+        egld_value: BigUint,
+        esdt_transfers: Vec<TokenTransfer>
     ) -> Result<CallResult<OutputManaged::Native>, ExecutorError>
         where
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync

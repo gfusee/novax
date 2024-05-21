@@ -112,13 +112,13 @@ impl<Interactor: BlockchainInteractor> TransactionExecutor for BaseTransactionNe
         function: &str,
         arguments: &[Vec<u8>],
         gas_limit: u64,
-        egld_value: &BigUint,
-        esdt_transfers: &[TokenTransfer]
+        egld_value: BigUint,
+        esdt_transfers: Vec<TokenTransfer>
     ) -> Result<CallResult<OutputManaged::Native>, ExecutorError>
         where
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
     {
-        let mut interactor = Interactor::new(&self.gateway_url).await;
+        let mut interactor = Interactor::new(self.gateway_url.clone()).await;
         let from = interactor.register_wallet(self.wallet);
 
         let payment = get_egld_or_esdt_transfers(
@@ -126,7 +126,7 @@ impl<Interactor: BlockchainInteractor> TransactionExecutor for BaseTransactionNe
             esdt_transfers
         )?;
 
-        interactor.sc_call::<OutputManaged>(
+        let result = interactor.sc_call(
             &from,
             to,
             function,
@@ -134,7 +134,9 @@ impl<Interactor: BlockchainInteractor> TransactionExecutor for BaseTransactionNe
             gas_limit,
             payment
         )
-            .await
+            .await;
+
+        todo!()
     }
 
     /// Indicates whether deserialization should be skipped during smart contract call execution.
@@ -177,7 +179,7 @@ impl<Interactor: BlockchainInteractor> DeployExecutor for BaseTransactionNetwork
     {
         let sc_deploy_step = sc_deploy_step.as_mut();
         let owned_sc_deploy_step = mem::replace(sc_deploy_step, ScDeployStep::new());
-        let mut interactor = Interactor::new(&self.gateway_url).await;
+        let mut interactor = Interactor::new(self.gateway_url.clone()).await;
         let sender_address = interactor.register_wallet(self.wallet);
         *sc_deploy_step = owned_sc_deploy_step.from(&multiversx_sc::types::Address::from(sender_address.to_bytes()));
 

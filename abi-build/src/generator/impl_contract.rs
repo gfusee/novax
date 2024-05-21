@@ -434,8 +434,8 @@ fn impl_abi_endpoint_call_query(
                     #endpoint_name,
                     &_novax_bytes_args,
                     self.gas_limit,
-                    &self.egld_value,
-                    &self.token_transfers,
+                    self.egld_value.clone(),
+                    self.token_transfers.clone(),
             ).await?;
 
             Result::Ok(result)
