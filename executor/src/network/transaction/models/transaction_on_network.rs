@@ -1,0 +1,36 @@
+use serde::Deserialize;
+
+#[derive(Deserialize, Clone, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct TransactionOnNetworkResponse {
+    pub data: Option<TransactionOnNetwork>,
+    pub error: String
+}
+
+#[derive(Deserialize, Clone, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct TransactionOnNetwork {
+    pub transaction: TransactionOnNetworkTransaction
+}
+
+#[derive(Deserialize, Clone, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct TransactionOnNetworkTransaction {
+    pub gas_used: u64,
+    pub smart_contract_results: Option<Vec<TransactionOnNetworkTransactionSmartContractResult>>,
+    pub status: String,
+}
+
+#[derive(Deserialize, Clone, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct TransactionOnNetworkTransactionSmartContractResult {
+    pub hash: String,
+    pub nonce: u64,
+    pub data: String,
+}
+
+impl TransactionOnNetwork {
+    pub fn is_success(&self) -> bool {
+        true // TODO
+    }
+}

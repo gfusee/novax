@@ -5,3 +5,4 @@ pub mod gateway;
 pub mod simulation;
 pub mod transaction;
 pub mod dummy;
+pub mod wallet;

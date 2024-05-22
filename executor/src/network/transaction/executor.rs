@@ -1,12 +1,9 @@
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
-use std::mem;
 
 use async_trait::async_trait;
 use multiversx_sc::codec::{TopDecodeMulti, TopEncodeMulti};
-use multiversx_sc_scenario::scenario_model::{ScDeployStep, TypedScDeploy};
-use multiversx_sc_snippets::Interactor;
-use multiversx_sdk::wallet::Wallet;
+use multiversx_sc_scenario::scenario_model::TypedScDeploy;
 use num_bigint::BigUint;
 
 use novax_data::{Address, NativeConvertible};
@@ -15,9 +12,11 @@ use crate::base::deploy::DeployExecutor;
 use crate::base::transaction::TransactionExecutor;
 use crate::call_result::CallResult;
 use crate::error::executor::ExecutorError;
-use crate::network::interactor::BlockchainInteractor;
+use crate::error::transaction::TransactionError;
+use crate::network::transaction::interactor::{BlockchainInteractor, Interactor};
+use crate::network::utils::wallet::Wallet;
+use crate::{TransactionOnNetwork, TransactionOnNetworkTransactionSmartContractResult};
 use crate::utils::transaction::token_transfer::TokenTransfer;
-use crate::utils::transaction::transfers::get_egld_or_esdt_transfers;
 
 /// Alias for the `BaseTransactionNetworkExecutor` struct, parameterized with the `Interactor` type.
 pub type NetworkExecutor = BaseTransactionNetworkExecutor<Interactor>;
@@ -43,8 +42,8 @@ pub struct BaseTransactionNetworkExecutor<Interactor: BlockchainInteractor> {
 /// affect the state of `BaseTransactionNetworkExecutor`), we can safely implement `Clone`
 /// without the `Interactor` needing to be `Clone`.
 impl<Interactor> Clone for BaseTransactionNetworkExecutor<Interactor>
-where
-    Interactor: BlockchainInteractor
+    where
+        Interactor: BlockchainInteractor
 {
     fn clone(&self) -> Self {
         Self {
@@ -94,16 +93,6 @@ impl<Interactor: BlockchainInteractor> BaseTransactionNetworkExecutor<Interactor
 
 #[async_trait]
 impl<Interactor: BlockchainInteractor> TransactionExecutor for BaseTransactionNetworkExecutor<Interactor> {
-    /// Executes a smart contract call on the blockchain.
-    ///
-    /// # Parameters
-    /// - `sc_call_step`: A mutable reference to the smart contract call step.
-    ///
-    /// # Type Parameters
-    /// - `OriginalResult`: The type of the result expected from the smart contract call. Must implement the `Send` trait.
-    ///
-    /// # Returns
-    /// - A `Result` with an empty `Ok(())` value if the call is successful, or an `Err(ExecutorError)` if the call fails.
     async fn sc_call<OutputManaged>(
         &mut self,
         to: &Address,
@@ -116,36 +105,37 @@ impl<Interactor: BlockchainInteractor> TransactionExecutor for BaseTransactionNe
         where
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
     {
-        let mut interactor = Interactor::new(self.gateway_url.clone()).await;
-        let from = interactor.register_wallet(self.wallet);
+        let mut interactor = Interactor::new(
+            self.gateway_url.clone(),
+            self.wallet
+        )
+            .await?;
 
-        let payment = get_egld_or_esdt_transfers(
-            egld_value,
-            esdt_transfers
-        )?;
+        let data = "".to_string(); // TODO
 
         let result = interactor.sc_call(
-            &from,
-            to,
-            function,
-            arguments,
+            to.to_bech32_string()?,
+            egld_value, // TODO: normalize
+            data,
             gas_limit,
-            payment
         )
-            .await;
+            .await?;
 
-        todo!()
-    }
+        let Some(mut sc_result) = find_smart_contract_result(&result.transaction.smart_contract_results) else {
+            return Err(TransactionError::NoSmartContractResult.into())
+        };
 
-    /// Indicates whether deserialization should be skipped during smart contract call execution.
-    ///
-    /// In the context of a real blockchain environment, deserialization is not skipped,
-    /// hence this method returns `false`.
-    ///
-    /// # Returns
-    /// - A boolean value `false`, indicating that deserialization should not be skipped.
-    async fn should_skip_deserialization(&self) -> bool {
-        false
+        let managed_result = OutputManaged::multi_decode(&mut sc_result)
+            .map_err(|_| TransactionError::CannotDecodeSmartContractResult)?;
+
+        let native_result = managed_result.to_native();
+
+        let call_result = CallResult {
+            response: result,
+            result: Some(native_result),
+        };
+
+        Ok(call_result)
     }
 }
 
@@ -175,15 +165,7 @@ impl<Interactor: BlockchainInteractor> DeployExecutor for BaseTransactionNetwork
         where
             OriginalResult: TopEncodeMulti + Send + Sync,
     {
-        let sc_deploy_step = sc_deploy_step.as_mut();
-        let owned_sc_deploy_step = mem::replace(sc_deploy_step, ScDeployStep::new());
-        let mut interactor = Interactor::new(self.gateway_url.clone()).await;
-        let sender_address = interactor.register_wallet(self.wallet);
-        *sc_deploy_step = owned_sc_deploy_step.from(&multiversx_sc::types::Address::from(sender_address.to_bytes()));
-
-        interactor.sc_deploy(sc_deploy_step).await;
-
-        Ok(())
+        todo!()
     }
 
     /// Specifies whether deserialization should be skipped during the deployment execution.
@@ -195,4 +177,24 @@ impl<Interactor: BlockchainInteractor> DeployExecutor for BaseTransactionNetwork
     async fn should_skip_deserialization(&self) -> bool {
         false
     }
+}
+
+fn find_smart_contract_result(opt_sc_results: &Option<Vec<TransactionOnNetworkTransactionSmartContractResult>>) -> Option<Vec<Vec<u8>>> {
+    let Some(sc_results) = opt_sc_results else {
+        return None
+    };
+
+    sc_results.iter()
+        .find(|sc_result| sc_result.nonce != 0 && sc_result.data.starts_with('@'))
+        .cloned()
+        .map(|sc_result| {
+            let mut split = sc_result.data.split('@');
+            let _ = split.next().expect("SCR data should start with '@'"); // TODO: no expect and assert_eq!
+            let result_code = split.next().expect("missing result code");
+            assert_eq!(result_code, "6f6b", "result code is not 'ok'");
+
+            split
+                .map(|encoded_arg| hex::decode(encoded_arg).expect("error hex-decoding result"))
+                .collect()
+        })
 }

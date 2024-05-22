@@ -119,11 +119,6 @@ impl TransactionExecutor for DummyExecutor<SendableTransaction> {
 
         Ok(dummy_result)
     }
-
-    /// Indicates that deserialization should be skipped as there is no actual execution.
-    async fn should_skip_deserialization(&self) -> bool {
-        true
-    }
 }
 
 #[async_trait]

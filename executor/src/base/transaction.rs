@@ -37,16 +37,6 @@ pub trait TransactionExecutor: Send + Sync {
     ) -> Result<CallResult<OutputManaged::Native>, ExecutorError>
         where
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync;
-
-    /// Determines whether deserialization should be skipped during the smart contract call execution.
-    ///
-    /// This method is particularly useful for implementations like `DummyExecutor` which do not perform
-    /// any actual calls, thus deserializing a non-existent result would lead to an error. In such cases,
-    /// this method should return `true` to skip deserialization, preventing potential errors.
-    ///
-    /// # Returns
-    /// - A `bool` indicating whether deserialization should be skipped.
-    async fn should_skip_deserialization(&self) -> bool;
 }
 
 /// An implementation of `TransactionExecutor` trait for types wrapped in `Arc<Mutex<T>>`.
@@ -78,17 +68,6 @@ impl<T: TransactionExecutor> TransactionExecutor for Arc<Mutex<T>> {
                 egld_value,
                 esdt_transfers
             ).await
-        }
-    }
-
-    /// Determines whether deserialization should be skipped during the smart contract call execution.
-    async fn should_skip_deserialization(&self) -> bool {
-        {
-            // Acquire a lock to access the underlying executor.
-            // Note: The lock here could lead to some performance penalty. A potential solution could be using
-            // another type of locking mechanism like `RwLock`.
-            let executor = self.lock().await;
-            executor.should_skip_deserialization().await
         }
     }
 }

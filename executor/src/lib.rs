@@ -63,9 +63,10 @@ pub use base::deploy::DeployExecutor;
 
 pub use network::query::executor::ProxyQueryExecutor;
 pub use network::query::executor::QueryNetworkExecutor;
-pub use network::transaction::NetworkExecutor;
-pub use network::transaction::BaseTransactionNetworkExecutor;
-pub use network::interactor::BlockchainInteractor;
+pub use network::utils::wallet::Wallet;
+pub use network::transaction::executor::NetworkExecutor;
+pub use network::transaction::executor::BaseTransactionNetworkExecutor;
+pub use network::transaction::interactor::BlockchainInteractor;
 pub use network::query::proxy::BlockchainProxy;
 pub use network::simulate::SimulationNetworkExecutor;
 pub use network::simulate::BaseSimulationNetworkExecutor;
@@ -74,6 +75,10 @@ pub use network::models::simulate::response::SimulationGatewayResponse;
 pub use network::query::models::request::VmValuesQueryRequest;
 pub use network::query::models::response::VmValuesQueryResponseData;
 pub use network::query::models::response::VmValuesQueryResponseDataData;
+pub use network::transaction::models::transaction_on_network::TransactionOnNetworkResponse;
+pub use network::transaction::models::transaction_on_network::TransactionOnNetwork;
+pub use network::transaction::models::transaction_on_network::TransactionOnNetworkTransaction;
+pub use network::transaction::models::transaction_on_network::TransactionOnNetworkTransactionSmartContractResult;
 
 pub use mocking::executor::StandardMockExecutor;
 pub use mocking::executor::MockExecutor;

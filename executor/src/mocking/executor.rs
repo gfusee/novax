@@ -112,17 +112,6 @@ impl<A> TransactionExecutor for MockExecutor<A>
 
         todo!()
     }
-
-    /// Specifies whether deserialization should be skipped during the smart contract call execution.
-    ///
-    /// In the context of the mocked environment, deserialization is not skipped,
-    /// hence this method returns `false`.
-    ///
-    /// # Returns
-    /// - A boolean value `false`, indicating that deserialization should not be skipped.
-    async fn should_skip_deserialization(&self) -> bool {
-        false
-    }
 }
 
 /// Mock implementation of the `DeployExecutor` trait for testing and development purposes.

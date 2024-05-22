@@ -3,12 +3,12 @@ mod utils;
 use std::sync::Arc;
 use async_trait::async_trait;
 use tokio::sync::Mutex;
-use novax::{Address, EgldOrMultiEsdtPayment, Wallet};
+use novax::{Address, EgldOrMultiEsdtPayment};
 use novax::errors::NovaXError;
 use num_bigint::{BigInt, BigUint};
 use novax::data::NativeConvertible;
 use novax::tester::tester::{CustomEnum, CustomEnumWithFields, CustomEnumWithValues, CustomStruct, CustomStructWithStructAndVec, TesterContract};
-use novax::executor::{BaseTransactionNetworkExecutor, BlockchainInteractor, DummyTransactionExecutor, ExecutorError, NetworkExecutor, SendableTransactionConvertible, TokenTransfer, TopDecodeMulti, TransactionExecutor};
+use novax::executor::{BaseTransactionNetworkExecutor, BlockchainInteractor, DummyTransactionExecutor, ExecutorError, NetworkExecutor, SendableTransactionConvertible, TokenTransfer, TopDecodeMulti, TransactionExecutor, TransactionOnNetwork, TransactionOnNetworkTransaction, TransactionOnNetworkTransactionSmartContractResult, Wallet};
 use novax::executor::call_result::CallResult;
 use novax_mocking::{ScCallStep, ScDeployStep, TxResponse};
 use crate::utils::decode_scr_data::decode_scr_data_or_panic;
@@ -21,59 +21,18 @@ struct MockInteractor;
 
 #[async_trait]
 impl BlockchainInteractor for MockInteractor {
-    async fn new(_gateway_url: &str) -> Self {
-        MockInteractor
+    async fn new(gateway_url: String, wallet: Wallet) -> Result<Self, ExecutorError> {
+        Ok(MockInteractor)
     }
 
-    fn register_wallet(&mut self, _wallet: Wallet) -> Address {
-        Address::from_bech32_string(CALLER).unwrap()
-    }
-
-    async fn sc_call<OutputManaged>(
+    async fn sc_call(
         &mut self,
-        from: &Address,
-        to: &Address,
-        function: String,
-        arguments: &[Vec<u8>],
-        gas_limit: u64,
-        payment: EgldOrMultiEsdtPayment
-    ) -> Result<CallResult<OutputManaged::Native>, ExecutorError>
-        where
-            OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
+        to: String,
+        value: BigUint,
+        data: String,
+        gas_limit: u64
+    ) -> Result<TransactionOnNetwork, ExecutorError>
     {
-        let (egld_value, esdt_transfers) = match payment {
-            EgldOrMultiEsdtPayment::Egld(value) => (value.to_alloc(), vec![]),
-            EgldOrMultiEsdtPayment::MultiEsdt(transfers) => {
-                let payments: Vec<TokenTransfer> = transfers
-                    .into_iter()
-                    .map(|transfer| {
-                        TokenTransfer {
-                            identifier: transfer.token_identifier.to_string(),
-                            nonce: transfer.token_nonce,
-                            amount: transfer.amount.to_alloc(),
-                        }
-                    })
-                    .collect();
-
-                (BigUint::from(0u8), payments)
-            }
-        };
-        let mut dummy_executor = DummyTransactionExecutor::new(&None);
-        _ = dummy_executor.sc_call::<OutputManaged>(
-            to,
-            function,
-            arguments,
-            gas_limit,
-            &egld_value,
-            &esdt_transfers
-        )
-            .await
-            .unwrap();
-
-        let data = dummy_executor
-            .get_transaction_details()
-            .unwrap()
-            .data;
         let mut return_data: Option<String> = None;
 
         if data == "returnCaller" {
@@ -159,15 +118,21 @@ impl BlockchainInteractor for MockInteractor {
             panic!("Unknown data for : \"{data}\"");
         };
 
-        let mut return_data_bytes= decode_scr_data_or_panic(&return_data);
+        let response = TransactionOnNetwork {
+            transaction: TransactionOnNetworkTransaction {
+                gas_used: 0,
+                smart_contract_results: Some(vec![
+                    TransactionOnNetworkTransactionSmartContractResult {
+                        hash: "".to_string(),
+                        nonce: 1,
+                        data,
+                    }
+                ]),
+                status: "executed".to_string(),
+            },
+        };
 
-        let response = TxResponse::from_raw_results(return_data_bytes.clone());
-        let decoded = OutputManaged::multi_decode(&mut return_data_bytes).unwrap();
-
-        return Ok(CallResult {
-            response,
-            result: Some(decoded.to_native()),
-        })
+        return Ok(response)
     }
 
     async fn sc_deploy<S>(&mut self, _sc_deploy_step: S) where S: AsMut<ScDeployStep> + Send {

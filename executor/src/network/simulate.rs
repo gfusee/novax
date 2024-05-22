@@ -207,12 +207,6 @@ impl<Client: GatewayClient> TransactionExecutor for BaseSimulationNetworkExecuto
 
         todo!()
     }
-
-    /// Indicates whether deserialization should be skipped during execution.
-    /// Always returns `false` for this implementation.
-    async fn should_skip_deserialization(&self) -> bool {
-        false
-    }
 }
 
 /// Processes the output of a transaction response.

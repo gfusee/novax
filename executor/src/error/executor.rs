@@ -5,6 +5,7 @@ use crate::error::dummy::DummyExecutorError;
 use crate::error::gateway::GatewayError;
 use crate::error::mock_deploy::MockDeployError;
 use crate::error::transaction::TransactionError;
+use crate::error::wallet::WalletError;
 use crate::SimulationError;
 
 /// An enumeration representing the various types of errors that can be encountered within the executor context.
@@ -40,6 +41,7 @@ pub enum ExecutorError {
     MockDeploy(MockDeployError),
 
     Transaction(TransactionError),
+    Wallet(WalletError),
 }
 
 /// An implementation of the `From` trait to allow for easy conversions from `DataError` to `ExecutorError`.

@@ -1,4 +1,4 @@
-use multiversx_sc_scenario::scenario_model::TxResponse;
+use crate::TransactionOnNetwork;
 
 /// A structure encapsulating the result of a contract call.
 ///
@@ -11,7 +11,7 @@ pub struct CallResult<T> {
     /// This field holds all the general transaction-related information returned after a contract call,
     /// such as the transaction status, error messages (if any), and other relevant data pertaining to
     /// the transaction execution.
-    pub response: TxResponse,
+    pub response: TransactionOnNetwork,
 
     /// The result data returned by the contract call, if any.
     ///
