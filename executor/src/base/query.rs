@@ -1,7 +1,6 @@
 use std::sync::Arc;
 use async_trait::async_trait;
 use multiversx_sc_scenario::multiversx_sc::codec::TopDecodeMulti;
-use multiversx_sc_scenario::scenario_model::ScCallStep;
 use num_bigint::BigUint;
 use tokio::sync::Mutex;
 use novax_data::{Address, NativeConvertible};
@@ -15,7 +14,7 @@ use crate::TokenTransfer;
 /// sending a query request, executing the query on the blockchain or mocked environment,
 /// and returning the result of the query.
 #[async_trait]
-pub trait QueryExecutor: Clone + Send + Sync {
+pub trait QueryExecutor: Send + Sync {
     /// Executes a smart contract query and returns the result.
     ///
     /// # Parameters
@@ -34,10 +33,10 @@ pub trait QueryExecutor: Clone + Send + Sync {
     async fn execute<OutputManaged>(
         &self,
         to: &Address,
-        function: &str,
+        function: String,
         arguments: &[Vec<u8>],
-        egld_value: &BigUint,
-        esdt_transfers: &[TokenTransfer]
+        egld_value: BigUint,
+        esdt_transfers: Vec<TokenTransfer>
     ) -> Result<OutputManaged::Native, ExecutorError>
         where
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync;
@@ -51,10 +50,10 @@ impl<T: QueryExecutor> QueryExecutor for Arc<T> {
     async fn execute<OutputManaged>(
         &self,
         to: &Address,
-        function: &str,
+        function: String,
         arguments: &[Vec<u8>],
-        egld_value: &BigUint,
-        esdt_transfers: &[TokenTransfer]
+        egld_value: BigUint,
+        esdt_transfers: Vec<TokenTransfer>
     ) -> Result<OutputManaged::Native, ExecutorError>
         where
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
@@ -78,10 +77,10 @@ impl<T: QueryExecutor> QueryExecutor for Arc<Mutex<T>> {
     async fn execute<OutputManaged>(
         &self,
         to: &Address,
-        function: &str,
+        function: String,
         arguments: &[Vec<u8>],
-        egld_value: &BigUint,
-        esdt_transfers: &[TokenTransfer]
+        egld_value: BigUint,
+        esdt_transfers: Vec<TokenTransfer>
     ) -> Result<OutputManaged::Native, ExecutorError>
         where
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync

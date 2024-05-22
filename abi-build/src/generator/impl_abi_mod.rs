@@ -89,7 +89,6 @@ fn get_mod_imports() -> TokenStream {
         multiversx_sc::derive_imports!();
         use novax_data::NativeConvertible;
         use multiversx_sc_scenario::api::StaticApi;
-        use multiversx_sdk::data::vm::VmValueRequest;
         use serde::{Deserialize, Serialize};
         use crate::errors::NovaXError;
         use crate::errors::CodingError;

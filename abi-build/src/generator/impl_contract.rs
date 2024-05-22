@@ -431,7 +431,7 @@ fn impl_abi_endpoint_call_query(
 
             let result = self.executor.sc_call::<#function_managed_outputs>(
                     &_novax_contract_address,
-                    #endpoint_name,
+                    #endpoint_name.to_string(),
                     &_novax_bytes_args,
                     self.gas_limit,
                     self.egld_value.clone(),
@@ -462,10 +462,10 @@ fn impl_abi_endpoint_call_query(
                     let result = self.executor
                         .execute::<#function_managed_outputs>(
                             &_novax_contract_address,
-                            #endpoint_name,
-                            &vec![], // TODO
-                            &num_bigint::BigUint::from(0u8), // TODO
-                            &vec![], // TODO
+                            #endpoint_name.to_string(),
+                            &_novax_bytes_args,
+                            num_bigint::BigUint::from(0u8), // TODO
+                            vec![], // TODO
                         ).await;
 
                     if let Result::Ok(result) = result {

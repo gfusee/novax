@@ -1,12 +1,14 @@
 use std::mem;
+
 use async_trait::async_trait;
-use multiversx_sc::api::{HandleTypeInfo, VMApi};
 use multiversx_sc::codec::{TopDecodeMulti, TopEncodeMulti};
-use multiversx_sc::imports::{EgldOrMultiEsdtPayment, ExplicitGas, FunctionCall, Tx, TxDataFunctionCall, TxEnv, TxFrom, TxGas, TxPayment, TxResultHandler, TxScEnv, TxTo, TxTypedCall};
-use multiversx_sc_scenario::imports::{AddressValue, Bech32Address, StaticApi};
-use multiversx_sc_scenario::scenario_model::{ScCallStep, ScDeployStep, TypedScCall, TypedScDeploy};
+use multiversx_sc::imports::{Tx, TxScEnv};
+use multiversx_sc_scenario::imports::{AddressValue, Bech32Address};
+use multiversx_sc_scenario::scenario_model::{ScDeployStep, TypedScDeploy};
 use num_bigint::BigUint;
+
 use novax_data::{Address, NativeConvertible};
+
 use crate::base::deploy::DeployExecutor;
 use crate::base::transaction::TransactionExecutor;
 use crate::call_result::CallResult;
@@ -62,7 +64,7 @@ impl TransactionExecutor for DummyExecutor<SendableTransaction> {
     async fn sc_call<OutputManaged>(
         &mut self,
         to: &Address,
-        function: &str,
+        function: String,
         arguments: &[Vec<u8>],
         gas_limit: u64,
         egld_value: BigUint,

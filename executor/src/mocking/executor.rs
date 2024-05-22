@@ -1,23 +1,23 @@
 use std::mem;
 use std::ops::Deref;
 use std::sync::Arc;
+
 use async_trait::async_trait;
-use multiversx_sc::api::{HandleTypeInfo, VMApi};
 use multiversx_sc::codec::{TopDecodeMulti, TopEncodeMulti};
-use multiversx_sc::imports::{TxEnv, TxFrom, TxGas, TxPayment, TxTo, TxTypedCall};
 use num_bigint::BigUint;
-use crate::{ScCallStep, ScDeployStep, ScQueryStep, TxQuery, TypedScCall, TypedScDeploy, TypedScQuery};
-use crate::ScenarioWorld;
-use tokio::sync::{Mutex, MutexGuard};
+use tokio::sync::Mutex;
+
 use novax_data::Address;
 use novax_data::NativeConvertible;
-use novax_data::parse_query_return_bytes_data;
+
+use crate::{ScCallStep, ScDeployStep, ScQueryStep, TxQuery, TypedScDeploy};
 use crate::base::deploy::DeployExecutor;
 use crate::base::query::QueryExecutor;
 use crate::base::transaction::TransactionExecutor;
 use crate::call_result::CallResult;
 use crate::error::executor::ExecutorError;
 use crate::error::mock_deploy::MockDeployError;
+use crate::ScenarioWorld;
 use crate::utils::transaction::token_transfer::TokenTransfer;
 
 /// A convenient type alias for `MockExecutor` with `String` as the generic type.
@@ -82,7 +82,7 @@ impl<A> TransactionExecutor for MockExecutor<A>
     async fn sc_call<OutputManaged>(
         &mut self,
         to: &Address,
-        function: &str,
+        function: String,
         arguments: &[Vec<u8>],
         gas_limit: u64,
         egld_value: BigUint,
@@ -224,10 +224,10 @@ impl<A> QueryExecutor for MockExecutor<A>
     async fn execute<OutputManaged>(
         &self,
         to: &Address,
-        function: &str,
+        function: String,
         arguments: &[Vec<u8>],
-        egld_value: &BigUint,
-        esdt_transfers: &[TokenTransfer]
+        egld_value: BigUint,
+        esdt_transfers: Vec<TokenTransfer>
     ) -> Result<OutputManaged::Native, ExecutorError>
         where
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync

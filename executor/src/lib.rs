@@ -61,16 +61,19 @@ pub use base::query::QueryExecutor;
 pub use base::transaction::TransactionExecutor;
 pub use base::deploy::DeployExecutor;
 
-pub use network::query::ProxyQueryExecutor;
-pub use network::query::QueryNetworkExecutor;
+pub use network::query::executor::ProxyQueryExecutor;
+pub use network::query::executor::QueryNetworkExecutor;
 pub use network::transaction::NetworkExecutor;
 pub use network::transaction::BaseTransactionNetworkExecutor;
 pub use network::interactor::BlockchainInteractor;
-pub use network::proxy::BlockchainProxy;
+pub use network::query::proxy::BlockchainProxy;
 pub use network::simulate::SimulationNetworkExecutor;
 pub use network::simulate::BaseSimulationNetworkExecutor;
 pub use network::models::simulate::request::SimulationGatewayRequest;
 pub use network::models::simulate::response::SimulationGatewayResponse;
+pub use network::query::models::request::VmValuesQueryRequest;
+pub use network::query::models::response::VmValuesQueryResponseData;
+pub use network::query::models::response::VmValuesQueryResponseDataData;
 
 pub use mocking::executor::StandardMockExecutor;
 pub use mocking::executor::MockExecutor;

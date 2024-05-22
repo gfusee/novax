@@ -10,6 +10,7 @@ repository = "https://github.com/gfusee/novax"
 
 [dependencies]
 tokio = "1.29.1"
+reqwest = "0.12.4"
 async-trait = "0.1.73"
 num-bigint = "0.4.3"
 serde = "1.0.183"

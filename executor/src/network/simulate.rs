@@ -1,17 +1,16 @@
 use std::fmt::{Debug, Formatter};
+
 use async_trait::async_trait;
 use base64::Engine;
-use multiversx_sc::api::{HandleTypeInfo, VMApi};
 use multiversx_sc::codec::TopDecodeMulti;
-use multiversx_sc::imports::{TxEnv, TxFrom, TxGas, TxPayment, TxTo, TxTypedCall};
-use multiversx_sc_scenario::scenario_model::{TxResponse, TypedScCall};
-use multiversx_sdk::data::transaction::ApiSmartContractResult;
-use multiversx_sdk::data::vm::CallType;
+use multiversx_sc_scenario::scenario_model::TxResponse;
 use num_bigint::BigUint;
 use tokio::join;
+
 use novax_data::{Address, NativeConvertible};
 use novax_request::gateway::client::GatewayClient;
-use crate::{ExecutorError, GatewayError, SendableTransactionConvertible, SimulationError, SimulationGatewayRequest, SimulationGatewayResponse, TransactionExecutor};
+
+use crate::{ExecutorError, GatewayError, SimulationGatewayRequest, SimulationGatewayResponse, TransactionExecutor};
 use crate::call_result::CallResult;
 use crate::network::models::simulate::request::SimulationGatewayRequestBody;
 use crate::network::utils::address::get_address_info;
@@ -135,7 +134,7 @@ impl<Client: GatewayClient> TransactionExecutor for BaseSimulationNetworkExecuto
     async fn sc_call<OutputManaged>(
         &mut self,
         to: &Address,
-        function: &str,
+        function: String,
         arguments: &[Vec<u8>],
         gas_limit: u64,
         egld_value: BigUint,

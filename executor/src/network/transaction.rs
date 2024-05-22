@@ -1,22 +1,20 @@
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use std::mem;
+
 use async_trait::async_trait;
-use multiversx_sc::api::{HandleTypeInfo, VMApi};
 use multiversx_sc::codec::{TopDecodeMulti, TopEncodeMulti};
-use multiversx_sc::imports::{EgldOrMultiEsdtPayment, EsdtTokenPayment, TxEnv, TxFrom, TxGas, TxPayment, TxTo, TxTypedCall};
-use multiversx_sc::types::{ManagedVec, TokenIdentifier};
-use multiversx_sc_scenario::api::StaticApi;
-use multiversx_sc_scenario::scenario_model::{ScCallStep, ScDeployStep, TypedScCall, TypedScDeploy};
+use multiversx_sc_scenario::scenario_model::{ScDeployStep, TypedScDeploy};
 use multiversx_sc_snippets::Interactor;
 use multiversx_sdk::wallet::Wallet;
 use num_bigint::BigUint;
+
 use novax_data::{Address, NativeConvertible};
+
 use crate::base::deploy::DeployExecutor;
 use crate::base::transaction::TransactionExecutor;
 use crate::call_result::CallResult;
 use crate::error::executor::ExecutorError;
-use crate::error::transaction::TransactionError;
 use crate::network::interactor::BlockchainInteractor;
 use crate::utils::transaction::token_transfer::TokenTransfer;
 use crate::utils::transaction::transfers::get_egld_or_esdt_transfers;
@@ -109,7 +107,7 @@ impl<Interactor: BlockchainInteractor> TransactionExecutor for BaseTransactionNe
     async fn sc_call<OutputManaged>(
         &mut self,
         to: &Address,
-        function: &str,
+        function: String,
         arguments: &[Vec<u8>],
         gas_limit: u64,
         egld_value: BigUint,

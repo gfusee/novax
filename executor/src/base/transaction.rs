@@ -1,14 +1,12 @@
 use std::sync::Arc;
+
 use async_trait::async_trait;
-use multiversx_sc::api::{HandleTypeInfo, VMApi};
 use multiversx_sc::codec::TopDecodeMulti;
-use multiversx_sc::imports::{FunctionCall, TxEnv, TxFrom, TxGas, TxPayment, TxTo};
-use multiversx_sc::types::TxTypedCall;
-use multiversx_sc_scenario::scenario_model::TypedScCall;
-use multiversx_sc_snippets::Interactor;
 use num_bigint::BigUint;
 use tokio::sync::Mutex;
+
 use novax_data::{Address, NativeConvertible};
+
 use crate::call_result::CallResult;
 use crate::error::executor::ExecutorError;
 use crate::utils::transaction::token_transfer::TokenTransfer;
@@ -31,7 +29,7 @@ pub trait TransactionExecutor: Send + Sync {
     async fn sc_call<OutputManaged>(
         &mut self,
         to: &Address,
-        function: &str,
+        function: String,
         arguments: &[Vec<u8>],
         gas_limit: u64,
         egld_value: BigUint,
@@ -60,7 +58,7 @@ impl<T: TransactionExecutor> TransactionExecutor for Arc<Mutex<T>> {
     async fn sc_call<OutputManaged>(
         &mut self,
         to: &Address,
-        function: &str,
+        function: String,
         arguments: &[Vec<u8>],
         gas_limit: u64,
         egld_value: BigUint,

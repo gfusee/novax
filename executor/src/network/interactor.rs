@@ -1,12 +1,9 @@
 use async_trait::async_trait;
-use multiversx_sc::imports::EgldOrMultiEsdtPayment;
-use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::scenario_model::ScDeployStep;
 use multiversx_sdk::wallet::Wallet;
 
 use novax_data::Address;
 
-use crate::call_result::CallResult;
 use crate::ExecutorError;
 use crate::utils::transaction::transfers::EgldOrMultiEsdtTransfers;
 
@@ -50,7 +47,7 @@ pub trait BlockchainInteractor: Send + Sync {
         &mut self,
         from: &Address,
         to: &Address,
-        function: &str,
+        function: String,
         arguments: &[Vec<u8>],
         gas_limit: u64,
         payment: EgldOrMultiEsdtTransfers
@@ -105,7 +102,7 @@ impl BlockchainInteractor for Interactor {
         &mut self,
         from: &Address,
         to: &Address,
-        function: &str,
+        function: String,
         arguments: &[Vec<u8>],
         gas_limit: u64,
         payment: EgldOrMultiEsdtTransfers

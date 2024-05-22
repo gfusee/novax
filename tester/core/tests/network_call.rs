@@ -33,7 +33,7 @@ impl BlockchainInteractor for MockInteractor {
         &mut self,
         from: &Address,
         to: &Address,
-        function: &str,
+        function: String,
         arguments: &[Vec<u8>],
         gas_limit: u64,
         payment: EgldOrMultiEsdtPayment

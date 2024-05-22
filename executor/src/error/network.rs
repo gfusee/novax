@@ -12,6 +12,8 @@ pub enum NetworkQueryError {
     /// This error variant is triggered when the argument provided for the network query is empty,
     /// which is not acceptable for the network query operation to proceed.
     EmptyArgs,
+    CannotSerializeVmValuesRequestBody,
+    CannotDeserializeVmValuesResponse,
     /// This error variant is triggered when there is an error while sending a request to the network.
     /// The exact error message is encapsulated in the `message` field.
     ErrorWhileSendingRequest {
