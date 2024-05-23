@@ -16,6 +16,7 @@ use crate::error::transaction::TransactionError;
 use crate::network::transaction::interactor::{BlockchainInteractor, Interactor};
 use crate::network::utils::wallet::Wallet;
 use crate::{TransactionOnNetwork, TransactionOnNetworkTransactionSmartContractResult};
+use crate::utils::transaction::normalization::NormalizationInOut;
 use crate::utils::transaction::token_transfer::TokenTransfer;
 
 /// Alias for the `BaseTransactionNetworkExecutor` struct, parameterized with the `Interactor` type.
@@ -97,7 +98,7 @@ impl<Interactor: BlockchainInteractor> TransactionExecutor for BaseTransactionNe
         &mut self,
         to: &Address,
         function: String,
-        arguments: &[Vec<u8>],
+        arguments: Vec<Vec<u8>>,
         gas_limit: u64,
         egld_value: BigUint,
         esdt_transfers: Vec<TokenTransfer>
@@ -111,12 +112,23 @@ impl<Interactor: BlockchainInteractor> TransactionExecutor for BaseTransactionNe
         )
             .await?;
 
-        let data = "".to_string(); // TODO
+        let normalized = NormalizationInOut {
+            sender: self.wallet.get_address().to_bech32_string()?,
+            receiver: to.to_bech32_string()?,
+            function_name: function,
+            arguments,
+            egld_value,
+            esdt_transfers,
+        }.normalize()?;
+
+        let receiver = normalized.receiver.clone();
+        let egld_value = normalized.egld_value.clone();
+        let transaction_data = normalized.get_transaction_data();
 
         let result = interactor.sc_call(
-            to.to_bech32_string()?,
-            egld_value, // TODO: normalize
-            data,
+            receiver,
+            egld_value,
+            transaction_data,
             gas_limit,
         )
             .await?;

@@ -1,17 +1,17 @@
-mod utils;
-
 use std::sync::Arc;
+
 use async_trait::async_trait;
-use tokio::sync::Mutex;
-use novax::{Address, EgldOrMultiEsdtPayment};
-use novax::errors::NovaXError;
 use num_bigint::{BigInt, BigUint};
+use tokio::sync::Mutex;
+
+use novax::Address;
 use novax::data::NativeConvertible;
+use novax::errors::NovaXError;
+use novax::executor::{BaseTransactionNetworkExecutor, BlockchainInteractor, ExecutorError, NetworkExecutor, SendableTransactionConvertible, TokenTransfer, TopDecodeMulti, TransactionExecutor, TransactionOnNetwork, TransactionOnNetworkTransaction, TransactionOnNetworkTransactionSmartContractResult, Wallet};
 use novax::tester::tester::{CustomEnum, CustomEnumWithFields, CustomEnumWithValues, CustomStruct, CustomStructWithStructAndVec, TesterContract};
-use novax::executor::{BaseTransactionNetworkExecutor, BlockchainInteractor, DummyTransactionExecutor, ExecutorError, NetworkExecutor, SendableTransactionConvertible, TokenTransfer, TopDecodeMulti, TransactionExecutor, TransactionOnNetwork, TransactionOnNetworkTransaction, TransactionOnNetworkTransactionSmartContractResult, Wallet};
-use novax::executor::call_result::CallResult;
-use novax_mocking::{ScCallStep, ScDeployStep, TxResponse};
-use crate::utils::decode_scr_data::decode_scr_data_or_panic;
+use novax_mocking::ScDeployStep;
+
+mod utils;
 
 const CALLER_PRIVATE_KEY: &str = "69417ce717e43d0d3a598f68b5e562d7d2a532a5a3ac1e8b3342515e0b2d950f"; // to anyone reading : this has been generated only for the tests below
 const CALLER: &str = "erd12wf7tlsk2z895vwmndheaknkp3uaqa7xuq847numkwlmcvy60wxql2ndlk";
@@ -81,6 +81,12 @@ impl BlockchainInteractor for MockInteractor {
             return_data = Some("@6f6b@746573742174657374".to_string())
         } else if data == "returnConcatMultiBufferArgs@7465737431@7465737432" {
             return_data = Some("@6f6b@74657374317465737432".to_string())
+        } else if data == "ESDTTransfer@5745474c442d616263646566@2386f26fc10000@72657475726e436f6e6361744d756c746942756666657241726773@68656c6c6f@776f726c64" {
+            return_data = Some("@6f6b@68656c6c6f776f726c64".to_string())
+        } else if data == "ESDTNFTTransfer@5346542d616263646566@01@2386f26fc10000@000000000000000005002bb767d7257a6d7c705383c2876e318356616635d303@72657475726e436f6e6361744d756c746942756666657241726773@68656c6c6f@736674" {
+            return_data = Some("@6f6b@68656c6c6f736674".to_string())
+        } else if data == "MultiESDTNFTTransfer@000000000000000005002bb767d7257a6d7c705383c2876e318356616635d303@02@5745474c442d616263646566@@0de0b6b3a7640000@5346542d616263646566@01@2386f26fc10000@72657475726e436f6e6361744d756c746942756666657241726773@68656c6c6f@6d756c7469" {
+            return_data = Some("@6f6b@68656c6c6f6d756c7469".to_string())
         } else if data == "returnCustomEnumArg@02" {
             return_data = Some("@6f6b@02".to_string())
         } else if data == "returnCustomStructArg@00000004746573740000000218711a00000000080de0b6b3a7640000" {
@@ -125,7 +131,7 @@ impl BlockchainInteractor for MockInteractor {
                     TransactionOnNetworkTransactionSmartContractResult {
                         hash: "".to_string(),
                         nonce: 1,
-                        data,
+                        data: return_data,
                     }
                 ]),
                 status: "executed".to_string(),
@@ -558,6 +564,104 @@ async fn test_call_concat_multi_buffer_args_result() -> Result<(), NovaXError> {
         TESTER_CONTRACT_ADDRESS
     )
         .call(executor, 600000000)
+        .return_concat_multi_buffer_args(&args)
+        .await?;
+
+    let expected = format!("{first_arg}{second_arg}");
+
+    assert_eq!(result.result.unwrap(), expected);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_call_concat_multi_buffer_args_one_fungible_transfer_result() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    let first_arg = "hello".to_string();
+    let second_arg = "world".to_string();
+    let args = vec![first_arg.clone(), second_arg.clone()];
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .call(executor, 600000000)
+        .with_esdt_transfers(
+            &vec![
+                TokenTransfer {
+                    identifier: "WEGLD-abcdef".to_string(),
+                    nonce: 0,
+                    amount: BigUint::from(10u8).pow(16),
+                }
+            ]
+        )
+        .return_concat_multi_buffer_args(&args)
+        .await?;
+
+    let expected = format!("{first_arg}{second_arg}");
+
+    assert_eq!(result.result.unwrap(), expected);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_call_concat_multi_buffer_args_one_non_fungible_transfer_result() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    let first_arg = "hello".to_string();
+    let second_arg = "sft".to_string();
+    let args = vec![first_arg.clone(), second_arg.clone()];
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .call(executor, 600000000)
+        .with_esdt_transfers(
+            &vec![
+                TokenTransfer {
+                    identifier: "SFT-abcdef".to_string(),
+                    nonce: 1,
+                    amount: BigUint::from(10u8).pow(16),
+                }
+            ]
+        )
+        .return_concat_multi_buffer_args(&args)
+        .await?;
+
+    let expected = format!("{first_arg}{second_arg}");
+
+    assert_eq!(result.result.unwrap(), expected);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_call_concat_multi_buffer_args_multi_transfers_result() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    let first_arg = "hello".to_string();
+    let second_arg = "multi".to_string();
+    let args = vec![first_arg.clone(), second_arg.clone()];
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .call(executor, 600000000)
+        .with_esdt_transfers(
+            &vec![
+                TokenTransfer {
+                    identifier: "WEGLD-abcdef".to_string(),
+                    nonce: 0,
+                    amount: BigUint::from(10u8).pow(18),
+                },
+                TokenTransfer {
+                    identifier: "SFT-abcdef".to_string(),
+                    nonce: 1,
+                    amount: BigUint::from(10u8).pow(16),
+                }
+            ]
+        )
         .return_concat_multi_buffer_args(&args)
         .await?;
 

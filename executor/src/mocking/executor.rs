@@ -83,7 +83,7 @@ impl<A> TransactionExecutor for MockExecutor<A>
         &mut self,
         to: &Address,
         function: String,
-        arguments: &[Vec<u8>],
+        arguments: Vec<Vec<u8>>,
         gas_limit: u64,
         egld_value: BigUint,
         esdt_transfers: Vec<TokenTransfer>
@@ -214,7 +214,7 @@ impl<A> QueryExecutor for MockExecutor<A>
         &self,
         to: &Address,
         function: String,
-        arguments: &[Vec<u8>],
+        arguments: Vec<Vec<u8>>,
         egld_value: BigUint,
         esdt_transfers: Vec<TokenTransfer>
     ) -> Result<OutputManaged::Native, ExecutorError>

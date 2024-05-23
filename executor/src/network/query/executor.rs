@@ -50,7 +50,7 @@ impl<Proxy: BlockchainProxy> QueryExecutor for QueryNetworkExecutor<Proxy> {
         &self,
         to: &novax_data::Address,
         function: String,
-        arguments: &[Vec<u8>],
+        arguments: Vec<Vec<u8>>,
         egld_value: BigUint,
         esdt_transfers: Vec<TokenTransfer>
     ) -> Result<OutputManaged::Native, ExecutorError>
@@ -58,7 +58,7 @@ impl<Proxy: BlockchainProxy> QueryExecutor for QueryNetworkExecutor<Proxy> {
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
     {
         let sc_address = to.to_bech32_string()?;
-        let arguments = encode_arguments(arguments);
+        let arguments = encode_arguments(&arguments);
 
         let vm_request = VmValuesQueryRequest { // TODO: put this in a separate function so normalization can be tested
             sc_address: sc_address.clone(),
@@ -87,7 +87,7 @@ impl QueryExecutor for &str {
         &self,
         to: &novax_data::Address,
         function: String,
-        arguments: &[Vec<u8>],
+        arguments: Vec<Vec<u8>>,
         egld_value: BigUint,
         esdt_transfers: Vec<TokenTransfer>
     ) -> Result<OutputManaged::Native, ExecutorError>
@@ -116,7 +116,7 @@ impl QueryExecutor for String {
         &self,
         to: &novax_data::Address,
         function: String,
-        arguments: &[Vec<u8>],
+        arguments: Vec<Vec<u8>>,
         egld_value: BigUint,
         esdt_transfers: Vec<TokenTransfer>
     ) -> Result<OutputManaged::Native, ExecutorError>

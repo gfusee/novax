@@ -65,7 +65,7 @@ impl TransactionExecutor for DummyExecutor<SendableTransaction> {
         &mut self,
         to: &Address,
         function: String,
-        arguments: &[Vec<u8>],
+        arguments: Vec<Vec<u8>>,
         gas_limit: u64,
         egld_value: BigUint,
         esdt_transfers: Vec<TokenTransfer>
@@ -92,7 +92,7 @@ impl TransactionExecutor for DummyExecutor<SendableTransaction> {
             .raw_call(function);
 
         for argument in arguments {
-            tx = tx.argument(argument);
+            tx = tx.argument(&argument);
         }
 
         let tx = tx.normalize();

@@ -11,7 +11,11 @@ pub enum TransactionError {
     CannotDeserializeTransactionOnNetworkResponse { response: String },
     FailedToSendTheTransaction { message: String },
     NoSmartContractResult,
-    CannotDecodeSmartContractResult
+    CannotDecodeSmartContractResult,
+    CannotEncodeString { string: String },
+    CannotEncodeU64 { value: u64 },
+    CannotEncodeTransfer,
+    CannotSerializeTransactionData
 }
 
 impl From<TransactionError> for ExecutorError {
