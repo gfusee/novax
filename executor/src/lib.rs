@@ -79,6 +79,8 @@ pub use network::transaction::models::transaction_on_network::TransactionOnNetwo
 pub use network::transaction::models::transaction_on_network::TransactionOnNetwork;
 pub use network::transaction::models::transaction_on_network::TransactionOnNetworkTransaction;
 pub use network::transaction::models::transaction_on_network::TransactionOnNetworkTransactionSmartContractResult;
+pub use network::transaction::models::transaction_on_network::TransactionOnNetworkTransactionLogs;
+pub use network::transaction::models::transaction_on_network::TransactionOnNetworkTransactionLogsEvents;
 
 pub use mocking::executor::StandardMockExecutor;
 pub use mocking::executor::MockExecutor;

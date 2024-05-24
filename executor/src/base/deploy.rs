@@ -1,9 +1,14 @@
 use std::sync::Arc;
 use async_trait::async_trait;
 use multiversx_sc::codec::TopEncodeMulti;
+use multiversx_sc::types::CodeMetadata;
 use multiversx_sc_scenario::scenario_model::TypedScDeploy;
+use num_bigint::BigUint;
 use tokio::sync::Mutex;
+use novax_data::{Address, NativeConvertible};
+use crate::call_result::CallResult;
 use crate::error::executor::ExecutorError;
+use crate::TopDecodeMulti;
 
 /// A trait defining the contract for executing smart contract deployment operations asynchronously.
 #[async_trait]
@@ -24,9 +29,18 @@ pub trait DeployExecutor: Send + Sync {
     /// # Returns
     ///
     /// A `Result` with an empty `Ok(())` value for success, or `Err(ExecutorError)` for failure.
-    async fn sc_deploy<OriginalResult>(&mut self, sc_deploy_step: &mut TypedScDeploy<OriginalResult>) -> Result<(), ExecutorError>
+    async fn sc_deploy<
+        OutputManaged
+    >(
+        &mut self,
+        bytes: Vec<u8>,
+        code_metadata: CodeMetadata,
+        egld_value: BigUint,
+        arguments: Vec<Vec<u8>>,
+        gas_limit: u64
+    ) -> Result<(Address, CallResult<OutputManaged::Native>), ExecutorError>
         where
-            OriginalResult: TopEncodeMulti + Send + Sync;
+            OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync;
 
     /// Indicates whether to skip deserialization during the deployment execution.
     ///
@@ -36,7 +50,7 @@ pub trait DeployExecutor: Send + Sync {
     /// # Returns
     ///
     /// A `bool` indicating whether deserialization should be skipped.
-    async fn should_skip_deserialization(&self) -> bool;
+    async fn should_skip_deserialization(&self) -> bool; // TODO: remove
 }
 
 /// An implementation of `DeployExecutor` for `Arc<Mutex<T>>` where `T: DeployExecutor`.
@@ -44,13 +58,22 @@ pub trait DeployExecutor: Send + Sync {
 #[async_trait]
 impl<T: DeployExecutor> DeployExecutor for Arc<Mutex<T>> {
     /// Executes a smart contract deployment step asynchronously, delegating to the inner `DeployExecutor`.
-    async fn sc_deploy<OriginalResult>(&mut self, sc_deploy_step: &mut TypedScDeploy<OriginalResult>) -> Result<(), ExecutorError>
+    async fn sc_deploy<
+        OutputManaged
+    >(
+        &mut self,
+        bytes: Vec<u8>,
+        code_metadata: CodeMetadata,
+        egld_value: BigUint,
+        arguments: Vec<Vec<u8>>,
+        gas_limit: u64
+    ) -> Result<(Address, CallResult<OutputManaged::Native>), ExecutorError>
         where
-            OriginalResult: TopEncodeMulti + Send + Sync,
+            OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
     {
         {
             let mut locked = self.lock().await;
-            locked.sc_deploy(sc_deploy_step).await
+            locked.sc_deploy::<OutputManaged>(bytes, code_metadata, egld_value, arguments, gas_limit).await
         }
     }
 

@@ -2,7 +2,7 @@ use std::mem;
 
 use async_trait::async_trait;
 use multiversx_sc::codec::{TopDecodeMulti, TopEncodeMulti};
-use multiversx_sc::imports::{Tx, TxScEnv};
+use multiversx_sc::imports::{CodeMetadata, Tx, TxScEnv};
 use multiversx_sc_scenario::imports::{AddressValue, Bech32Address};
 use multiversx_sc_scenario::scenario_model::{ScDeployStep, TypedScDeploy};
 use num_bigint::BigUint;
@@ -122,12 +122,22 @@ impl TransactionExecutor for DummyExecutor<SendableTransaction> {
 }
 
 #[async_trait]
-impl DeployExecutor for DummyExecutor<ScDeployStep> {
+impl DeployExecutor for DummyExecutor<SendableTransaction> {
     /// Captures the smart contract deployment details.
-    async fn sc_deploy<OriginalResult>(&mut self, sc_deploy_step: &mut TypedScDeploy<OriginalResult>) -> Result<(), ExecutorError>
+    async fn sc_deploy<
+        OutputManaged
+    >(
+        &mut self,
+        bytes: Vec<u8>,
+        code_metadata: CodeMetadata,
+        egld_value: BigUint,
+        arguments: Vec<Vec<u8>>,
+        gas_limit: u64
+    ) -> Result<(Address, CallResult<OutputManaged::Native>), ExecutorError>
         where
-            OriginalResult: TopEncodeMulti + Send + Sync,
+            OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
     {
+        /*
         let mut owned_sc_deploy_step = mem::replace(sc_deploy_step, ScDeployStep::new().into());
 
         if let Some(caller) = &self.caller {
@@ -137,6 +147,10 @@ impl DeployExecutor for DummyExecutor<ScDeployStep> {
         self.tx = Some(owned_sc_deploy_step.sc_deploy_step);
 
         Ok(())
+
+         */
+
+        todo!()
     }
 
     /// Indicates that deserialization should be skipped as there is no actual execution.

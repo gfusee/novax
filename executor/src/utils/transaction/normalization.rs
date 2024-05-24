@@ -7,7 +7,7 @@ use crate::error::transaction::TransactionError;
 pub struct NormalizationInOut {
     pub sender: String,
     pub receiver: String,
-    pub function_name: String,
+    pub function_name: Option<String>,
     pub arguments: Vec<Vec<u8>>,
     pub egld_value: BigUint,
     pub esdt_transfers: Vec<TokenTransfer>
@@ -28,17 +28,15 @@ impl NormalizationInOut {
             let is_fungible = transfer.nonce == 0;
             let (encoded_identifier, encoded_nonce, encoded_amount) = encode_transfer(transfer)?;
 
-            let encoded_function_name = encode_string(&self.function_name)?;
 
-            let (receiver, function_name, built_in_args) = if is_fungible {
+            let (receiver, function_name, mut built_in_args) = if is_fungible {
                 let function_name = "ESDTTransfer".to_string();
                 let built_in_args = vec![
                     encoded_identifier,
-                    encoded_amount,
-                    encoded_function_name
+                    encoded_amount
                 ];
 
-                (self.receiver, function_name, built_in_args)
+                (self.receiver, Some(function_name), built_in_args)
             } else {
                 let function_name = "ESDTNFTTransfer".to_string();
                 let built_in_args = vec![
@@ -46,11 +44,16 @@ impl NormalizationInOut {
                     encoded_nonce,
                     encoded_amount,
                     Address::from_bech32_string(&self.receiver)?.to_bytes().to_vec(),
-                    encoded_function_name
                 ];
 
-                (self.sender.clone(), function_name, built_in_args)
+                (self.sender.clone(), Some(function_name), built_in_args)
             };
+
+            if let Some(function_name) = self.function_name {
+                let encoded_function_name = encode_string(&function_name)?;
+
+                built_in_args.push(encoded_function_name);
+            }
 
             let mut args = built_in_args;
 
@@ -77,8 +80,12 @@ impl NormalizationInOut {
                 built_in_args.push(encoded_nonce);
                 built_in_args.push(encoded_amount);
             }
-            
-            built_in_args.push(encode_string(&self.function_name)?);
+
+            if let Some(function_name) = self.function_name {
+                let encoded_function_name = encode_string(&function_name)?;
+
+                built_in_args.push(encoded_function_name);
+            }
 
             let mut args = built_in_args;
             args.append(&mut self.arguments);
@@ -86,7 +93,7 @@ impl NormalizationInOut {
             NormalizationInOut {
                 sender: self.sender.clone(),
                 receiver: self.sender,
-                function_name: "MultiESDTNFTTransfer".to_string(),
+                function_name: Some("MultiESDTNFTTransfer".to_string()),
                 arguments: args,
                 egld_value: BigUint::from(0u8),
                 esdt_transfers: vec![],
@@ -97,7 +104,11 @@ impl NormalizationInOut {
     }
 
     pub fn get_transaction_data(self) -> String {
-        let mut args_string = vec![self.function_name];
+        let mut args_string = vec![];
+
+        if let Some(function_name) = self.function_name {
+            args_string.push(function_name)
+        }
 
         for arg in self.arguments {
             args_string.push(hex::encode(arg));

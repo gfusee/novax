@@ -2,8 +2,10 @@ use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 
 use async_trait::async_trait;
-use multiversx_sc::codec::{TopDecodeMulti, TopEncodeMulti};
-use multiversx_sc_scenario::scenario_model::TypedScDeploy;
+use multiversx_sc::codec::{TopDecodeMulti, TopEncode};
+use multiversx_sc::imports::{CodeMetadata, ManagedBuffer};
+use multiversx_sc_scenario::api::StaticApi;
+use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::keccak256;
 use num_bigint::BigUint;
 
 use novax_data::{Address, NativeConvertible};
@@ -14,8 +16,9 @@ use crate::call_result::CallResult;
 use crate::error::executor::ExecutorError;
 use crate::error::transaction::TransactionError;
 use crate::network::transaction::interactor::{BlockchainInteractor, Interactor};
+use crate::network::transaction::models::transaction_on_network::{TransactionOnNetworkTransactionLogs, TransactionOnNetworkTransactionLogsEvents};
 use crate::network::utils::wallet::Wallet;
-use crate::{TransactionOnNetwork, TransactionOnNetworkTransactionSmartContractResult};
+use crate::TransactionOnNetworkTransactionSmartContractResult;
 use crate::utils::transaction::normalization::NormalizationInOut;
 use crate::utils::transaction::token_transfer::TokenTransfer;
 
@@ -112,10 +115,16 @@ impl<Interactor: BlockchainInteractor> TransactionExecutor for BaseTransactionNe
         )
             .await?;
 
+        let function_name = if function.is_empty() {
+            None
+        } else {
+            Some(function)
+        };
+
         let normalized = NormalizationInOut {
             sender: self.wallet.get_address().to_bech32_string()?,
             receiver: to.to_bech32_string()?,
-            function_name: function,
+            function_name,
             arguments,
             egld_value,
             esdt_transfers,
@@ -173,11 +182,48 @@ impl<Interactor: BlockchainInteractor> DeployExecutor for BaseTransactionNetwork
     /// # Returns
     ///
     /// A `Result` with an empty `Ok(())` value indicating success, or an `Err(ExecutorError)` indicating failure.
-    async fn sc_deploy<OriginalResult>(&mut self, sc_deploy_step: &mut TypedScDeploy<OriginalResult>) -> Result<(), ExecutorError>
+    async fn sc_deploy<
+        OutputManaged
+    >(
+        &mut self,
+        bytes: Vec<u8>,
+        code_metadata: CodeMetadata,
+        egld_value: BigUint,
+        mut arguments: Vec<Vec<u8>>,
+        gas_limit: u64
+    ) -> Result<(Address, CallResult<OutputManaged::Native>), ExecutorError>
         where
-            OriginalResult: TopEncodeMulti + Send + Sync,
+            OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
     {
-        todo!()
+        let mut encoded_metadata: ManagedBuffer<StaticApi> = ManagedBuffer::new();
+        _ = code_metadata.top_encode(&mut encoded_metadata).unwrap();
+
+        let built_in_arguments: Vec<Vec<u8>> = vec![
+            bytes,
+            vec![5, 0], // VM type: WASM
+            encoded_metadata.to_boxed_bytes().into_vec()
+        ];
+
+        let mut all_arguments = built_in_arguments;
+        all_arguments.append(&mut arguments);
+
+        let deploy_result = self.sc_call::<OutputManaged>(
+            &Address::from_bytes([0u8; 32]),
+            "".to_string(),
+            all_arguments,
+            gas_limit,
+            egld_value,
+            vec![]
+        )
+            .await?;
+
+        let Some(sc_deploy_event) = find_sc_deploy_event(&deploy_result.response.transaction.logs.events) else {
+            return Err(TransactionError::NoSCDeployLogInTheResponse.into())
+        };
+
+        let deployed_address = Address::from_bech32_string(&sc_deploy_event.address)?;
+
+        Ok((deployed_address, deploy_result))
     }
 
     /// Specifies whether deserialization should be skipped during the deployment execution.
@@ -189,6 +235,12 @@ impl<Interactor: BlockchainInteractor> DeployExecutor for BaseTransactionNetwork
     async fn should_skip_deserialization(&self) -> bool {
         false
     }
+}
+
+fn find_sc_deploy_event(logs: &[TransactionOnNetworkTransactionLogsEvents]) -> Option<TransactionOnNetworkTransactionLogsEvents> {
+    logs.iter()
+        .find(|event| event.identifier == "SCDeploy")
+        .cloned()
 }
 
 fn find_smart_contract_result(opt_sc_results: &Option<Vec<TransactionOnNetworkTransactionSmartContractResult>>) -> Option<Vec<Vec<u8>>> {

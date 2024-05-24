@@ -12,6 +12,7 @@ pub enum TransactionError {
     FailedToSendTheTransaction { message: String },
     NoSmartContractResult,
     CannotDecodeSmartContractResult,
+    NoSCDeployLogInTheResponse,
     CannotEncodeString { string: String },
     CannotEncodeU64 { value: u64 },
     CannotEncodeTransfer,

@@ -4,10 +4,11 @@ use multiversx_sc_scenario::scenario_model::ScDeployStep;
 use num_bigint::BigUint;
 use reqwest::Client;
 
-use novax_data::Address;
+use novax_data::{Address, NativeConvertible};
+use crate::call_result::CallResult;
 use crate::error::transaction::TransactionError;
 
-use crate::ExecutorError;
+use crate::{ExecutorError, TopDecodeMulti};
 use crate::network::models::address::info::AddressGatewayInfoAccount;
 use crate::network::models::network::config::NetworkGatewayConfig;
 use crate::network::transaction::models::send_request::TransactionSendRequest;
@@ -29,29 +30,6 @@ pub trait BlockchainInteractor: Sized + Send + Sync {
         data: String,
         gas_limit: u64
     ) -> Result<TransactionOnNetwork, ExecutorError>;
-
-    /// Deploys a smart contract on the blockchain.
-    ///
-    /// The `sc_deploy` method takes a `sc_deploy_step` parameter that encapsulates the information required
-    /// for deploying a smart contract. The method is asynchronous and requires the [`tokio`] runtime, ensuring non-blocking
-    /// operation and concurrency where needed.
-    ///
-    /// # Type Parameters
-    /// - `S`: A type that implements [`AsMut<ScDeployStep>`] trait, allowing for a mutable reference to an [`ScDeployStep`] instance to be obtained.
-    ///
-    /// # Parameters
-    /// - `&mut self`: A mutable reference to the current [`BlockchainInteractor`] instance.
-    /// - `sc_deploy_step`: The smart contract deployment step encapsulating the necessary information for deployment.
-    ///
-    /// # Returns
-    /// The method returns a [`Result`] indicating the success or failure of the operation. Successful operations
-    /// will return `Ok(())` while failures will return `Err(BlockchainInteractorError)`.
-    ///
-    /// # Errors
-    /// Any errors that occur during the execution of this method will be encapsulated in a [`BlockchainInteractorError`] and returned.
-    async fn sc_deploy<S>(&mut self, sc_deploy_step: S)
-        where
-            S: AsMut<ScDeployStep> + Send;
 }
 
 pub struct Interactor {
@@ -138,15 +116,15 @@ impl BlockchainInteractor for Interactor {
         data: String,
         gas_limit: u64
     ) -> Result<TransactionOnNetwork, ExecutorError> {
-        let receiver_info = self.get_account_info().await?;
-        let receiver_address = receiver_info.address;
-        let nonce = receiver_info.nonce; // TODO: +1?
+        let sender_info = self.get_account_info().await?;
+        let sender_address = sender_info.address;
+        let nonce = sender_info.nonce; // TODO: +1?
 
         let transaction_request = self.get_sendable_transaction(
             nonce,
             value.to_string(),
-            receiver_address,
             to,
+            sender_address,
             self.network_config.config.erd_min_gas_price,
             gas_limit,
             data,
@@ -164,8 +142,8 @@ impl BlockchainInteractor for Interactor {
 
         self.wait_for_execution(&tx_hash).await
     }
+}
 
-    async fn sc_deploy<S>(&mut self, sc_deploy_step: S) where S: AsMut<ScDeployStep> + Send {
-        todo!()
-    }
+fn encode_code_bytes(bytes: &[u8]) -> String {
+    hex::encode(bytes)
 }

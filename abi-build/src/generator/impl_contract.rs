@@ -518,53 +518,25 @@ fn impl_abi_constructor(contract_info_name: &str, abi_constructor: &AbiConstruct
         /// - `CallResult`: A `CallResult` instance containing the response data from the contract's deployment.
         ///
         /// Or a `NovaXError` if the deployment process fails.
-        pub async fn #function_name<Code: AsBytesValue, Executor: DeployExecutor>(_novax_deploy_data: DeployData<Code>, _novax_executor: &mut Executor, gas_limit: u64, #function_inputs) -> Result<(Address, CallResult<#function_native_outputs>), NovaXError> {
+        pub async fn #function_name<Code: AsBytesValue, Executor: DeployExecutor>(_novax_deploy_data: DeployData<Code>, _novax_executor: &mut Executor, _novax_gas_limit: u64, #function_inputs) -> Result<(Address, CallResult<#function_native_outputs>), NovaXError> {
             let mut _novax_contract = #contract_info_ident::new(&multiversx_sc::types::Address::from(<[u8;32]>::default()));
 
             #endpoint_args_let_statements
 
+            let mut _novax_bytes_args: std::vec::Vec<std::vec::Vec<u8>> = vec![];
+            #(#endpoint_args_inputs) *
+
             let _novax_code_bytes = _novax_deploy_data.code.into_bytes_value().await?;
 
-            todo!();
-
-            /*
-            let mut _novax_deploy_step = ScDeployStep::new()
-                .call(_novax_contract.init(#(#endpoint_args_inputs), *))
-                .gas_limit(gas_limit)
-                .code(_novax_code_bytes)
-                .code_metadata(_novax_deploy_data.metadata);
-
-            let _novax_should_skip_deserialization = async {
-                _novax_executor.sc_deploy(&mut _novax_deploy_step).await?;
-
-                Result::Ok::<bool, NovaXError>(_novax_executor.should_skip_deserialization().await)
-            }.await?;
-
-            let (_novax_new_address, _novax_result, _novax_response) = {
-                let mut result = None;
-                let mut opt_response = None;
-                let mut new_address = multiversx_sc::types::Address::from(<[u8;32]>::default());
-                if !_novax_should_skip_deserialization {
-                    if let Result::Ok(_novax_parsed_result) = _novax_deploy_step.result::<#function_managed_outputs>() {
-                        let _novax_response = _novax_deploy_step.response().clone();
-                        new_address = _novax_response.new_deployed_address.clone().unwrap();
-                        result = Some(_novax_parsed_result);
-                        opt_response = Some(_novax_response);
-                    }
-                }
-
-                (Address::from(new_address), result, opt_response.unwrap_or_else(|| TxResponse::default()))
-            };
-
-
-            let mut _novax_call_result = CallResult {
-                response: _novax_response,
-                result: _novax_result.to_native()
-            };
-
-            Result::Ok((_novax_new_address, _novax_call_result))
-
-             */
+            _novax_executor.sc_deploy::<#function_managed_outputs>(
+                _novax_code_bytes,
+                _novax_deploy_data.metadata,
+                num_bigint::BigUint::from(0u8), // TODO
+                _novax_bytes_args,
+                _novax_gas_limit
+            )
+                .await
+                .map_err(NovaXError::from)
         }
     };
 

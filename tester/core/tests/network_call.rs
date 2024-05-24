@@ -140,10 +140,6 @@ impl BlockchainInteractor for MockInteractor {
 
         return Ok(response)
     }
-
-    async fn sc_deploy<S>(&mut self, _sc_deploy_step: S) where S: AsMut<ScDeployStep> + Send {
-        todo!()
-    }
 }
 
 fn get_executor() -> Arc<Mutex<BaseTransactionNetworkExecutor<MockInteractor>>> {

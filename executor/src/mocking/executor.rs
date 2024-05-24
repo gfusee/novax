@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use multiversx_sc::codec::{TopDecodeMulti, TopEncodeMulti};
+use multiversx_sc::imports::CodeMetadata;
 use num_bigint::BigUint;
 use tokio::sync::Mutex;
 
@@ -148,10 +149,20 @@ impl<A> DeployExecutor for MockExecutor<A>
     ///
     /// A `Result` with an empty `Ok(())` value indicating success, or an `Err(ExecutorError)` indicating failure,
     /// specifically a `MockDeployError::WalletAddressNotPresent` error if the wallet address is not present.
-    async fn sc_deploy<OriginalResult>(&mut self, sc_deploy_step: &mut TypedScDeploy<OriginalResult>) -> Result<(), ExecutorError>
+    async fn sc_deploy<
+        OutputManaged
+    >(
+        &mut self,
+        bytes: Vec<u8>,
+        code_metadata: CodeMetadata,
+        egld_value: BigUint,
+        arguments: Vec<Vec<u8>>,
+        gas_limit: u64
+    ) -> Result<(Address, CallResult<OutputManaged::Native>), ExecutorError>
         where
-            OriginalResult: TopEncodeMulti + Send + Sync,
+            OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
     {
+        /*
         let caller: Address = {
             let Some(caller) = self.opt_caller.as_deref() else {
                 return Err(ExecutorError::MockDeploy(MockDeployError::WalletAddressNotPresent))
@@ -171,6 +182,10 @@ impl<A> DeployExecutor for MockExecutor<A>
         }
 
         Ok(())
+
+         */
+
+        todo!()
     }
 
     /// Specifies whether deserialization should be skipped during the deployment execution.
