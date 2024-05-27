@@ -54,6 +54,7 @@ mod utils;
 pub use error::executor::ExecutorError;
 pub use error::network::NetworkQueryError;
 pub use error::mock_deploy::MockDeployError;
+pub use error::mock_transaction::MockTransactionError;
 pub use error::gateway::GatewayError;
 pub use error::simulation::SimulationError;
 

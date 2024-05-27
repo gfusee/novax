@@ -15,6 +15,8 @@ use crate::call_result::CallResult;
 use crate::error::dummy::DummyExecutorError;
 use crate::error::executor::ExecutorError;
 use crate::utils::transaction::data::{SendableTransaction, SendableTransactionConvertible};
+use crate::utils::transaction::deploy::get_deploy_call_input;
+use crate::utils::transaction::normalization::NormalizationInOut;
 use crate::utils::transaction::token_transfer::TokenTransfer;
 use crate::utils::transaction::transfers::get_egld_or_esdt_transfers;
 
@@ -73,31 +75,24 @@ impl TransactionExecutor for DummyExecutor<SendableTransaction> {
         where
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
     {
-        let from = if let Some(caller) = &self.caller {
-            AddressValue::from(caller)
+        let function_name = if function.is_empty() {
+            None
         } else {
-            AddressValue::from(Bech32Address::from_bech32_string(to.to_bech32_string()?))
+            Some(function)
         };
 
-        let payments = get_egld_or_esdt_transfers(
+        let to = to.to_bech32_string()?;
+
+        let normalized = NormalizationInOut {
+            sender: self.caller.clone().map(|address| address.to_bech32_string()).unwrap_or_else(|| Ok(to.clone()))?,
+            receiver: to,
+            function_name,
+            arguments,
             egld_value,
-            esdt_transfers
-        )?;
+            esdt_transfers,
+        }.normalize()?;
 
-        let mut tx = Tx::new_with_env(TxScEnv::default())
-            .from(from)
-            .to(Bech32Address::from_bech32_string(to.to_bech32_string()?))
-            .gas(gas_limit)
-            .egld_or_multi_esdt(payments)
-            .raw_call(function);
-
-        for argument in arguments {
-            tx = tx.argument(&argument);
-        }
-
-        let tx = tx.normalize();
-
-        self.tx = Some(tx.to_sendable_transaction());
+        self.tx = Some(normalized.to_sendable_transaction(gas_limit));
 
         /*
         let mut owned_sc_call_step = mem::replace(sc_call_step, ScCallStep::new().into());
@@ -137,20 +132,25 @@ impl DeployExecutor for DummyExecutor<SendableTransaction> {
         where
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
     {
-        /*
-        let mut owned_sc_deploy_step = mem::replace(sc_deploy_step, ScDeployStep::new().into());
+        let deploy_call_input = get_deploy_call_input(
+            bytes,
+            code_metadata,
+            egld_value,
+            arguments,
+            gas_limit
+        );
 
-        if let Some(caller) = &self.caller {
-            owned_sc_deploy_step = owned_sc_deploy_step.from(&multiversx_sc::types::Address::from(caller.to_bytes()));
-        }
+        let deploy_result = self.sc_call::<OutputManaged>(
+            &deploy_call_input.to,
+            deploy_call_input.function,
+            deploy_call_input.arguments,
+            deploy_call_input.gas_limit,
+            deploy_call_input.egld_value,
+            deploy_call_input.esdt_transfers
+        )
+            .await?;
 
-        self.tx = Some(owned_sc_deploy_step.sc_deploy_step);
-
-        Ok(())
-
-         */
-
-        todo!()
+        Ok((Address::default(), deploy_result))
     }
 
     /// Indicates that deserialization should be skipped as there is no actual execution.

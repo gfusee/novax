@@ -4,6 +4,7 @@ use novax_data::DataError;
 use crate::error::dummy::DummyExecutorError;
 use crate::error::gateway::GatewayError;
 use crate::error::mock_deploy::MockDeployError;
+use crate::error::mock_transaction::MockTransactionError;
 use crate::error::transaction::TransactionError;
 use crate::error::wallet::WalletError;
 use crate::SimulationError;
@@ -39,6 +40,7 @@ pub enum ExecutorError {
     /// `MockExecutor` for testing or simulation purposes. The wrapped `MockDeployError` provides more detailed
     /// information about the nature of the mock deployment-related error that occurred.
     MockDeploy(MockDeployError),
+    MockTransaction(MockTransactionError),
 
     Transaction(TransactionError),
     Wallet(WalletError),

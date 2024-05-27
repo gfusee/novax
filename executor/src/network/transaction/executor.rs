@@ -19,6 +19,7 @@ use crate::network::transaction::interactor::{BlockchainInteractor, Interactor};
 use crate::network::transaction::models::transaction_on_network::{TransactionOnNetworkTransactionLogs, TransactionOnNetworkTransactionLogsEvents};
 use crate::network::utils::wallet::Wallet;
 use crate::TransactionOnNetworkTransactionSmartContractResult;
+use crate::utils::transaction::deploy::get_deploy_call_input;
 use crate::utils::transaction::normalization::NormalizationInOut;
 use crate::utils::transaction::token_transfer::TokenTransfer;
 
@@ -189,31 +190,27 @@ impl<Interactor: BlockchainInteractor> DeployExecutor for BaseTransactionNetwork
         bytes: Vec<u8>,
         code_metadata: CodeMetadata,
         egld_value: BigUint,
-        mut arguments: Vec<Vec<u8>>,
+        arguments: Vec<Vec<u8>>,
         gas_limit: u64
     ) -> Result<(Address, CallResult<OutputManaged::Native>), ExecutorError>
         where
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
     {
-        let mut encoded_metadata: ManagedBuffer<StaticApi> = ManagedBuffer::new();
-        _ = code_metadata.top_encode(&mut encoded_metadata).unwrap();
-
-        let built_in_arguments: Vec<Vec<u8>> = vec![
+        let deploy_call_input = get_deploy_call_input(
             bytes,
-            vec![5, 0], // VM type: WASM
-            encoded_metadata.to_boxed_bytes().into_vec()
-        ];
-
-        let mut all_arguments = built_in_arguments;
-        all_arguments.append(&mut arguments);
+            code_metadata,
+            egld_value,
+            arguments,
+            gas_limit
+        );
 
         let deploy_result = self.sc_call::<OutputManaged>(
-            &Address::from_bytes([0u8; 32]),
-            "".to_string(),
-            all_arguments,
-            gas_limit,
-            egld_value,
-            vec![]
+            &deploy_call_input.to,
+            deploy_call_input.function,
+            deploy_call_input.arguments,
+            deploy_call_input.gas_limit,
+            deploy_call_input.egld_value,
+            deploy_call_input.esdt_transfers
         )
             .await?;
 

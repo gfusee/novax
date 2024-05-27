@@ -6,3 +6,4 @@ pub mod simulation;
 pub mod transaction;
 pub mod dummy;
 pub mod wallet;
+pub mod mock_transaction;

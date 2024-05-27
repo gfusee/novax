@@ -1,6 +1,6 @@
 use num_bigint::BigUint;
 use novax_data::Address;
-use crate::{ExecutorError, TokenTransfer};
+use crate::{ExecutorError, SendableTransaction, TokenTransfer};
 use crate::error::transaction::TransactionError;
 
 #[derive(Clone, PartialEq, Debug)]
@@ -116,6 +116,15 @@ impl NormalizationInOut {
 
         args_string.join("@")
     }
+
+    pub fn to_sendable_transaction(self, gas_limit: u64) -> SendableTransaction {
+        SendableTransaction {
+            receiver: self.receiver.clone(),
+            egld_value: self.egld_value.clone(),
+            gas_limit,
+            data: self.get_transaction_data(),
+        }
+    }
 }
 
 fn encode_string(string: &str) -> Result<Vec<u8>, ExecutorError> {
@@ -171,7 +180,7 @@ mod tests {
         let value = NormalizationInOut {
             sender: SENDER.to_string(),
             receiver: RECEIVER.to_string(),
-            function_name: ENDPOINT_NAME.to_string(),
+            function_name: Some(ENDPOINT_NAME.to_string()),
             arguments: vec![
                 vec![1, 2],
                 vec![3, 4]
@@ -195,7 +204,7 @@ mod tests {
         let value = NormalizationInOut {
             sender: SENDER.to_string(),
             receiver: RECEIVER.to_string(),
-            function_name: ENDPOINT_NAME.to_string(),
+            function_name: Some(ENDPOINT_NAME.to_string()),
             arguments: vec![
                 vec![1, 2],
                 vec![3, 4]
@@ -219,7 +228,7 @@ mod tests {
         let value = NormalizationInOut {
             sender: SENDER.to_string(),
             receiver: RECEIVER.to_string(),
-            function_name: ENDPOINT_NAME.to_string(),
+            function_name: Some(ENDPOINT_NAME.to_string()),
             arguments: vec![],
             egld_value: BigUint::from(0u8),
             esdt_transfers: vec![
@@ -237,7 +246,7 @@ mod tests {
         let expected = NormalizationInOut {
             sender: SENDER.to_string(),
             receiver: RECEIVER.to_string(),
-            function_name: "ESDTTransfer".to_string(),
+            function_name: Some("ESDTTransfer".to_string()),
             arguments: vec![
                 hex::decode(FUNGIBLE_NAME_HEX).unwrap(),
                 vec![100],
@@ -258,7 +267,7 @@ mod tests {
         let value = NormalizationInOut {
             sender: SENDER.to_string(),
             receiver: RECEIVER.to_string(),
-            function_name: ENDPOINT_NAME.to_string(),
+            function_name: Some(ENDPOINT_NAME.to_string()),
             arguments: vec![
                 vec![1, 2],
                 vec![3, 4]
@@ -279,7 +288,7 @@ mod tests {
         let expected = NormalizationInOut {
             sender: SENDER.to_string(),
             receiver: RECEIVER.to_string(),
-            function_name: "ESDTTransfer".to_string(),
+            function_name: Some("ESDTTransfer".to_string()),
             arguments: vec![
                 hex::decode(FUNGIBLE_NAME_HEX).unwrap(),
                 vec![100],
@@ -302,7 +311,7 @@ mod tests {
         let value = NormalizationInOut {
             sender: SENDER.to_string(),
             receiver: RECEIVER.to_string(),
-            function_name: ENDPOINT_NAME.to_string(),
+            function_name: Some(ENDPOINT_NAME.to_string()),
             arguments: vec![],
             egld_value: BigUint::from(0u8),
             esdt_transfers: vec![
@@ -320,7 +329,7 @@ mod tests {
         let expected = NormalizationInOut {
             sender: SENDER.to_string(),
             receiver: SENDER.to_string(),
-            function_name: "ESDTNFTTransfer".to_string(),
+            function_name: Some("ESDTNFTTransfer".to_string()),
             arguments: vec![
                 hex::decode(NON_FUNGIBLE_NAME_HEX).unwrap(),
                 vec![1],
@@ -342,7 +351,7 @@ mod tests {
         let value = NormalizationInOut {
             sender: SENDER.to_string(),
             receiver: RECEIVER.to_string(),
-            function_name: ENDPOINT_NAME.to_string(),
+            function_name: Some(ENDPOINT_NAME.to_string()),
             arguments: vec![
                 vec![1, 2],
                 vec![3, 4]
@@ -363,7 +372,7 @@ mod tests {
         let expected = NormalizationInOut {
             sender: SENDER.to_string(),
             receiver: SENDER.to_string(),
-            function_name: "ESDTNFTTransfer".to_string(),
+            function_name: Some("ESDTNFTTransfer".to_string()),
             arguments: vec![
                 hex::decode(NON_FUNGIBLE_NAME_HEX).unwrap(),
                 vec![1],
@@ -388,7 +397,7 @@ mod tests {
         let value = NormalizationInOut {
             sender: SENDER.to_string(),
             receiver: RECEIVER.to_string(),
-            function_name: ENDPOINT_NAME.to_string(),
+            function_name: Some(ENDPOINT_NAME.to_string()),
             arguments: vec![],
             egld_value: BigUint::from(0u8),
             esdt_transfers: vec![
@@ -410,7 +419,7 @@ mod tests {
         let expected = NormalizationInOut {
             sender: SENDER.to_string(),
             receiver: SENDER.to_string(),
-            function_name: "MultiESDTNFTTransfer".to_string(),
+            function_name: Some("MultiESDTNFTTransfer".to_string()),
             arguments: vec![
                 hex::decode(RECEIVER_HEX).unwrap(),
                 vec![2],
@@ -436,7 +445,7 @@ mod tests {
         let value = NormalizationInOut {
             sender: SENDER.to_string(),
             receiver: RECEIVER.to_string(),
-            function_name: ENDPOINT_NAME.to_string(),
+            function_name: Some(ENDPOINT_NAME.to_string()),
             arguments: vec![
                 vec![1, 2],
                 vec![3, 4]
@@ -462,7 +471,7 @@ mod tests {
         let expected = NormalizationInOut {
             sender: SENDER.to_string(),
             receiver: SENDER.to_string(),
-            function_name: "MultiESDTNFTTransfer".to_string(),
+            function_name: Some("MultiESDTNFTTransfer".to_string()),
             arguments: vec![
                 hex::decode(RECEIVER_HEX).unwrap(),
                 vec![2],
@@ -489,7 +498,7 @@ mod tests {
         let value = NormalizationInOut {
             sender: SENDER.to_string(),
             receiver: RECEIVER.to_string(),
-            function_name: ENDPOINT_NAME.to_string(),
+            function_name: Some(ENDPOINT_NAME.to_string()),
             arguments: vec![],
             egld_value: BigUint::from(1u8),
             esdt_transfers: vec![

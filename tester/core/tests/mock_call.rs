@@ -5,8 +5,9 @@ use novax::Address;
 use novax::errors::NovaXError;
 use novax_mocking::world::infos::ScenarioWorldInfos;
 use num_bigint::{BigInt, BigUint};
+use novax::executor::call_result::CallResult;
 use novax::tester::tester::{CustomEnum, CustomEnumWithFields, CustomEnumWithValues, CustomStruct, CustomStructWithStructAndVec, TesterContract};
-use novax::executor::StandardMockExecutor;
+use novax::executor::{ExecutorError, MockTransactionError, StandardMockExecutor};
 use novax_mocking::ScenarioWorld;
 
 const CALLER: &str = "bech32:erd1h4uhy73dev6qrfj7wxsguapzs8632mfwqjswjpsj6kzm2jfrnslqsuduqu";
@@ -78,10 +79,13 @@ async fn test_call_return_caller_no_caller_set() -> Result<(), NovaXError> {
     )
         .call(executor, 600000000)
         .return_caller()
-        .await?;
+        .await
+        .err()
+        .unwrap();
 
-    assert!(result.response.is_success());
-    assert_eq!(result.result, Some(Address::from(TESTER_CONTRACT_ADDRESS)));
+    let expected = NovaXError::Executor(ExecutorError::MockTransaction(MockTransactionError::CallerAddressNotPresent));
+
+    assert_eq!(result, expected);
 
     Ok(())
 }

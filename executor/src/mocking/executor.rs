@@ -4,7 +4,10 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use multiversx_sc::codec::{TopDecodeMulti, TopEncodeMulti};
-use multiversx_sc::imports::CodeMetadata;
+use multiversx_sc::imports::{CodeMetadata, ReturnsNewAddress};
+use multiversx_sc::types::{MultiValueEncoded, ReturnsRawResult};
+use multiversx_sc_scenario::imports::{Bech32Address, BytesValue};
+use multiversx_sc_scenario::ScenarioTxRun;
 use num_bigint::BigUint;
 use tokio::sync::Mutex;
 
@@ -18,8 +21,12 @@ use crate::base::transaction::TransactionExecutor;
 use crate::call_result::CallResult;
 use crate::error::executor::ExecutorError;
 use crate::error::mock_deploy::MockDeployError;
+use crate::error::mock_transaction::MockTransactionError;
+use crate::error::transaction::TransactionError;
 use crate::ScenarioWorld;
+use crate::utils::transaction::deploy::get_deploy_call_input;
 use crate::utils::transaction::token_transfer::TokenTransfer;
+use crate::utils::transaction::transfers::get_egld_or_esdt_transfers;
 
 /// A convenient type alias for `MockExecutor` with `String` as the generic type.
 pub type StandardMockExecutor = MockExecutor<String>;
@@ -92,26 +99,44 @@ impl<A> TransactionExecutor for MockExecutor<A>
         where
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
     {
-        /*
-        let caller: Address = if let Some(caller) = self.opt_caller.as_deref() {
-            caller.into()
-        } else {
-            (&sc_call_step.sc_call_step.tx.to.value).into()
+        let mut world = self.world.lock().await;
+
+        let transfers = get_egld_or_esdt_transfers(
+            egld_value,
+            esdt_transfers
+        )?;
+
+        let Some(caller) = self.opt_caller.as_ref() else {
+            return Err(MockTransactionError::CallerAddressNotPresent.into())
         };
 
-        let owned_sc_call_step = mem::replace(sc_call_step, ScCallStep::new().into());
-        *sc_call_step = owned_sc_call_step.from(&caller);
+        let mut tx = world.tx()
+            .from(Bech32Address::from_bech32_string(Address::from(caller).to_bech32_string()?))
+            .to(Bech32Address::from_bech32_string(to.to_bech32_string()?))
+            .raw_call(function)
+            .with_gas_limit(gas_limit)
+            .egld_or_multi_esdt(transfers)
+            .returns(ReturnsRawResult);
 
-        {
-            let mut world = self.world.lock().await;
-            world.sc_call(sc_call_step);
+        for argument in arguments {
+            tx = tx.argument(&argument);
         }
 
-        Ok(())
+        let raw_result_managed = tx.run();
+        let mut raw_result: Vec<Vec<u8>> = raw_result_managed
+            .into_vec()
+            .iter()
+            .map(|buffer| buffer.to_boxed_bytes().into_vec())
+            .collect();
 
-         */
+        let output_managed = OutputManaged::multi_decode(&mut raw_result).unwrap(); // TODO: no unwrap
 
-        todo!()
+        let call_result = CallResult {
+            response: Default::default(),
+            result: Some(output_managed.to_native()),
+        };
+
+        Ok(call_result)
     }
 }
 
@@ -162,30 +187,41 @@ impl<A> DeployExecutor for MockExecutor<A>
         where
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
     {
-        /*
-        let caller: Address = {
-            let Some(caller) = self.opt_caller.as_deref() else {
-                return Err(ExecutorError::MockDeploy(MockDeployError::WalletAddressNotPresent))
-            };
+        let mut world = self.world.lock().await;
 
-            caller.into()
+        let Some(caller) = self.opt_caller.as_ref() else {
+            return Err(MockDeployError::CallerAddressNotPresent.into())
         };
 
-        let sc_deploy_step = sc_deploy_step.as_mut();
+        let mut tx = world.tx()
+            .from(Bech32Address::from_bech32_string(Address::from(caller).to_bech32_string()?))
+            .raw_deploy()
+            .code_metadata(code_metadata)
+            .code(BytesValue::from(bytes))
+            .with_gas_limit(gas_limit)
+            .egld(multiversx_sc::types::BigUint::from(egld_value))
+            .returns(ReturnsNewAddress)
+            .returns(ReturnsRawResult);
 
-        let owned_sc_deploy_step = mem::replace(sc_deploy_step, ScDeployStep::new());
-        *sc_deploy_step = owned_sc_deploy_step.from(&caller);
-
-        {
-            let mut world = self.world.lock().await;
-            world.sc_deploy(sc_deploy_step);
+        for argument in arguments {
+            tx = tx.argument(&argument);
         }
 
-        Ok(())
+        let (new_address, raw_result_managed) = tx.run();
+        let mut raw_result: Vec<Vec<u8>> = raw_result_managed
+            .into_vec()
+            .iter()
+            .map(|buffer| buffer.to_boxed_bytes().into_vec())
+            .collect();
 
-         */
+        let output_managed = OutputManaged::multi_decode(&mut raw_result).unwrap(); // TODO: no unwrap
 
-        todo!()
+        let call_result = CallResult {
+            response: Default::default(),
+            result: Some(output_managed.to_native()),
+        };
+
+        Ok((Address::from_bytes(*new_address.as_array()), call_result))
     }
 
     /// Specifies whether deserialization should be skipped during the deployment execution.
@@ -236,30 +272,31 @@ impl<A> QueryExecutor for MockExecutor<A>
         where
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
     {
-        /*
-        // Convert the smart contract query step to a call step.
-        let query = convert_sc_query_step_to_call_step(request);
-        // Create a TypedScQuery from the query.
-        let mut typed = TypedScQuery::<OutputManaged>::from(query);
-        {
-            // Lock the mock world state for exclusive access.
-            let mut world: MutexGuard<ScenarioWorld> = self.world.lock().await;
-            // Execute the smart contract query in the mock world.
-            world.sc_query(&mut typed);
+        let mut world = self.world.lock().await;
+
+        // TODO: use from when run() becomes available with it in the MvX Rust SDK
+        // TODO: use payments when run() becomes available with them in the MvX Rust SDK
+        // let from = self.opt_caller.as_ref().map(|a| Address::from(a)).unwrap_or_else(|| to.clone());
+
+        let mut tx = world.query()
+            .to(Bech32Address::from_bech32_string(to.to_bech32_string()?))
+            .raw_call(function)
+            .returns(ReturnsRawResult);
+
+        for argument in arguments {
+            tx = tx.argument(&argument);
         }
-        // Retrieve the response from the typed query.
-        let response = typed.response();
-        // Clone the output from the response.
-        let mut out = response.out.clone();
 
-        // Parse the query return bytes data.
-        let parsed = parse_query_return_bytes_data::<OutputManaged>(&mut out)?;
-        // Convert the parsed data to its native type and return it.
-        Ok(parsed.to_native())
+        let raw_result_managed = tx.run();
+        let mut raw_result: Vec<Vec<u8>> = raw_result_managed
+            .into_vec()
+            .iter()
+            .map(|buffer| buffer.to_boxed_bytes().into_vec())
+            .collect();
 
-         */
+        let output_managed = OutputManaged::multi_decode(&mut raw_result).unwrap(); // TODO: no unwrap
 
-        todo!()
+        Ok(output_managed.to_native())
     }
 }
 

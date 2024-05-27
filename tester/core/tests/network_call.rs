@@ -7,7 +7,7 @@ use tokio::sync::Mutex;
 use novax::Address;
 use novax::data::NativeConvertible;
 use novax::errors::NovaXError;
-use novax::executor::{BaseTransactionNetworkExecutor, BlockchainInteractor, ExecutorError, NetworkExecutor, SendableTransactionConvertible, TokenTransfer, TopDecodeMulti, TransactionExecutor, TransactionOnNetwork, TransactionOnNetworkTransaction, TransactionOnNetworkTransactionSmartContractResult, Wallet};
+use novax::executor::{BaseTransactionNetworkExecutor, BlockchainInteractor, ExecutorError, NetworkExecutor, SendableTransactionConvertible, TokenTransfer, TopDecodeMulti, TransactionExecutor, TransactionOnNetwork, TransactionOnNetworkTransaction, TransactionOnNetworkTransactionLogs, TransactionOnNetworkTransactionSmartContractResult, Wallet};
 use novax::tester::tester::{CustomEnum, CustomEnumWithFields, CustomEnumWithValues, CustomStruct, CustomStructWithStructAndVec, TesterContract};
 use novax_mocking::ScDeployStep;
 
@@ -135,6 +135,10 @@ impl BlockchainInteractor for MockInteractor {
                     }
                 ]),
                 status: "executed".to_string(),
+                logs: TransactionOnNetworkTransactionLogs {
+                    address: "".to_string(),
+                    events: vec![],
+                },
             },
         };
 
