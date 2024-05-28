@@ -190,10 +190,12 @@ impl<Client: GatewayClient> TransactionExecutor for BaseSimulationNetworkExecuto
             })
             .collect();
 
-        let mut sc_results = find_smart_contract_result(&Some(scrs))
+        let mut raw_result = find_smart_contract_result(&Some(scrs))?
             .unwrap_or_default();
 
-        let output_managed = OutputManaged::multi_decode(&mut sc_results).unwrap(); // TODO: no unwrap
+        let Ok(output_managed) = OutputManaged::multi_decode(&mut raw_result) else {
+            return Err(TransactionError::CannotDecodeSmartContractResult.into())
+        };
 
         let call_result = CallResult {
             response: Default::default(),

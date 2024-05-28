@@ -1,5 +1,6 @@
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
+use std::time::Duration;
 
 use async_trait::async_trait;
 use multiversx_sc::codec::{TopDecodeMulti, TopEncode};
@@ -15,7 +16,7 @@ use crate::base::transaction::TransactionExecutor;
 use crate::call_result::CallResult;
 use crate::error::executor::ExecutorError;
 use crate::error::transaction::TransactionError;
-use crate::network::transaction::interactor::{BlockchainInteractor, Interactor};
+use crate::network::transaction::interactor::{BlockchainInteractor, Interactor, TransactionRefreshStrategy};
 use crate::network::transaction::models::transaction_on_network::{TransactionOnNetworkTransactionLogs, TransactionOnNetworkTransactionLogsEvents};
 use crate::network::utils::wallet::Wallet;
 use crate::TransactionOnNetworkTransactionSmartContractResult;
@@ -32,13 +33,17 @@ pub type NetworkExecutor = BaseTransactionNetworkExecutor<Interactor>;
 /// This executor is designed to interact with a blockchain network via a specified gateway URL and a wallet
 /// for signing transactions. It is parameterized by a type `Interactor` that encapsulates the blockchain interaction logic.
 pub struct BaseTransactionNetworkExecutor<Interactor: BlockchainInteractor> {
-    /// The URL of the blockchain network gateway through which transactions will be sent.
-    pub gateway_url: String,
-    /// The wallet used for signing transactions before they are sent to the blockchain network.
-    pub wallet: Wallet,
-    /// Phantom data to allow the generic parameter `Interactor`.
-    /// This field does not occupy any space in memory.
-    _phantom_data: PhantomData<Interactor>,
+    interactor: Interactor
+}
+
+impl BaseTransactionNetworkExecutor<Interactor> {
+    pub fn set_refresh_strategy(&mut self, strategy: TransactionRefreshStrategy) {
+        self.interactor.refresh_strategy = strategy;
+    }
+
+    pub fn set_timeout(&mut self, timeout: Duration) {
+        self.interactor.timeout = timeout;
+    }
 }
 
 /// Custom implementation of `Clone` for `BaseTransactionNetworkExecutor`.
@@ -49,13 +54,11 @@ pub struct BaseTransactionNetworkExecutor<Interactor: BlockchainInteractor> {
 /// without the `Interactor` needing to be `Clone`.
 impl<Interactor> Clone for BaseTransactionNetworkExecutor<Interactor>
     where
-        Interactor: BlockchainInteractor
+        Interactor: BlockchainInteractor + Clone
 {
     fn clone(&self) -> Self {
         Self {
-            gateway_url: self.gateway_url.clone(),
-            wallet: self.wallet,
-            _phantom_data: Default::default(),
+            interactor: self.interactor.clone()
         }
     }
 }
@@ -69,13 +72,11 @@ impl<Interactor> Clone for BaseTransactionNetworkExecutor<Interactor>
 /// formatted using the `Debug` trait regardless of whether `Interactor` implements `Debug`.
 impl<Interactor> Debug for BaseTransactionNetworkExecutor<Interactor>
     where
-        Interactor: BlockchainInteractor
+        Interactor: BlockchainInteractor + Debug
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("BaseTransactionNetworkExecutor")
-            .field("gateway_url", &self.gateway_url)
-            .field("wallet", &self.wallet)
-            .finish()
+        write!(f, "BaseTransactionNetworkExecutor - ")?;
+        self.interactor.fmt(f)
     }
 }
 
@@ -88,12 +89,17 @@ impl<Interactor: BlockchainInteractor> BaseTransactionNetworkExecutor<Interactor
     ///
     /// # Returns
     /// A new `BaseTransactionNetworkExecutor` instance.
-    pub fn new(gateway_url: &str, wallet: &Wallet) -> Self {
-        BaseTransactionNetworkExecutor {
-            gateway_url: gateway_url.to_string(),
-            wallet: *wallet,
-            _phantom_data: PhantomData,
-        }
+    pub async fn new(gateway_url: String, wallet: Wallet) -> Result<Self, ExecutorError> {
+        let interactor = Interactor::new(
+            gateway_url,
+            wallet
+        ).await?;
+
+        Ok(
+            BaseTransactionNetworkExecutor {
+                interactor
+            }
+        )
     }
 }
 
@@ -111,12 +117,6 @@ impl<Interactor: BlockchainInteractor> TransactionExecutor for BaseTransactionNe
         where
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
     {
-        let mut interactor = Interactor::new(
-            self.gateway_url.clone(),
-            self.wallet
-        )
-            .await?;
-
         let function_name = if function.is_empty() {
             None
         } else {
@@ -124,7 +124,7 @@ impl<Interactor: BlockchainInteractor> TransactionExecutor for BaseTransactionNe
         };
 
         let normalized = NormalizationInOut {
-            sender: self.wallet.get_address().to_bech32_string()?,
+            sender: self.interactor.get_sender_address().to_bech32_string()?,
             receiver: to.to_bech32_string()?,
             function_name,
             arguments,
@@ -136,7 +136,7 @@ impl<Interactor: BlockchainInteractor> TransactionExecutor for BaseTransactionNe
         let egld_value = normalized.egld_value.clone();
         let transaction_data = normalized.get_transaction_data();
 
-        let result = interactor.sc_call(
+        let result = self.interactor.sc_call(
             receiver,
             egld_value,
             transaction_data,
@@ -144,7 +144,7 @@ impl<Interactor: BlockchainInteractor> TransactionExecutor for BaseTransactionNe
         )
             .await?;
 
-        let Some(mut sc_result) = find_smart_contract_result(&result.transaction.smart_contract_results) else {
+        let Some(mut sc_result) = find_smart_contract_result(&result.transaction.smart_contract_results)? else {
             return Err(TransactionError::NoSmartContractResult.into())
         };
 

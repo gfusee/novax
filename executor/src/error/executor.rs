@@ -1,6 +1,7 @@
 use crate::error::network::NetworkQueryError;
 use serde::{Deserialize, Serialize};
 use novax_data::DataError;
+use crate::error::date::DateError;
 use crate::error::dummy::DummyExecutorError;
 use crate::error::gateway::GatewayError;
 use crate::error::mock_deploy::MockDeployError;
@@ -18,6 +19,7 @@ pub enum ExecutorError {
     NetworkQuery(NetworkQueryError),
 
     Dummy(DummyExecutorError),
+    Date(DateError),
 
     /// Represents errors specifically related to interactions with the MultiversX gateway. This can include
     /// HTTP request issues, response parsing errors, and other anomalies encountered while communicating

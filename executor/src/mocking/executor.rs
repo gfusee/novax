@@ -129,7 +129,9 @@ impl<A> TransactionExecutor for MockExecutor<A>
             .map(|buffer| buffer.to_boxed_bytes().into_vec())
             .collect();
 
-        let output_managed = OutputManaged::multi_decode(&mut raw_result).unwrap(); // TODO: no unwrap
+        let Ok(output_managed) = OutputManaged::multi_decode(&mut raw_result) else {
+            return Err(TransactionError::CannotDecodeSmartContractResult.into())
+        };
 
         let call_result = CallResult {
             response: Default::default(),
@@ -214,7 +216,9 @@ impl<A> DeployExecutor for MockExecutor<A>
             .map(|buffer| buffer.to_boxed_bytes().into_vec())
             .collect();
 
-        let output_managed = OutputManaged::multi_decode(&mut raw_result).unwrap(); // TODO: no unwrap
+        let Ok(output_managed) = OutputManaged::multi_decode(&mut raw_result) else {
+            return Err(TransactionError::CannotDecodeSmartContractResult.into())
+        };
 
         let call_result = CallResult {
             response: Default::default(),
@@ -284,7 +288,9 @@ impl<A> QueryExecutor for MockExecutor<A>
             .map(|buffer| buffer.to_boxed_bytes().into_vec())
             .collect();
 
-        let output_managed = OutputManaged::multi_decode(&mut raw_result).unwrap(); // TODO: no unwrap
+        let Ok(output_managed) = OutputManaged::multi_decode(&mut raw_result) else {
+            return Err(TransactionError::CannotDecodeSmartContractResult.into())
+        };
 
         Ok(output_managed.to_native())
     }

@@ -3,6 +3,7 @@ use async_trait::async_trait;
 use multiversx_sc_scenario::scenario_model::ScDeployStep;
 use num_bigint::BigUint;
 use reqwest::Client;
+use tokio::time::Instant;
 
 use novax_data::{Address, NativeConvertible};
 use crate::call_result::CallResult;
@@ -18,6 +19,7 @@ use crate::network::utils::address::get_address_info;
 use crate::network::utils::network::get_network_config;
 use crate::network::utils::transaction::{get_transaction_on_network, send_transaction};
 use crate::network::utils::wallet::{SignableTransaction, Wallet};
+use crate::utils::date::get_current_timestamp::{get_current_timestamp, get_timestamp_of_next_block};
 
 #[async_trait]
 pub trait BlockchainInteractor: Sized + Send + Sync {
@@ -30,14 +32,20 @@ pub trait BlockchainInteractor: Sized + Send + Sync {
         data: String,
         gas_limit: u64
     ) -> Result<TransactionOnNetwork, ExecutorError>;
+
+    fn get_sender_address(&self) -> Address;
 }
 
+#[derive(Clone, Debug)]
 pub struct Interactor {
     pub gateway_url: String,
     pub wallet: Wallet,
-    pub network_config: NetworkGatewayConfig
+    pub network_config: NetworkGatewayConfig,
+    pub refresh_strategy: TransactionRefreshStrategy,
+    pub timeout: Duration
 }
 
+#[derive(Clone, Debug)]
 pub enum TransactionRefreshStrategy {
     EachBlock,
     EachDuration(Duration)
@@ -51,6 +59,8 @@ impl Interactor {
     }
 
     async fn wait_for_execution(&self, tx_hash: &str) -> Result<TransactionOnNetwork, ExecutorError> {
+        let end_timestamp = get_current_timestamp()? + self.timeout;
+
         loop {
             let transaction_on_network = get_transaction_on_network(
                 &self.gateway_url,
@@ -61,10 +71,22 @@ impl Interactor {
                 return Ok(transaction_on_network)
             }
 
-            tokio::time::sleep(Duration::from_secs(1)).await; // TODO
-        }
+            let current_timestamp = get_current_timestamp()?;
 
-        // TODO: add timeout
+            if current_timestamp >= end_timestamp {
+                return Err(TransactionError::TimeoutWhenRetrievingTransactionOnNetwork.into())
+            }
+
+            match self.refresh_strategy {
+                TransactionRefreshStrategy::EachBlock => {
+                    let timestamp_of_next_block = get_timestamp_of_next_block(current_timestamp)?;
+                    tokio::time::sleep(timestamp_of_next_block - current_timestamp).await;
+                }
+                TransactionRefreshStrategy::EachDuration(duration) => {
+                    tokio::time::sleep(duration).await;
+                }
+            }
+        }
     }
     
     fn get_sendable_transaction(
@@ -109,7 +131,9 @@ impl BlockchainInteractor for Interactor {
             Self {
                 gateway_url,
                 wallet,
-                network_config
+                network_config,
+                refresh_strategy: TransactionRefreshStrategy::EachBlock,
+                timeout: Duration::from_secs(10)
             }
         )
     }
@@ -134,8 +158,8 @@ impl BlockchainInteractor for Interactor {
             gas_limit,
             data,
             self.network_config.config.erd_chain_id.clone(),
-            1, // TODO: what's this?
-            0 // TODO: what's this?
+            1,
+            0
         );
 
         let tx_hash = send_transaction(
@@ -146,6 +170,10 @@ impl BlockchainInteractor for Interactor {
 
 
         self.wait_for_execution(&tx_hash).await
+    }
+
+    fn get_sender_address(&self) -> Address {
+        self.wallet.get_address()
     }
 }
 

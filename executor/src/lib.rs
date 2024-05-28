@@ -68,6 +68,7 @@ pub use network::utils::wallet::Wallet;
 pub use network::transaction::executor::NetworkExecutor;
 pub use network::transaction::executor::BaseTransactionNetworkExecutor;
 pub use network::transaction::interactor::BlockchainInteractor;
+pub use network::transaction::interactor::TransactionRefreshStrategy;
 pub use network::query::proxy::BlockchainProxy;
 pub use network::simulate::SimulationNetworkExecutor;
 pub use network::simulate::BaseSimulationNetworkExecutor;

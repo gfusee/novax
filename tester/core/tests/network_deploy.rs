@@ -19,6 +19,7 @@ const NEW_CONTRACT: &str = "erd1qqqqqqqqqqqqqpgq74myhunu4sfdpmskm6s6ul8k4cetjvhh
 const RETURNING_MOCK_URL: &str = "returning";
 
 struct MockInteractor {
+    wallet: Wallet,
     is_deploy_returning: bool
 }
 
@@ -29,6 +30,7 @@ impl BlockchainInteractor for MockInteractor {
 
         Ok(
             MockInteractor {
+                wallet,
                 is_deploy_returning,
             }
         )
@@ -80,10 +82,14 @@ impl BlockchainInteractor for MockInteractor {
 
         return Ok(response)
     }
+
+    fn get_sender_address(&self) -> Address {
+        self.wallet.get_address()
+    }
 }
 
 
-fn get_executor(is_returning_value: bool) -> BaseTransactionNetworkExecutor<MockInteractor> {
+async fn get_executor(is_returning_value: bool) -> BaseTransactionNetworkExecutor<MockInteractor> {
     let wallet = Wallet::from_private_key(CALLER_PRIVATE_KEY).unwrap();
 
     let url = if is_returning_value {
@@ -93,14 +99,16 @@ fn get_executor(is_returning_value: bool) -> BaseTransactionNetworkExecutor<Mock
     };
 
     BaseTransactionNetworkExecutor::new(
-        &url,
-        &wallet
+        url,
+        wallet
     )
+        .await
+        .unwrap()
 }
 
 #[tokio::test]
 async fn test_deploy_with_biguint_arg() -> Result<(), NovaXError> {
-    let mut executor = get_executor(false);
+    let mut executor = get_executor(false).await;
 
     let deploy_data = DeployData {
         code: "../../.novax/tester-contract.wasm",
@@ -123,7 +131,7 @@ async fn test_deploy_with_biguint_arg() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_deploy_with_return_value() -> Result<(), NovaXError> {
-    let mut executor = get_executor(true);
+    let mut executor = get_executor(true).await;
 
     let deploy_data = DeployData {
         code: "../../.novax/tester-contract.wasm",
@@ -147,7 +155,7 @@ async fn test_deploy_with_return_value() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_deploy_with_biguint_arg_with_metadatas() -> Result<(), NovaXError> {
-    let mut executor = get_executor(false);
+    let mut executor = get_executor(false).await;
 
     let deploy_data = DeployData {
         code: "../../.novax/tester-contract.wasm",

@@ -8,6 +8,7 @@ use novax_data::{NativeConvertible, parse_query_return_string_data};
 
 use crate::{BlockchainProxy, ExecutorError, QueryExecutor, TokenTransfer, VmValuesQueryRequest};
 use crate::network::query::proxy::NetworkBlockchainProxy;
+use crate::utils::transaction::normalization::NormalizationInOut;
 
 /// A convenient type alias for `QueryNetworkExecutor` with `NetworkBlockchainProxy` as the generic type.
 pub type ProxyQueryExecutor = QueryNetworkExecutor<NetworkBlockchainProxy>;
@@ -58,14 +59,22 @@ impl<Proxy: BlockchainProxy> QueryExecutor for QueryNetworkExecutor<Proxy> {
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
     {
         let sc_address = to.to_bech32_string()?;
-        let arguments = encode_arguments(&arguments);
 
-        let vm_request = VmValuesQueryRequest { // TODO: put this in a separate function so normalization can be tested
-            sc_address: sc_address.clone(),
-            func_name: function,
-            caller: None, // TODO
-            value: None, // TODO: normalize
-            args: arguments,
+        let normalized = NormalizationInOut {
+            sender: sc_address.clone(), // TODO
+            receiver: sc_address,
+            function_name: Some(function),
+            arguments,
+            egld_value,
+            esdt_transfers,
+        }.normalize()?;
+
+        let vm_request = VmValuesQueryRequest {
+            sc_address: normalized.receiver,
+            func_name: normalized.function_name.unwrap_or_default(),
+            caller: Some(normalized.sender),
+            value: Some(normalized.egld_value.to_string()),
+            args: encode_arguments(&normalized.arguments),
         };
 
         let blockchain = Proxy::new(self.gateway_url.clone());
