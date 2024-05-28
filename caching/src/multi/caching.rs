@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use tokio::join;
-use novax::caching::CachingStrategy;
+use novax::caching::{CachingDurationStrategy, CachingStrategy};
 use novax::errors::NovaXError;
 
 #[derive(Clone, Debug)]
@@ -88,17 +88,10 @@ where
         Ok(())
     }
 
-    fn with_duration(&self, duration: Duration) -> Self {
+    fn with_duration_strategy(&self, strategy: CachingDurationStrategy) -> Self {
         CachingMulti::new(
-            self.first.with_duration(duration),
-            self.second.with_duration(duration)
-        )
-    }
-
-    fn until_next_block(&self) -> Self {
-        CachingMulti::new(
-            self.first.until_next_block(),
-            self.second.until_next_block()
+            self.first.with_duration_strategy(strategy.clone()),
+            self.second.with_duration_strategy(strategy)
         )
     }
 }
@@ -106,7 +99,7 @@ where
 #[cfg(test)]
 mod test {
     use std::time::Duration;
-    use novax::caching::CachingStrategy;
+    use novax::caching::{CachingDurationStrategy, CachingStrategy};
     use novax::errors::NovaXError;
     use crate::local::caching_local::CachingLocal;
     use crate::multi::caching::CachingMulti;
@@ -116,9 +109,9 @@ mod test {
     async fn test_get_cache_no_cache() -> Result<(), NovaXError> {
         let key = 1u64;
 
-        let first_caching = CachingLocal::empty();
+        let first_caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
 
-        let second_caching = CachingLocal::empty();
+        let second_caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
 
         let caching = CachingMulti::new(first_caching, second_caching);
 
@@ -134,10 +127,10 @@ mod test {
     async fn test_get_cache_first_only() -> Result<(), NovaXError> {
         let key = 1u64;
         let value = "test".to_string();
-        let first_caching = CachingLocal::empty();
+        let first_caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
         first_caching.set_cache(key, &value).await?;
 
-        let second_caching = CachingLocal::empty();
+        let second_caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
 
         let caching = CachingMulti::new(first_caching, second_caching);
 
@@ -153,9 +146,9 @@ mod test {
     async fn test_get_cache_second_only() -> Result<(), NovaXError> {
         let key = 1u64;
         let value = "test".to_string();
-        let first_caching = CachingLocal::empty();
+        let first_caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
 
-        let second_caching = CachingLocal::empty();
+        let second_caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
         second_caching.set_cache(key, &value).await?;
 
         let caching = CachingMulti::new(first_caching, second_caching);
@@ -172,11 +165,11 @@ mod test {
     async fn test_get_cache_first_and_second() -> Result<(), NovaXError> {
         let key = 1u64;
         let first_value = "test1".to_string();
-        let first_caching = CachingLocal::empty();
+        let first_caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
         first_caching.set_cache(key, &first_value).await?;
 
         let second_value = "test2".to_string();
-        let second_caching = CachingLocal::empty();
+        let second_caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
         second_caching.set_cache(key, &second_value).await?;
 
         let caching = CachingMulti::new(first_caching, second_caching);
@@ -194,8 +187,8 @@ mod test {
         let key = 1u64;
         let value = "test".to_string();
 
-        let first_caching = CachingLocal::empty();
-        let second_caching = CachingLocal::empty();
+        let first_caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
+        let second_caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
 
         let caching = CachingMulti::new(first_caching.clone(), second_caching.clone());
         caching.set_cache(key, &value).await?;
@@ -212,8 +205,8 @@ mod test {
 
     #[tokio::test]
     async fn test_clear() -> Result<(), NovaXError> {
-        let first_caching = CachingLocal::empty();
-        let second_caching = CachingLocal::empty();
+        let first_caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
+        let second_caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
 
         let caching = CachingMulti::new(first_caching.clone(), second_caching.clone());
 
@@ -236,17 +229,17 @@ mod test {
         let key = 1u64;
         let value = "test".to_string();
 
-        let first_caching = CachingLocal::empty();
-        let second_caching = CachingLocal::empty();
+        let first_caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
+        let second_caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
 
         let caching = CachingMulti::new(
             first_caching.clone(),
             second_caching.clone()
         )
-            .with_duration(Duration::from_secs(10));
+            .with_duration_strategy(CachingDurationStrategy::Duration(Duration::from_secs(10)));
         caching.set_cache(key, &value).await?;
 
-        set_mock_time(Duration::from_secs(10));
+        set_mock_time(Duration::from_secs(9));
 
         let first_result = first_caching.get_cache::<String>(key).await?;
         let second_result = second_caching.get_cache::<String>(key).await?;
@@ -263,14 +256,14 @@ mod test {
         let key = 1u64;
         let value = "test".to_string();
 
-        let first_caching = CachingLocal::empty();
-        let second_caching = CachingLocal::empty();
+        let first_caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
+        let second_caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
 
         let caching = CachingMulti::new(
             first_caching.clone(),
             second_caching.clone()
         )
-            .with_duration(Duration::from_secs(10));
+            .with_duration_strategy(CachingDurationStrategy::Duration(Duration::from_secs(10)));
         caching.set_cache(key, &value).await?;
 
         set_mock_time(Duration::from_secs(11));
@@ -291,14 +284,14 @@ mod test {
         let key = 1u64;
         let value = "test".to_string();
 
-        let first_caching = CachingLocal::empty();
-        let second_caching = CachingLocal::empty();
+        let first_caching = CachingLocal::empty(CachingDurationStrategy::Duration(Duration::from_secs(0)));
+        let second_caching = CachingLocal::empty(CachingDurationStrategy::Duration(Duration::from_secs(0)));
 
         let caching = CachingMulti::new(
             first_caching.clone(),
             second_caching.clone()
         )
-            .until_next_block();
+            .with_duration_strategy(CachingDurationStrategy::EachBlock);
         caching.set_cache(key, &value).await?;
 
         set_mock_time(Duration::from_secs(5));
@@ -319,14 +312,14 @@ mod test {
         let key = 1u64;
         let value = "test".to_string();
 
-        let first_caching = CachingLocal::empty();
-        let second_caching = CachingLocal::empty();
+        let first_caching = CachingLocal::empty(CachingDurationStrategy::Duration(Duration::from_secs(0)));
+        let second_caching = CachingLocal::empty(CachingDurationStrategy::Duration(Duration::from_secs(0)));
 
         let caching = CachingMulti::new(
             first_caching.clone(),
             second_caching.clone()
         )
-            .until_next_block();
+            .with_duration_strategy(CachingDurationStrategy::EachBlock);
         caching.set_cache(key, &value).await?;
 
         set_mock_time(Duration::from_secs(6));

@@ -21,6 +21,7 @@ use crate::network::utils::wallet::Wallet;
 use crate::TransactionOnNetworkTransactionSmartContractResult;
 use crate::utils::transaction::deploy::get_deploy_call_input;
 use crate::utils::transaction::normalization::NormalizationInOut;
+use crate::utils::transaction::results::{find_sc_deploy_event, find_smart_contract_result};
 use crate::utils::transaction::token_transfer::TokenTransfer;
 
 /// Alias for the `BaseTransactionNetworkExecutor` struct, parameterized with the `Interactor` type.
@@ -222,40 +223,4 @@ impl<Interactor: BlockchainInteractor> DeployExecutor for BaseTransactionNetwork
 
         Ok((deployed_address, deploy_result))
     }
-
-    /// Specifies whether deserialization should be skipped during the deployment execution.
-    /// In this implementation, deserialization is not skipped.
-    ///
-    /// # Returns
-    ///
-    /// A `bool` value of `false`, indicating that deserialization should not be skipped.
-    async fn should_skip_deserialization(&self) -> bool {
-        false
-    }
-}
-
-fn find_sc_deploy_event(logs: &[TransactionOnNetworkTransactionLogsEvents]) -> Option<TransactionOnNetworkTransactionLogsEvents> {
-    logs.iter()
-        .find(|event| event.identifier == "SCDeploy")
-        .cloned()
-}
-
-fn find_smart_contract_result(opt_sc_results: &Option<Vec<TransactionOnNetworkTransactionSmartContractResult>>) -> Option<Vec<Vec<u8>>> {
-    let Some(sc_results) = opt_sc_results else {
-        return None
-    };
-
-    sc_results.iter()
-        .find(|sc_result| sc_result.nonce != 0 && sc_result.data.starts_with('@'))
-        .cloned()
-        .map(|sc_result| {
-            let mut split = sc_result.data.split('@');
-            let _ = split.next().expect("SCR data should start with '@'"); // TODO: no expect and assert_eq!
-            let result_code = split.next().expect("missing result code");
-            assert_eq!(result_code, "6f6b", "result code is not 'ok'");
-
-            split
-                .map(|encoded_arg| hex::decode(encoded_arg).expect("error hex-decoding result"))
-                .collect()
-        })
 }

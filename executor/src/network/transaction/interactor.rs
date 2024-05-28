@@ -38,6 +38,11 @@ pub struct Interactor {
     pub network_config: NetworkGatewayConfig
 }
 
+pub enum TransactionRefreshStrategy {
+    EachBlock,
+    EachDuration(Duration)
+}
+
 impl Interactor {
     async fn get_account_info(&self) -> Result<AddressGatewayInfoAccount, ExecutorError> {
         let address = Address::from(self.wallet.get_address());

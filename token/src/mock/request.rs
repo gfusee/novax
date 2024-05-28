@@ -57,7 +57,7 @@ impl GatewayClient for MockClient {
         if let Some((status, data)) = token::get_token_properties_vm_query_response(&decoded) {
             Ok((status, Some(data)))
         } else {
-            todo!()
+            unreachable!()
         }
     }
 }

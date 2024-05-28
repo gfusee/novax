@@ -35,10 +35,10 @@ pub struct DummyExecutor<Tx: SendableTransactionConvertible> {
     pub caller: Option<Address>
 }
 
-impl<Tx: SendableTransactionConvertible> DummyExecutor<Tx> {
+impl<Tx: SendableTransactionConvertible + Clone> DummyExecutor<Tx> {
     /// Retrieves the transaction details encapsulated into a `SendableTransaction`.
     pub fn get_transaction_details(&self) -> Result<SendableTransaction, ExecutorError> {
-        if let Some(tx) = &self.tx {
+        if let Some(tx) = self.tx.clone() {
             Ok(tx.to_sendable_transaction())
         } else {
             Err(DummyExecutorError::NoTransactionSent.into())
@@ -151,10 +151,5 @@ impl DeployExecutor for DummyExecutor<SendableTransaction> {
             .await?;
 
         Ok((Address::default(), deploy_result))
-    }
-
-    /// Indicates that deserialization should be skipped as there is no actual execution.
-    async fn should_skip_deserialization(&self) -> bool {
-        true
     }
 }

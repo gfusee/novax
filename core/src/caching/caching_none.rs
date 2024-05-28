@@ -3,7 +3,7 @@ use std::future::Future;
 use std::time::Duration;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
-use crate::caching::caching_strategy::CachingStrategy;
+use crate::caching::caching_strategy::{CachingDurationStrategy, CachingStrategy};
 use crate::errors::NovaXError;
 
 /// An implementation of the `CachingStrategy` trait that performs no caching.
@@ -43,15 +43,7 @@ impl CachingStrategy for CachingNone {
         value_fn.await
     }
 
-    /// Attempts to create a new `CachingNone` instance with a specified cache duration,
-    /// but returns a new unchanged `CachingNone` instance since `CachingNone` does not support cache duration.
-    fn with_duration(&self, _duration: Duration) -> Self {
-        CachingNone
-    }
-
-    /// Attempts to create a new `CachingNone` instance that caches values until the next block,
-    /// but returns a new unchanged `CachingNone` instance since `CachingNone` does not support caching until the next block.
-    fn until_next_block(&self) -> Self {
+    fn with_duration_strategy(&self, _strategy: CachingDurationStrategy) -> Self {
         CachingNone
     }
 }

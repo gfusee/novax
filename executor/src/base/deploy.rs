@@ -41,16 +41,6 @@ pub trait DeployExecutor: Send + Sync {
     ) -> Result<(Address, CallResult<OutputManaged::Native>), ExecutorError>
         where
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync;
-
-    /// Indicates whether to skip deserialization during the deployment execution.
-    ///
-    /// This could be useful in cases where deserialization is either unnecessary or could cause errors,
-    /// for example, with the `DummyExecutor`.
-    ///
-    /// # Returns
-    ///
-    /// A `bool` indicating whether deserialization should be skipped.
-    async fn should_skip_deserialization(&self) -> bool; // TODO: remove
 }
 
 /// An implementation of `DeployExecutor` for `Arc<Mutex<T>>` where `T: DeployExecutor`.
@@ -74,16 +64,6 @@ impl<T: DeployExecutor> DeployExecutor for Arc<Mutex<T>> {
         {
             let mut locked = self.lock().await;
             locked.sc_deploy::<OutputManaged>(bytes, code_metadata, egld_value, arguments, gas_limit).await
-        }
-    }
-
-    /// Indicates whether to skip deserialization during the deployment execution, delegating to the inner `DeployExecutor`.
-    async fn should_skip_deserialization(&self) -> bool {
-        {
-            // Locking here can lead to some performance penalty. A potential solution may be to use
-            // another type other than Mutex, like RwLock.
-            let locked = self.lock().await;
-            locked.should_skip_deserialization().await
         }
     }
 }

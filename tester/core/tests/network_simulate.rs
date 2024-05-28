@@ -79,7 +79,7 @@ impl GatewayClient for MockClient {
         } else if url == "/network/config" {
             get_network_config()
         } else {
-            todo!()
+            unreachable!()
         };
 
         Ok((result.0, Some(result.1)))
@@ -93,7 +93,7 @@ impl GatewayClient for MockClient {
         } else if data == r#"{"nonce":5,"value":"0","receiver":"erd1qqqqqqqqqqqqqpgq7x53hfeg9558dmzjg9lqyfar77z8wrxf5u7qrawwh0","sender":"erd1uh67c2lkhyj4vh73akv7jky9sfgvus8awwcj64uju69mmfne5u7q299t7g","gasPrice":1000000000,"gasLimit":600000000,"data":"YWRkQDBh","chainId":"D","version":1}"# {
             get_return_biguint_argument_simulation_data()
         } else {
-            todo!()
+            unreachable!()
         };
 
         Ok((result.0, Some(result.1)))

@@ -14,7 +14,9 @@ pub enum SimulationError {
         /// A code associated with the error. Useful for programmatically identifying
         /// the nature of the error, and may be helpful in debugging or categorizing different types of execution errors.
         code: String
-    }
+    },
+
+    NoSmartContractResult
 }
 
 impl From<SimulationError> for ExecutorError {

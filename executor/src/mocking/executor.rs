@@ -223,16 +223,6 @@ impl<A> DeployExecutor for MockExecutor<A>
 
         Ok((Address::from_bytes(*new_address.as_array()), call_result))
     }
-
-    /// Specifies whether deserialization should be skipped during the deployment execution.
-    /// In this implementation, deserialization is not skipped.
-    ///
-    /// # Returns
-    ///
-    /// A `bool` value of `false`, indicating that deserialization should not be skipped.
-    async fn should_skip_deserialization(&self) -> bool {
-        false
-    }
 }
 
 /// The `MockExecutor` implementation for the `QueryExecutor` trait, used to simulate smart contract queries in a mock environment.
