@@ -39,6 +39,7 @@ async fn test_deploy_with_biguint_arg() -> Result<(), NovaXError> {
     let deploy_result = TesterContract::deploy(
         deploy_data,
         &mut executor,
+        BigUint::from(0u8),
         600000000u64,
         &BigUint::from(5u8)
         )
@@ -74,6 +75,7 @@ async fn test_deploy_with_metadatas() -> Result<(), NovaXError> {
     let deploy_result = TesterContract::deploy(
         deploy_data,
         &mut executor,
+        BigUint::from(0u8),
         600000000u64,
         &BigUint::from(5u8)
     )

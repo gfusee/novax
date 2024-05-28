@@ -9,7 +9,6 @@ use novax::data::NativeConvertible;
 use novax::errors::NovaXError;
 use novax::executor::{BaseTransactionNetworkExecutor, BlockchainInteractor, ExecutorError, NetworkExecutor, SendableTransactionConvertible, TokenTransfer, TopDecodeMulti, TransactionExecutor, TransactionOnNetwork, TransactionOnNetworkTransaction, TransactionOnNetworkTransactionLogs, TransactionOnNetworkTransactionSmartContractResult, Wallet};
 use novax::tester::tester::{CustomEnum, CustomEnumWithFields, CustomEnumWithValues, CustomStruct, CustomStructWithStructAndVec, TesterContract};
-use novax_mocking::ScDeployStep;
 
 mod utils;
 
@@ -173,9 +172,8 @@ async fn get_executor() -> Arc<Mutex<BaseTransactionNetworkExecutor<MockInteract
 #[tokio::test]
 async fn test_clone_network_executor() -> Result<(), NovaXError> {
     let wallet = Wallet::from_private_key(CALLER_PRIVATE_KEY).unwrap();
-    let executor = NetworkExecutor::new("".to_string(), wallet).await?;
-    #[allow(clippy::redundant_clone)]
-    let _executor2 = executor.clone();
+    let executor = NetworkExecutor::new("".to_string(), wallet).await;
+    _ = executor.map(|e| e.clone());
 
     Ok(())
 }
@@ -184,9 +182,9 @@ async fn test_clone_network_executor() -> Result<(), NovaXError> {
 #[tokio::test]
 async fn test_debug_network_executor() -> Result<(), NovaXError> {
     let wallet = Wallet::from_private_key(CALLER_PRIVATE_KEY).unwrap();
-    let executor = NetworkExecutor::new("".to_string(), wallet).await.unwrap();
+    let executor = NetworkExecutor::new("".to_string(), wallet).await;
 
-    println!("{executor:?}");
+    _ = executor.map(|e| println!("{:?}", e.clone()));
 
     Ok(())
 }

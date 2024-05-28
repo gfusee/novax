@@ -147,7 +147,7 @@ impl BlockchainInteractor for Interactor {
     ) -> Result<TransactionOnNetwork, ExecutorError> {
         let sender_info = self.get_account_info().await?;
         let sender_address = sender_info.address;
-        let nonce = sender_info.nonce; // TODO: +1?
+        let nonce = sender_info.nonce;
 
         let transaction_request = self.get_sendable_transaction(
             nonce,

@@ -464,8 +464,8 @@ fn impl_abi_endpoint_call_query(
                             &_novax_contract_address,
                             #endpoint_name.to_string(),
                             _novax_bytes_args,
-                            num_bigint::BigUint::from(0u8), // TODO
-                            vec![], // TODO
+                            self.egld_value.clone(),
+                            vec![],
                         ).await;
 
                     if let Result::Ok(result) = result {
@@ -518,7 +518,7 @@ fn impl_abi_constructor(contract_info_name: &str, abi_constructor: &AbiConstruct
         /// - `CallResult`: A `CallResult` instance containing the response data from the contract's deployment.
         ///
         /// Or a `NovaXError` if the deployment process fails.
-        pub async fn #function_name<Code: AsBytesValue, Executor: DeployExecutor>(_novax_deploy_data: DeployData<Code>, _novax_executor: &mut Executor, _novax_gas_limit: u64, #function_inputs) -> Result<(Address, CallResult<#function_native_outputs>), NovaXError> {
+        pub async fn #function_name<Code: AsBytesValue, Executor: DeployExecutor>(_novax_deploy_data: DeployData<Code>, _novax_executor: &mut Executor, _novax_egld_value: num_bigint::BigUint, _novax_gas_limit: u64, #function_inputs) -> Result<(Address, CallResult<#function_native_outputs>), NovaXError> {
             let mut _novax_contract = #contract_info_ident::new(&multiversx_sc::types::Address::from(<[u8;32]>::default()));
 
             #endpoint_args_let_statements
@@ -531,7 +531,7 @@ fn impl_abi_constructor(contract_info_name: &str, abi_constructor: &AbiConstruct
             _novax_executor.sc_deploy::<#function_managed_outputs>(
                 _novax_code_bytes,
                 _novax_deploy_data.metadata,
-                num_bigint::BigUint::from(0u8), // TODO
+                _novax_egld_value,
                 _novax_bytes_args,
                 _novax_gas_limit
             )
