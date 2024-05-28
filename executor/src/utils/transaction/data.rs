@@ -48,7 +48,7 @@ impl<Env, From, Payment, Gas, Data, RH> SendableTransactionConvertible for Tx<En
     where
         Env: TxEnv,
         From: TxFrom<Env>,
-        Payment: TxPayment<Env> + Clone, // TODO: evil clone
+        Payment: TxPayment<Env> + Clone,
         Gas: TxGas<Env>,
         Data: TxDataFunctionCall<Env>,
         RH: TxResultHandler<Env>,
@@ -56,7 +56,7 @@ impl<Env, From, Payment, Gas, Data, RH> SendableTransactionConvertible for Tx<En
     fn to_sendable_transaction(self) -> SendableTransaction {
         let receiver = Address::from_bytes(self.to.to_byte_array()).to_bech32_string().unwrap();
         let egld_value = self.payment
-            .clone() // TODO: evil clone
+            .clone()
             .into_full_payment_data(&self.env).egld
             .map(|v| BigUint::from_bytes_be(v.value.to_bytes_be().as_slice()))
             .unwrap_or_default();
