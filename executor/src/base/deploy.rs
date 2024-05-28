@@ -1,11 +1,12 @@
 use std::sync::Arc;
+
 use async_trait::async_trait;
-use multiversx_sc::codec::TopEncodeMulti;
 use multiversx_sc::types::CodeMetadata;
-use multiversx_sc_scenario::scenario_model::TypedScDeploy;
 use num_bigint::BigUint;
 use tokio::sync::Mutex;
+
 use novax_data::{Address, NativeConvertible};
+
 use crate::call_result::CallResult;
 use crate::error::executor::ExecutorError;
 use crate::TopDecodeMulti;

@@ -1,19 +1,15 @@
 use std::time::Duration;
+
 use async_trait::async_trait;
-use multiversx_sc_scenario::scenario_model::ScDeployStep;
 use num_bigint::BigUint;
-use reqwest::Client;
-use tokio::time::Instant;
 
-use novax_data::{Address, NativeConvertible};
-use crate::call_result::CallResult;
+use novax_data::Address;
+
 use crate::error::transaction::TransactionError;
-
-use crate::{ExecutorError, TopDecodeMulti};
+use crate::ExecutorError;
 use crate::network::models::address::info::AddressGatewayInfoAccount;
 use crate::network::models::network::config::NetworkGatewayConfig;
 use crate::network::transaction::models::send_request::TransactionSendRequest;
-use crate::network::transaction::models::send_response::TransactionSendResponse;
 use crate::network::transaction::models::transaction_on_network::TransactionOnNetwork;
 use crate::network::utils::address::get_address_info;
 use crate::network::utils::network::get_network_config;

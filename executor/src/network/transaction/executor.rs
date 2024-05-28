@@ -1,12 +1,9 @@
 use std::fmt::{Debug, Formatter};
-use std::marker::PhantomData;
 use std::time::Duration;
 
 use async_trait::async_trait;
-use multiversx_sc::codec::{TopDecodeMulti, TopEncode};
-use multiversx_sc::imports::{CodeMetadata, ManagedBuffer};
-use multiversx_sc_scenario::api::StaticApi;
-use multiversx_sc_scenario::multiversx_chain_vm::crypto_functions::keccak256;
+use multiversx_sc::codec::TopDecodeMulti;
+use multiversx_sc::imports::CodeMetadata;
 use num_bigint::BigUint;
 
 use novax_data::{Address, NativeConvertible};
@@ -17,9 +14,7 @@ use crate::call_result::CallResult;
 use crate::error::executor::ExecutorError;
 use crate::error::transaction::TransactionError;
 use crate::network::transaction::interactor::{BlockchainInteractor, Interactor, TransactionRefreshStrategy};
-use crate::network::transaction::models::transaction_on_network::{TransactionOnNetworkTransactionLogs, TransactionOnNetworkTransactionLogsEvents};
 use crate::network::utils::wallet::Wallet;
-use crate::TransactionOnNetworkTransactionSmartContractResult;
 use crate::utils::transaction::deploy::get_deploy_call_input;
 use crate::utils::transaction::normalization::NormalizationInOut;
 use crate::utils::transaction::results::{find_sc_deploy_event, find_smart_contract_result};
