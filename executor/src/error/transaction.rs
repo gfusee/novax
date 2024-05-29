@@ -17,7 +17,10 @@ pub enum TransactionError {
     CannotEncodeString { string: String },
     CannotEncodeU64 { value: u64 },
     CannotEncodeTransfer,
-    CannotSerializeTransactionData
+    CannotSerializeTransactionData,
+    CannotDecodeBase64,
+    CannotDecodeTopic,
+    WrongTopicsCountForSignalErrorEvent
 }
 
 impl From<TransactionError> for ExecutorError {

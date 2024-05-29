@@ -1,5 +1,7 @@
 use serde::Deserialize;
 
+use crate::utils::transaction::results::find_sc_error;
+
 #[derive(Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct TransactionOnNetworkResponse {
@@ -43,11 +45,15 @@ pub struct TransactionOnNetworkTransactionLogsEvents {
     pub address: String,
     pub identifier: String,
     pub topics: Vec<String>,
-    pub data: String
+    pub data: Option<String>
 }
 
 impl TransactionOnNetwork {
     pub fn is_success(&self) -> bool {
-        true // TODO
+        if let Ok(None) = find_sc_error(&self.transaction.logs) {
+            true
+        } else {
+            false
+        }
     }
 }

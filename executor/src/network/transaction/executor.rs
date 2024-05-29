@@ -139,7 +139,10 @@ impl<Interactor: BlockchainInteractor> TransactionExecutor for BaseTransactionNe
         )
             .await?;
 
-        let Some(mut sc_result) = find_smart_contract_result(&result.transaction.smart_contract_results)? else {
+        let Some(mut sc_result) = find_smart_contract_result(
+            &result.transaction.smart_contract_results,
+            Some(&result.transaction.logs)
+        )? else {
             return Err(TransactionError::NoSmartContractResult.into())
         };
 

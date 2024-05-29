@@ -61,7 +61,7 @@ impl<Proxy: BlockchainProxy> QueryExecutor for QueryNetworkExecutor<Proxy> {
         let sc_address = to.to_bech32_string()?;
 
         let normalized = NormalizationInOut {
-            sender: sc_address.clone(), // TODO: allow custom sender
+            sender: sc_address.clone(),
             receiver: sc_address,
             function_name: Some(function),
             arguments,

@@ -61,7 +61,7 @@ impl BlockchainInteractor for MockInteractor {
         let response = TransactionOnNetwork {
             transaction: TransactionOnNetworkTransaction {
                 gas_used: 0,
-                smart_contract_results: Some(vec![ // TODO: use writeLog result
+                smart_contract_results: Some(vec![
                     TransactionOnNetworkTransactionSmartContractResult {
                         hash: "".to_string(),
                         nonce: 1,
@@ -75,7 +75,7 @@ impl BlockchainInteractor for MockInteractor {
                             address: NEW_CONTRACT.to_string(),
                             identifier: "SCDeploy".to_string(),
                             topics: vec![],
-                            data,
+                            data: Some(data),
                         }
                     ],
                 },
