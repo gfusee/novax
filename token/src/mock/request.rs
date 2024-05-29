@@ -1,6 +1,5 @@
 use async_trait::async_trait;
 use http::StatusCode;
-use reqwest::ResponseBuilderExt;
 use serde::Serialize;
 use serde_json::Value;
 

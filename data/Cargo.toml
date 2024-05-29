@@ -10,9 +10,9 @@ repository = "https://github.com/gfusee/novax"
 
 [dependencies]
 num-bigint = "0.4.3"
-multiversx-sc = { path = "../../mx-sdk-rs/framework/base" }
-multiversx-sc-scenario = { path = "../../mx-sdk-rs/framework/scenario" }
-multiversx-sc-codec = { path = "../../mx-sdk-rs/data/codec" }
-multiversx-sdk = { path = "../../mx-sdk-rs/sdk/core" }
+multiversx-sc = "0.50.3"
+multiversx-sc-scenario = "0.50.3"
+multiversx-sc-codec = "0.19.0"
+multiversx-sdk = "0.4.1"
 serde = "1.0.183"
 base64 = "0.21.3"

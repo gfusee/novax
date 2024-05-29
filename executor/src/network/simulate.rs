@@ -3,7 +3,6 @@ use std::fmt::{Debug, Formatter};
 use async_trait::async_trait;
 use base64::Engine;
 use multiversx_sc::codec::TopDecodeMulti;
-use multiversx_sc_scenario::scenario_model::TxResponse;
 use num_bigint::BigUint;
 use tokio::join;
 
@@ -203,14 +202,5 @@ impl<Client: GatewayClient> TransactionExecutor for BaseSimulationNetworkExecuto
         };
 
         Ok(call_result)
-    }
-}
-
-/// Processes the output of a transaction response.
-fn process_out(step: &mut TxResponse) {
-    let out_scr = step.api_scrs.iter().find(multiversx_sc_scenario::scenario_model::is_out_scr);
-
-    if let Some(out_scr) = out_scr {
-        step.out = multiversx_sc_scenario::scenario_model::decode_scr_data_or_panic(&out_scr.data);
     }
 }

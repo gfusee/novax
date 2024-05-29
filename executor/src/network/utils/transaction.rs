@@ -14,7 +14,7 @@ pub async fn send_transaction<Client: GatewayClient>(client: &Client, transactio
     };
 
     let sent_transaction_response: TransactionSendResponse = serde_json::from_str(&text)
-        .map_err(|error| TransactionError::CannotDeserializeTransactionSendingResponse { response: text })?;
+        .map_err(|_| TransactionError::CannotDeserializeTransactionSendingResponse { response: text })?;
 
     let Some(sent_transaction_data) = sent_transaction_response.data else {
         return Err(TransactionError::FailedToSendTheTransaction { message: sent_transaction_response.error }.into())
@@ -33,7 +33,7 @@ pub async fn get_transaction_on_network<Client: GatewayClient>(client: &Client, 
     };
 
     let transaction_on_network_response: TransactionOnNetworkResponse = serde_json::from_str(&text)
-        .map_err(|error| TransactionError::CannotDeserializeTransactionOnNetworkResponse { response: text })?;
+        .map_err(|_| TransactionError::CannotDeserializeTransactionOnNetworkResponse { response: text })?;
 
     let Some(transaction_on_network_data) = transaction_on_network_response.data else {
         return Err(TransactionError::FailedToSendTheTransaction { message: transaction_on_network_response.error }.into())

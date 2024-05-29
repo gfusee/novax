@@ -1,11 +1,10 @@
-use std::mem;
 use std::ops::Deref;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use multiversx_sc::codec::{TopDecodeMulti, TopEncodeMulti};
+use multiversx_sc::codec::TopDecodeMulti;
 use multiversx_sc::imports::{CodeMetadata, ReturnsNewAddress};
-use multiversx_sc::types::{MultiValueEncoded, ReturnsRawResult};
+use multiversx_sc::types::ReturnsRawResult;
 use multiversx_sc_scenario::imports::{Bech32Address, BytesValue};
 use multiversx_sc_scenario::ScenarioTxRun;
 use num_bigint::BigUint;
@@ -14,7 +13,6 @@ use tokio::sync::Mutex;
 use novax_data::Address;
 use novax_data::NativeConvertible;
 
-use crate::{ScCallStep, ScDeployStep, ScQueryStep, TxQuery, TypedScDeploy};
 use crate::base::deploy::DeployExecutor;
 use crate::base::query::QueryExecutor;
 use crate::base::transaction::TransactionExecutor;
@@ -24,7 +22,6 @@ use crate::error::mock_deploy::MockDeployError;
 use crate::error::mock_transaction::MockTransactionError;
 use crate::error::transaction::TransactionError;
 use crate::ScenarioWorld;
-use crate::utils::transaction::deploy::get_deploy_call_input;
 use crate::utils::transaction::token_transfer::TokenTransfer;
 use crate::utils::transaction::transfers::get_egld_or_esdt_transfers;
 
@@ -260,8 +257,8 @@ impl<A> QueryExecutor for MockExecutor<A>
         to: &Address,
         function: String,
         arguments: Vec<Vec<u8>>,
-        egld_value: BigUint,
-        esdt_transfers: Vec<TokenTransfer>
+        _egld_value: BigUint,
+        _esdt_transfers: Vec<TokenTransfer>
     ) -> Result<OutputManaged::Native, ExecutorError>
         where
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
@@ -293,26 +290,5 @@ impl<A> QueryExecutor for MockExecutor<A>
         };
 
         Ok(output_managed.to_native())
-    }
-}
-
-/// Converts a smart contract query step to a call step.
-///
-/// This conversion is needed to accommodate the types expected by the scenario engine from the MultiversX Rust Testing Framework.
-fn convert_sc_query_step_to_call_step(query_step: &ScCallStep) -> ScQueryStep {
-    let query_tx = TxQuery {
-        to: query_step.tx.to.clone(),
-        function: query_step.tx.function.clone(),
-        arguments: query_step.tx.arguments.clone(),
-    };
-
-    ScQueryStep {
-        id: query_step.id.clone(),
-        tx_id: query_step.tx_id.clone(),
-        explicit_tx_hash: query_step.explicit_tx_hash.clone(),
-        comment: query_step.comment.clone(),
-        tx: Box::new(query_tx),
-        expect: query_step.expect.clone(),
-        response: query_step.response.clone(),
     }
 }

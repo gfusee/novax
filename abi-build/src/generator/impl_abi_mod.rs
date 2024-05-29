@@ -79,6 +79,7 @@ fn impl_mod(abi: &Abi) -> Result<TokenStream, BuildError> {
 fn get_mod_imports() -> TokenStream {
    quote! {
        #![allow(unused_imports)]
+       #![allow(dead_code)]
 
         multiversx_sc::imports!();
         multiversx_sc::derive_imports!();
@@ -96,9 +97,6 @@ fn get_mod_imports() -> TokenStream {
         use multiversx_sc_codec::Empty;
         use multiversx_sc_scenario::ContractInfo;
         use multiversx_sc_snippets::Interactor;
-        use multiversx_sc_scenario::scenario_model::ScCallStep;
-        use multiversx_sc_scenario::scenario_model::TypedScCall;
-        use multiversx_sc_scenario::scenario_model::TxExpect;
         use multiversx_sc_scenario::scenario_model::AddressKey;
         use multiversx_sc::api::VMApi;
         use multiversx_sc_scenario::DebugApi;

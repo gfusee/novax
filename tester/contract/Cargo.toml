@@ -1,19 +1,18 @@
 [package]
 name = "tester-contract"
 version = "0.0.0"
-authors = [ "you",]
-edition = "2018"
+authors = ["you"]
+edition = "2021"
 publish = false
-license = "GPL-3.0-only"
 
 [lib]
 path = "src/lib.rs"
 
-[dependencies]
-multiversx-sc = { path = "../../../mx-sdk-rs/framework/base" }
+[dependencies.multiversx-sc]
+version = "0.50.3"
 
 [dev-dependencies]
-multiversx-sc-scenario = { path = "../../../mx-sdk-rs/framework/scenario" }
+num-bigint = "0.4"
 
-[package.metadata.release]
-release = false
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.50.3"

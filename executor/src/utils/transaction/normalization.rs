@@ -415,6 +415,7 @@ mod tests {
         };
 
         let result = value.normalize().unwrap();
+        let result_data = result.clone().get_transaction_data();
 
         let expected = NormalizationInOut {
             sender: SENDER.to_string(),
@@ -438,6 +439,7 @@ mod tests {
         let expected_data = format!("MultiESDTNFTTransfer@{RECEIVER_HEX}@{FUNGIBLE_NAME_HEX}@@0a@{NON_FUNGIBLE_NAME_HEX}@01@64@@{ENDPOINT_NAME_HEX}");
 
         assert_eq!(result, expected);
+        assert_eq!(result_data, expected_data);
     }
 
     #[test]
@@ -491,7 +493,9 @@ mod tests {
 
         let expected_data = format!("MultiESDTNFTTransfer@{RECEIVER_HEX}@{FUNGIBLE_NAME_HEX}@@0a@{NON_FUNGIBLE_NAME_HEX}@01@64@@{ENDPOINT_NAME_HEX}@0102@0304");
 
-        assert_eq!(result, expected);    }
+        assert_eq!(result, expected);
+        assert_eq!(result_data, expected_data);
+    }
 
     #[test]
     fn test_normalize_esdt_and_egld_payment() {

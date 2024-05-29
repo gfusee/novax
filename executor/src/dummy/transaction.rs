@@ -1,10 +1,6 @@
-use std::mem;
-
 use async_trait::async_trait;
-use multiversx_sc::codec::{TopDecodeMulti, TopEncodeMulti};
-use multiversx_sc::imports::{CodeMetadata, Tx, TxScEnv};
-use multiversx_sc_scenario::imports::{AddressValue, Bech32Address};
-use multiversx_sc_scenario::scenario_model::{ScDeployStep, TypedScDeploy};
+use multiversx_sc::codec::TopDecodeMulti;
+use multiversx_sc::imports::CodeMetadata;
 use num_bigint::BigUint;
 
 use novax_data::{Address, NativeConvertible};
@@ -18,7 +14,6 @@ use crate::utils::transaction::data::{SendableTransaction, SendableTransactionCo
 use crate::utils::transaction::deploy::get_deploy_call_input;
 use crate::utils::transaction::normalization::NormalizationInOut;
 use crate::utils::transaction::token_transfer::TokenTransfer;
-use crate::utils::transaction::transfers::get_egld_or_esdt_transfers;
 
 /// A type alias for `DummyExecutor` handling `ScCallStep`.
 pub type DummyTransactionExecutor = DummyExecutor<SendableTransaction>;

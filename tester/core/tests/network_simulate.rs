@@ -1,18 +1,19 @@
-mod utils;
-
 use std::sync::Arc;
+
 use async_trait::async_trait;
-use hyper::{http, StatusCode};
+use hyper::StatusCode;
+use num_bigint::BigUint;
+use serde::Serialize;
 use tokio::sync::Mutex;
+
 use novax::Address;
 use novax::errors::NovaXError;
-use num_bigint::BigUint;
-use reqwest::{Body, Response};
-use serde::Serialize;
-use novax::tester::tester::TesterContract;
 use novax::executor::{BaseSimulationNetworkExecutor, SimulationNetworkExecutor};
+use novax::tester::tester::TesterContract;
 use novax_request::error::request::RequestError;
 use novax_request::gateway::client::GatewayClient;
+
+mod utils;
 
 const CALLER: &str = "erd1uh67c2lkhyj4vh73akv7jky9sfgvus8awwcj64uju69mmfne5u7q299t7g";
 const TESTER_CONTRACT_ADDRESS: &str = "erd1qqqqqqqqqqqqqpgq7x53hfeg9558dmzjg9lqyfar77z8wrxf5u7qrawwh0";

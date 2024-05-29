@@ -1,10 +1,10 @@
-use multiversx_sdk::data::vm::VmValuesResponseData;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct VmValuesQueryResponse {
-    pub data: Option<VmValuesResponseData>
+    pub data: Option<VmValuesQueryResponseData>,
+    pub error: String
 }
 
 #[derive(Deserialize)]

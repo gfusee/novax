@@ -97,5 +97,5 @@ pub use utils::transaction::token_transfer::TokenTransfer;
 pub use utils::transaction::call_result;
 
 pub use multiversx_sc_scenario::ScenarioWorld;
-pub use multiversx_sc_scenario::scenario_model::{ScCallStep, ScDeployStep, ScQueryStep, SetStateStep, Account, TxQuery, TxResponse, TypedScCall, TypedScDeploy, TypedScQuery, TypedResponse};
+pub use multiversx_sc_scenario::scenario_model::{ScCallStep, ScDeployStep, ScQueryStep, SetStateStep, Account, TxQuery, TxResponse, TypedScDeploy, TypedScQuery, TypedResponse};
 pub use multiversx_sc::codec::TopDecodeMulti;

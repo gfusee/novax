@@ -1,6 +1,3 @@
-#![feature(future_join)]
-#![feature(type_changing_struct_update)]
-
 pub mod world;
 pub mod gateway;
 pub mod errors;

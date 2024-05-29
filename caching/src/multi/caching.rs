@@ -1,9 +1,10 @@
 use std::future::Future;
-use std::time::Duration;
+
 use async_trait::async_trait;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use tokio::join;
+
 use novax::caching::{CachingDurationStrategy, CachingStrategy};
 use novax::errors::NovaXError;
 
@@ -99,11 +100,13 @@ where
 #[cfg(test)]
 mod test {
     use std::time::Duration;
+
     use novax::caching::{CachingDurationStrategy, CachingStrategy};
     use novax::errors::NovaXError;
+
+    use crate::date::get_current_timestamp::set_mock_time;
     use crate::local::caching_local::CachingLocal;
     use crate::multi::caching::CachingMulti;
-    use crate::date::get_current_timestamp::set_mock_time;
 
     #[tokio::test]
     async fn test_get_cache_no_cache() -> Result<(), NovaXError> {

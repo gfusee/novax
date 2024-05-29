@@ -25,8 +25,7 @@ pub trait CallModule: ContractBase {
             address
         )
             .return_two_u64()
-            .async_call()
-            .call_and_exit()
+            .async_call_and_exit()
     }
 
     #[endpoint(asyncCallAnotherContractReturnTwoU64WithReturningCallback)]
@@ -38,9 +37,8 @@ pub trait CallModule: ContractBase {
             address
         )
             .return_two_u64()
-            .async_call()
             .with_callback(self.callbacks().callback_that_returns_result())
-            .call_and_exit()
+            .async_call_and_exit()
     }
 
     #[endpoint(asyncCallAnotherContractReturnTwoU64WithNonReturningCallback)]
@@ -52,9 +50,8 @@ pub trait CallModule: ContractBase {
             address
         )
             .return_two_u64()
-            .async_call()
             .with_callback(self.callbacks().callback_that_returns_nothing())
-            .call_and_exit()
+            .async_call_and_exit()
     }
 
     #[callback]

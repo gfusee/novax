@@ -20,6 +20,9 @@ pub enum NetworkQueryError {
         /// Contains a descriptive error message explaining the reason for the failure while sending the request.
         message: String
     },
+    ErrorInResponse {
+        message: String
+    }
 }
 
 /// An implementation of the `From` trait to allow for easy conversions from `NetworkQueryError` to `ExecutorError`.

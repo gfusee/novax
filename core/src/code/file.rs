@@ -1,7 +1,8 @@
 use std::fs::read;
 use std::path::{Path, PathBuf};
+
 use async_trait::async_trait;
-use multiversx_sc_scenario::scenario_model::BytesValue;
+
 use crate::code::bytes::AsBytesValue;
 use crate::errors::{CodeError, NovaXError};
 

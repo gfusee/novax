@@ -5,7 +5,6 @@ use novax::Address;
 use novax::errors::NovaXError;
 use novax_mocking::world::infos::ScenarioWorldInfos;
 use num_bigint::{BigInt, BigUint};
-use novax::executor::call_result::CallResult;
 use novax::tester::tester::{CustomEnum, CustomEnumWithFields, CustomEnumWithValues, CustomStruct, CustomStructWithStructAndVec, TesterContract};
 use novax::executor::{ExecutorError, MockTransactionError, StandardMockExecutor};
 use novax_mocking::ScenarioWorld;

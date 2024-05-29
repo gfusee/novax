@@ -1,5 +1,4 @@
 use multiversx_sc::imports::{EgldOrMultiEsdtPayment, EsdtTokenPayment, ManagedVec};
-use multiversx_sc::types::TokenIdentifier;
 use multiversx_sc_scenario::imports::StaticApi;
 use num_bigint::BigUint;
 

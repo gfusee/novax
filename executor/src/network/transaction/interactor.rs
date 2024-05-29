@@ -172,7 +172,3 @@ impl BlockchainInteractor for Interactor {
         self.wallet.get_address()
     }
 }
-
-fn encode_code_bytes(bytes: &[u8]) -> String {
-    hex::encode(bytes)
-}

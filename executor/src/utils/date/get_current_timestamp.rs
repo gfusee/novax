@@ -23,9 +23,6 @@ mod implementation {
 
 use std::time::Duration;
 pub(crate) use implementation::get_current_timestamp;
-
-#[cfg(test)]
-pub(crate) use implementation::set_mock_time;
 use crate::ExecutorError;
 
 #[cfg(test)]

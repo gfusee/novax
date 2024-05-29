@@ -3,7 +3,7 @@ use reqwest::Client;
 
 use crate::error::executor::ExecutorError;
 use crate::network::query::models::request::VmValuesQueryRequest;
-use crate::network::query::models::response::VmValuesQueryResponseData;
+use crate::network::query::models::response::{VmValuesQueryResponse, VmValuesQueryResponseData};
 use crate::NetworkQueryError;
 
 #[async_trait]
@@ -46,7 +46,13 @@ impl BlockchainProxy for NetworkBlockchainProxy {
             .await
             .map_err(|error| NetworkQueryError::ErrorWhileSendingRequest { message: error.to_string() })?;
 
-        serde_json::from_str(&text)
-            .map_err(|_| NetworkQueryError::CannotDeserializeVmValuesResponse.into())
+        let response = serde_json::from_str::<VmValuesQueryResponse>(&text)
+            .map_err(|_| NetworkQueryError::CannotDeserializeVmValuesResponse)?;
+
+        let Some(response_data) = response.data else {
+            return Err(NetworkQueryError::ErrorInResponse { message: response.error }.into())
+        };
+
+        Ok(response_data)
     }
 }

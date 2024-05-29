@@ -5,9 +5,8 @@ use num_bigint::{BigInt, BigUint};
 use tokio::sync::Mutex;
 
 use novax::Address;
-use novax::data::NativeConvertible;
 use novax::errors::NovaXError;
-use novax::executor::{BaseTransactionNetworkExecutor, BlockchainInteractor, ExecutorError, NetworkExecutor, SendableTransactionConvertible, TokenTransfer, TopDecodeMulti, TransactionExecutor, TransactionOnNetwork, TransactionOnNetworkTransaction, TransactionOnNetworkTransactionLogs, TransactionOnNetworkTransactionSmartContractResult, Wallet};
+use novax::executor::{BaseTransactionNetworkExecutor, BlockchainInteractor, ExecutorError, NetworkExecutor, TokenTransfer, TransactionOnNetwork, TransactionOnNetworkTransaction, TransactionOnNetworkTransactionLogs, TransactionOnNetworkTransactionSmartContractResult, Wallet};
 use novax::tester::tester::{CustomEnum, CustomEnumWithFields, CustomEnumWithValues, CustomStruct, CustomStructWithStructAndVec, TesterContract};
 
 mod utils;
@@ -32,10 +31,10 @@ impl BlockchainInteractor for MockInteractor {
 
     async fn sc_call(
         &mut self,
-        to: String,
-        value: BigUint,
+        _to: String,
+        _value: BigUint,
         data: String,
-        gas_limit: u64
+        _gas_limit: u64
     ) -> Result<TransactionOnNetwork, ExecutorError>
     {
         let mut return_data: Option<String> = None;

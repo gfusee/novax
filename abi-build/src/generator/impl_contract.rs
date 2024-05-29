@@ -24,7 +24,6 @@ pub(crate) fn impl_contract(mod_name: &str, abi: &Abi) -> Result<TokenStream, Bu
     let query_name = format_ident!("{}", abi.get_query_name());
     let (calls_impls, queries_impls) = impl_abi_endpoints(
         &contract_info_name,
-        &proxy_mod_name,
         &abi.endpoints,
         &abi.types
     )?;
@@ -342,7 +341,6 @@ fn impl_proxy_endpoint(abi_endpoint: &AbiEndpoint, abi_types: &AbiTypes) -> Resu
 // (TokenStream, TokenStream) = (calls, queries)
 fn impl_abi_endpoints(
     contract_info_name: &str,
-    proxy_mod_name: &str,
     abi_endpoints: &AbiEndpoints,
     abi_types: &AbiTypes
 ) -> Result<(TokenStream, TokenStream), BuildError> {
@@ -351,7 +349,6 @@ fn impl_abi_endpoints(
     for endpoint in abi_endpoints {
         let endpoint_impls = impl_abi_endpoint_call_query(
             contract_info_name,
-            proxy_mod_name,
             endpoint,
             abi_types
         )?;
@@ -374,7 +371,6 @@ fn impl_abi_endpoints(
 
 fn impl_abi_endpoint_call_query(
     contract_info_name: &str,
-    proxy_mod_name: &str,
     abi_endpoint: &AbiEndpoint,
     abi_types: &AbiTypes
 ) -> Result<(TokenStream, TokenStream), BuildError> {
@@ -616,7 +612,7 @@ fn impl_endpoint_args_for_call(abi_inputs: &AbiInputs, all_abi_types: &AbiTypes)
         inputs_function_arg_idents.push(quote! {
             {
                 let mut _novax_top_encoded_args = ManagedVec::<#static_api, ManagedBuffer<#static_api>>::new();
-                #input_managed_name_ident.multi_encode(&mut _novax_top_encoded_args);
+                _ = #input_managed_name_ident.multi_encode(&mut _novax_top_encoded_args);
 
                 for _novax_top_encoded_arg in _novax_top_encoded_args.into_iter() {
                     _novax_bytes_args.push(_novax_top_encoded_arg.to_boxed_bytes().into_vec());

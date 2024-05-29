@@ -1,10 +1,6 @@
-use std::convert::From;
 use std::str::FromStr;
-
-use multiversx_sc::api::CallTypeApi;
-use multiversx_sc::imports::{Tx, TxData, TxDataFunctionCall, TxEnv, TxFrom, TxGas, TxPayment, TxResultHandler, TxTo};
-use multiversx_sc::types::{ContractCallWithEgld, ManagedAddress};
-use multiversx_sc_scenario::scenario_model::{ScCallStep, ScDeployStep, TxCall, TxDeploy, TypedScCall, TypedScDeploy};
+use multiversx_sc::imports::{Tx, TxDataFunctionCall, TxEnv, TxFrom, TxGas, TxPayment, TxResultHandler};
+use multiversx_sc::types::ManagedAddress;
 use multiversx_sdk::data::address::Address;
 use num_bigint::BigUint;
 use serde::{de, Deserialize, Serialize, Serializer};
