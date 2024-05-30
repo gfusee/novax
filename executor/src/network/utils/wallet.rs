@@ -65,7 +65,7 @@ impl Wallet {
 
     pub fn from_pem_file(file_path: &str) -> Result<Self, ExecutorError> {
         let contents = std::fs::read_to_string(file_path)
-            .map_err(|e| WalletError::InvalidPemFile)?;
+            .map_err(|_| WalletError::InvalidPemFile)?;
 
         Self::from_pem_file_contents(contents)
     }

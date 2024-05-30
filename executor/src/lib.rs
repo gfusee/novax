@@ -42,7 +42,7 @@
 //! Error handling in `novax-executor` is comprehensive and designed to cover a range of issues that might arise while interacting with the blockchain.
 //! See [`ExecutorError`](enum.ExecutorError.html), [`NetworkQueryError`](enum.NetworkQueryError.html), and [`MockDeployError`](enum.MockDeployError.html) for more details.
 
-#![warn(missing_docs)]
+// TODO #![warn(missing_docs)]
 
 mod error;
 mod base;

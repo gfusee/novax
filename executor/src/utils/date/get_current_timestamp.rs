@@ -43,13 +43,6 @@ mod implementation {
 
         Ok(time)
     }
-
-    pub(crate) fn set_mock_time(new_time: Duration) {
-        MOCK_TIME.with(|value| {
-            let mut mock_time = value.borrow_mut();
-            *mock_time = new_time;
-        });
-    }
 }
 
 #[cfg(test)]

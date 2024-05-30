@@ -43,7 +43,7 @@
 //!
 //! The `novax` crate utilizes Rust's procedural macro facilities to perform code generation at compile time.
 //! This ensures that the generated code is type-safe, efficient, and ready-to-use right out of the box.
-#![warn(missing_docs)]
+// TODO #![warn(missing_docs)]
 
 /// The `caching` module provides caching strategies to optimize smart contract queries.
 pub mod caching;
