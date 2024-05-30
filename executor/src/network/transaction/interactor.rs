@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
+use base64::Engine;
 use num_bigint::BigUint;
 
 use novax_data::Address;
@@ -10,7 +11,7 @@ use crate::ExecutorError;
 use crate::network::models::address::info::AddressGatewayInfoAccount;
 use crate::network::models::network::config::NetworkGatewayConfig;
 use crate::network::transaction::models::send_request::TransactionSendRequest;
-use crate::network::transaction::models::transaction_on_network::TransactionOnNetwork;
+use crate::network::transaction::models::transaction_on_network::{FINAL_TRANSACTION_STATUS, TransactionOnNetwork};
 use crate::network::utils::address::get_address_info;
 use crate::network::utils::network::get_network_config;
 use crate::network::utils::transaction::{get_transaction_on_network, send_transaction};
@@ -63,7 +64,7 @@ impl Interactor {
                 tx_hash
             ).await?;
 
-            if transaction_on_network.transaction.status == "executed" {
+            if FINAL_TRANSACTION_STATUS.contains(&transaction_on_network.transaction.status.as_ref()) {
                 return Ok(transaction_on_network)
             }
 
@@ -95,18 +96,20 @@ impl Interactor {
         gas_limit: u64,
         data: String,
         chain_id: String,
-        version: u64,
-        options: u64
+        version: u32,
+        options: u32
     ) -> TransactionSendRequest {
+        let base64_encoded_data = base64::engine::general_purpose::STANDARD.encode(data);
+
         let tx_to_sign = SignableTransaction {
             nonce,
-            value: value.clone(),
-            receiver: receiver.clone(),
-            sender: sender.clone(),
+            value,
+            receiver,
+            sender,
             gas_price,
             gas_limit,
-            data: data.clone(),
-            chain_id: chain_id.clone(),
+            data: Some(base64_encoded_data),
+            chain_id,
             version,
             options,
         };

@@ -21,7 +21,7 @@ use crate::error::executor::ExecutorError;
 use crate::error::mock_deploy::MockDeployError;
 use crate::error::mock_transaction::MockTransactionError;
 use crate::error::transaction::TransactionError;
-use crate::ScenarioWorld;
+use crate::{ScenarioWorld, TransactionOnNetwork};
 use crate::utils::transaction::token_transfer::TokenTransfer;
 use crate::utils::transaction::transfers::get_egld_or_esdt_transfers;
 
@@ -130,8 +130,11 @@ impl<A> TransactionExecutor for MockExecutor<A>
             return Err(TransactionError::CannotDecodeSmartContractResult.into())
         };
 
+        let mut response = TransactionOnNetwork::default();
+        response.transaction.status = "successful".to_string();
+
         let call_result = CallResult {
-            response: Default::default(),
+            response,
             result: Some(output_managed.to_native()),
         };
 

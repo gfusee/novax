@@ -67,6 +67,7 @@ include!(concat!(env!("OUT_DIR"), "/generated_lib.rs"));
 
 pub use multiversx_sdk::data::address::Address as SDKAddress;
 pub use multiversx_sdk::data::vm::VMOutputApi;
+pub use novax_executor::Wallet;
 pub use novax_data::Address;
 pub use multiversx_sc::types::CodeMetadata;
 use multiversx_sc_scenario::imports::StaticApi;

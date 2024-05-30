@@ -59,6 +59,8 @@ where
 
             Some(text)
         } else {
+            let text = response.text().await.unwrap(); // TODO
+
             None
         };
 

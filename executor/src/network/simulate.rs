@@ -9,7 +9,7 @@ use tokio::join;
 use novax_data::{Address, NativeConvertible};
 use novax_request::gateway::client::GatewayClient;
 
-use crate::{ExecutorError, GatewayError, SimulationError, SimulationGatewayRequest, SimulationGatewayResponse, TransactionExecutor, TransactionOnNetworkTransactionSmartContractResult};
+use crate::{ExecutorError, GatewayError, SimulationError, SimulationGatewayRequest, SimulationGatewayResponse, TransactionExecutor, TransactionOnNetwork, TransactionOnNetworkTransactionSmartContractResult};
 use crate::call_result::CallResult;
 use crate::error::transaction::TransactionError;
 use crate::network::models::simulate::request::SimulationGatewayRequestBody;
@@ -196,8 +196,11 @@ impl<Client: GatewayClient> TransactionExecutor for BaseSimulationNetworkExecuto
             return Err(TransactionError::CannotDecodeSmartContractResult.into())
         };
 
+        let mut response = TransactionOnNetwork::default();
+        response.transaction.status = "success".to_string();
+
         let call_result = CallResult {
-            response: Default::default(),
+            response,
             result: Some(output_managed.to_native()),
         };
 

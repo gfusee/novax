@@ -141,7 +141,7 @@ impl<Interactor: BlockchainInteractor> TransactionExecutor for BaseTransactionNe
 
         let Some(mut sc_result) = find_smart_contract_result(
             &result.transaction.smart_contract_results,
-            Some(&result.transaction.logs)
+            result.transaction.logs.as_ref()
         )? else {
             return Err(TransactionError::NoSmartContractResult.into())
         };
@@ -213,7 +213,11 @@ impl<Interactor: BlockchainInteractor> DeployExecutor for BaseTransactionNetwork
         )
             .await?;
 
-        let Some(sc_deploy_event) = find_sc_deploy_event(&deploy_result.response.transaction.logs.events) else {
+        let Some(logs) = deploy_result.response.transaction.logs.as_ref() else {
+            return Err(TransactionError::NoSCDeployLogInTheResponse.into())
+        };
+
+        let Some(sc_deploy_event) = find_sc_deploy_event(&logs.events) else {
             return Err(TransactionError::NoSCDeployLogInTheResponse.into())
         };
 

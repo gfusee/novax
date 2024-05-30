@@ -1432,6 +1432,7 @@ dependencies = [
  "novax-data",
  "novax-request",
  "num-bigint",
+ "pem",
  "reqwest 0.12.4",
  "serde",
  "serde_json",

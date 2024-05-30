@@ -210,7 +210,7 @@ mod tests {
 
         let results = find_smart_contract_result(
             &tx_on_network.smart_contract_results,
-            Some(&tx_on_network.logs)
+            tx_on_network.logs.as_ref()
         )
             .unwrap()
             .unwrap();
@@ -348,7 +348,7 @@ mod tests {
 
         let results = find_smart_contract_result(
             &tx_on_network.smart_contract_results,
-            Some(&tx_on_network.logs)
+            tx_on_network.logs.as_ref()
         )
             .unwrap()
             .unwrap();
@@ -483,7 +483,7 @@ mod tests {
 
         let results = find_smart_contract_result(
             &tx_on_network.smart_contract_results,
-            Some(&tx_on_network.logs)
+            tx_on_network.logs.as_ref()
         )
             .unwrap()
             .unwrap();
@@ -618,7 +618,7 @@ mod tests {
 
         let results = find_smart_contract_result(
             &tx_on_network.smart_contract_results,
-            Some(&tx_on_network.logs)
+            tx_on_network.logs.as_ref()
         )
             .unwrap()
             .unwrap();
@@ -911,7 +911,7 @@ mod tests {
 
         let results = find_smart_contract_result(
             &tx_on_network.smart_contract_results,
-            Some(&tx_on_network.logs)
+            tx_on_network.logs.as_ref()
         )
             .unwrap()
             .unwrap();
@@ -1176,7 +1176,7 @@ mod tests {
 
         let results = find_smart_contract_result(
             &tx_on_network.smart_contract_results,
-            Some(&tx_on_network.logs)
+            tx_on_network.logs.as_ref()
         )
             .unwrap()
             .unwrap();
@@ -1270,7 +1270,7 @@ mod tests {
 
         let results = find_smart_contract_result(
             &tx_on_network.smart_contract_results,
-            Some(&tx_on_network.logs)
+            tx_on_network.logs.as_ref()
         )
             .unwrap()
             .unwrap();

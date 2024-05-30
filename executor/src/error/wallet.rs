@@ -4,7 +4,8 @@ use crate::ExecutorError;
 
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub enum WalletError {
-    InvalidPrivateKey
+    InvalidPrivateKey,
+    InvalidPemFile
 }
 
 impl From<WalletError> for ExecutorError {

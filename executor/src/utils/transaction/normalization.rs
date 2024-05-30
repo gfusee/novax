@@ -436,7 +436,7 @@ mod tests {
             esdt_transfers: vec![]
         };
 
-        let expected_data = format!("MultiESDTNFTTransfer@{RECEIVER_HEX}@{FUNGIBLE_NAME_HEX}@@0a@{NON_FUNGIBLE_NAME_HEX}@01@64@@{ENDPOINT_NAME_HEX}");
+        let expected_data = format!("MultiESDTNFTTransfer@{RECEIVER_HEX}@02@{FUNGIBLE_NAME_HEX}@@0a@{NON_FUNGIBLE_NAME_HEX}@01@64@{ENDPOINT_NAME_HEX}");
 
         assert_eq!(result, expected);
         assert_eq!(result_data, expected_data);
@@ -491,7 +491,7 @@ mod tests {
             esdt_transfers: vec![]
         };
 
-        let expected_data = format!("MultiESDTNFTTransfer@{RECEIVER_HEX}@{FUNGIBLE_NAME_HEX}@@0a@{NON_FUNGIBLE_NAME_HEX}@01@64@@{ENDPOINT_NAME_HEX}@0102@0304");
+        let expected_data = format!("MultiESDTNFTTransfer@{RECEIVER_HEX}@02@{FUNGIBLE_NAME_HEX}@@0a@{NON_FUNGIBLE_NAME_HEX}@01@64@{ENDPOINT_NAME_HEX}@0102@0304");
 
         assert_eq!(result, expected);
         assert_eq!(result_data, expected_data);

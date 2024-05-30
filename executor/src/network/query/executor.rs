@@ -6,7 +6,7 @@ use num_bigint::BigUint;
 
 use novax_data::{NativeConvertible, parse_query_return_string_data};
 
-use crate::{BlockchainProxy, ExecutorError, QueryExecutor, TokenTransfer, VmValuesQueryRequest};
+use crate::{BlockchainProxy, ExecutorError, NetworkQueryError, QueryExecutor, TokenTransfer, VmValuesQueryRequest};
 use crate::network::query::proxy::NetworkBlockchainProxy;
 use crate::utils::transaction::normalization::NormalizationInOut;
 
@@ -79,8 +79,11 @@ impl<Proxy: BlockchainProxy> QueryExecutor for QueryNetworkExecutor<Proxy> {
 
         let blockchain = Proxy::new(self.gateway_url.clone());
         let result = blockchain.execute_vmquery(&vm_request).await?;
+        let Some(return_data) = result.data.return_data else {
+            return Err(NetworkQueryError::ErrorInResponse { message: result.data.return_message }.into())
+        };
 
-        let data: Vec<&str> = result.data.return_data.iter().map(AsRef::as_ref).collect();
+        let data: Vec<&str> = return_data.iter().map(AsRef::as_ref).collect();
 
         Ok(parse_query_return_string_data::<OutputManaged>(data.as_slice())?.to_native())
     }

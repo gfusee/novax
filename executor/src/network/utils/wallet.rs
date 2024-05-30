@@ -1,5 +1,5 @@
 use std::fmt::{Debug, Formatter};
-use multiversx_sdk::crypto::private_key::PrivateKey;
+use multiversx_sdk::crypto::private_key::{PRIVATE_KEY_LENGTH, PrivateKey};
 use multiversx_sdk::crypto::public_key::PublicKey;
 use serde::Serialize;
 use serde_json::json;
@@ -10,6 +10,7 @@ use crate::ExecutorError;
 use crate::network::transaction::models::send_request::TransactionSendRequest;
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SignableTransaction {
     pub nonce: u64,
     pub value: String,
@@ -17,10 +18,18 @@ pub struct SignableTransaction {
     pub sender: String,
     pub gas_price: u64,
     pub gas_limit: u64,
-    pub data: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub data: Option<String>,
+    #[serde(rename = "chainID")]
     pub chain_id: String,
-    pub version: u64,
-    pub options: u64
+    pub version: u32,
+    #[serde(skip_serializing_if = "is_zero")]
+    pub options: u32,
+}
+
+#[allow(clippy::trivially_copy_pass_by_ref)]
+fn is_zero(num: &u32) -> bool {
+    *num == 0
 }
 
 impl SignableTransaction {
@@ -31,12 +40,14 @@ impl SignableTransaction {
             nonce: self.nonce,
             value: self.value,
             receiver: self.receiver,
+            sender: self.sender,
             gas_price: self.gas_price,
             gas_limit: self.gas_limit,
             data: self.data,
+            signature,
             chain_id: self.chain_id,
             version: self.version,
-            signature,
+            options: self.options,
         }
     }
 }
@@ -50,6 +61,24 @@ impl Wallet {
             .map_err(|_| WalletError::InvalidPrivateKey)?;
 
         Ok(Wallet(private_key))
+    }
+
+    pub fn from_pem_file(file_path: &str) -> Result<Self, ExecutorError> {
+        let contents = std::fs::read_to_string(file_path)
+            .map_err(|e| WalletError::InvalidPemFile)?;
+
+        Self::from_pem_file_contents(contents)
+    }
+
+    pub fn from_pem_file_contents(contents: String) -> Result<Self, ExecutorError> {
+        let x = pem::parse(contents)
+            .map_err(|_| WalletError::InvalidPemFile)?;
+        let x = x.contents()[..PRIVATE_KEY_LENGTH].to_vec();
+        let priv_key_str = std::str::from_utf8(x.as_slice())
+            .map_err(|_| WalletError::InvalidPemFile)?;
+        let pri_key = PrivateKey::from_hex_str(priv_key_str)
+            .map_err(|_| WalletError::InvalidPemFile)?;
+        Ok(Self(pri_key))
     }
 
     pub fn get_address(&self) -> Address {

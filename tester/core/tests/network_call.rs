@@ -138,11 +138,13 @@ impl BlockchainInteractor for MockInteractor {
                         data: return_data,
                     }
                 ]),
-                status: "executed".to_string(),
-                logs: TransactionOnNetworkTransactionLogs {
-                    address: "".to_string(),
-                    events: vec![],
-                },
+                status: "success".to_string(),
+                logs: Some(
+                    TransactionOnNetworkTransactionLogs {
+                        address: "".to_string(),
+                        events: vec![],
+                    }
+                ),
             },
         };
 

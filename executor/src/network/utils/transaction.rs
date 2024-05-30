@@ -24,7 +24,7 @@ pub async fn send_transaction<Client: GatewayClient>(client: &Client, transactio
 }
 
 pub async fn get_transaction_on_network<Client: GatewayClient>(client: &Client, tx_hash: &str) -> Result<TransactionOnNetwork, ExecutorError> {
-    let url_to_append = format!("transaction/{tx_hash}?withResults=true");
+    let url_to_append = format!("/transaction/{tx_hash}?withResults=true");
     let Ok((_, Some(text))) = client
         .with_appended_url(&url_to_append)
         .get()
@@ -33,7 +33,9 @@ pub async fn get_transaction_on_network<Client: GatewayClient>(client: &Client, 
     };
 
     let transaction_on_network_response: TransactionOnNetworkResponse = serde_json::from_str(&text)
-        .map_err(|_| TransactionError::CannotDeserializeTransactionOnNetworkResponse { response: text })?;
+        .map_err(|_| {
+            TransactionError::CannotDeserializeTransactionOnNetworkResponse { response: text }
+        })?;
 
     let Some(transaction_on_network_data) = transaction_on_network_response.data else {
         return Err(TransactionError::FailedToSendTheTransaction { message: transaction_on_network_response.error }.into())

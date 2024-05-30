@@ -128,7 +128,8 @@ impl BlockchainProxy for MockProxy {
 fn get_success_vm_response_data(return_data: Vec<String>) -> VmValuesQueryResponseData {
     VmValuesQueryResponseData {
         data: VmValuesQueryResponseDataData {
-            return_data,
+            return_data: Some(return_data),
+            return_message: "".to_string()
         }
     }
 }
