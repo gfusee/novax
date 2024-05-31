@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub enum MockTransactionError {
-    /// TODO This error variant is triggered when there is an attempt to deploy, but no caller address is present.
+    /// This error variant is triggered when there is an attempt to deploy, but no caller address is present.
     /// In the context of a `MockExecutor`, a caller's wallet address is essential for calling a contract, and if the
     /// `opt_caller` field is `None`, this error will be thrown.
     CallerAddressNotPresent,

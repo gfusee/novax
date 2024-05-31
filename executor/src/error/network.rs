@@ -1,12 +1,7 @@
 use crate::error::executor::ExecutorError;
 use serde::{Deserialize, Serialize};
 
-/// TODO An enumeration representing the various errors that can occur during network query operations.
-///
-/// It includes the following variants:
-/// * `EmptyArgs` - Indicates that the arguments provided for the network query are empty when they shouldn't be.
-/// * `ErrorWhileSendingRequest` - Indicates an error occurred while sending the request to the network.
-///   The accompanying message provides more detail regarding the nature of the error.
+/// An enumeration representing the various errors that can occur during network query operations.
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub enum NetworkQueryError {
     /// This error variant is triggered when the argument provided for the network query is empty,

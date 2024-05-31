@@ -11,25 +11,10 @@ use crate::call_result::CallResult;
 use crate::error::executor::ExecutorError;
 use crate::TopDecodeMulti;
 
-/// TODO A trait defining the contract for executing smart contract deployment operations asynchronously.
+/// A trait defining the contract for executing smart contract deployment operations asynchronously.
 #[async_trait]
 pub trait DeployExecutor: Send + Sync {
-    /// TODO Executes a smart contract deployment step asynchronously.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `OriginalResult` - The result type expected from the smart contract deployment.
-    ///   Must implement `TopEncodeMulti`, `Send`, and `Sync`.
-    /// * `S` - The type encapsulating the smart contract deployment step.
-    ///   Must implement `AsMut<TypedScDeploy<OriginalResult>>` and `Send`.
-    ///
-    /// # Parameters
-    ///
-    /// * `sc_deploy_step` - The smart contract deployment step to be executed.
-    ///
-    /// # Returns
-    ///
-    /// A `Result` with an empty `Ok(())` value for success, or `Err(ExecutorError)` for failure.
+    /// Executes a smart contract deployment step asynchronously.
     async fn sc_deploy<
         OutputManaged
     >(
@@ -44,11 +29,11 @@ pub trait DeployExecutor: Send + Sync {
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync;
 }
 
-/// TODO An implementation of `DeployExecutor` for `Arc<Mutex<T>>` where `T: DeployExecutor`.
+/// An implementation of `DeployExecutor` for `Arc<Mutex<T>>` where `T: DeployExecutor`.
 /// This wrapper allows for thread-safe, shared ownership of a deploy executor.
 #[async_trait]
 impl<T: DeployExecutor> DeployExecutor for Arc<Mutex<T>> {
-    /// TODO Executes a smart contract deployment step asynchronously, delegating to the inner `DeployExecutor`.
+    /// Executes a smart contract deployment step asynchronously, delegating to the inner `DeployExecutor`.
     async fn sc_deploy<
         OutputManaged
     >(

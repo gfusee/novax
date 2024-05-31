@@ -15,13 +15,13 @@ use crate::utils::transaction::deploy::get_deploy_call_input;
 use crate::utils::transaction::normalization::NormalizationInOut;
 use crate::utils::transaction::token_transfer::TokenTransfer;
 
-/// TODO A type alias for `DummyExecutor` handling `ScCallStep`.
+/// A type alias for `DummyExecutor` handling `SendableTransaction`.
 pub type DummyTransactionExecutor = DummyExecutor<SendableTransaction>;
 
-/// TODO A type alias for `DummyExecutor` handling `ScDeployStep`.
+/// A type alias for `DummyExecutor` handling `SendableTransaction`.
 pub type DummyDeployExecutor = DummyExecutor<SendableTransaction>;
 
-/// TODO A structure for capturing transaction details without performing actual blockchain transactions.
+/// A structure for capturing transaction details without performing actual blockchain transactions.
 /// It is designed for testing scenarios, especially to fetch `SendableTransaction` details from interactions.
 pub struct DummyExecutor<Tx: SendableTransactionConvertible> {
     /// Holds the transaction details.
@@ -31,7 +31,7 @@ pub struct DummyExecutor<Tx: SendableTransactionConvertible> {
 }
 
 impl<Tx: SendableTransactionConvertible + Clone> DummyExecutor<Tx> {
-    /// TODO Retrieves the transaction details encapsulated into a `SendableTransaction`.
+    /// Retrieves the transaction details encapsulated into a `SendableTransaction`.
     pub fn get_transaction_details(&self) -> Result<SendableTransaction, ExecutorError> {
         if let Some(tx) = self.tx.clone() {
             Ok(tx.to_sendable_transaction())
@@ -42,7 +42,7 @@ impl<Tx: SendableTransactionConvertible + Clone> DummyExecutor<Tx> {
 }
 
 impl<Tx: SendableTransactionConvertible> DummyExecutor<Tx> {
-    /// TODO Constructs a new `DummyExecutor` instance.
+    /// Constructs a new `DummyExecutor` instance.
     ///
     /// # Arguments
     ///

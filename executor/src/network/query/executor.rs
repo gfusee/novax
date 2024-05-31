@@ -10,10 +10,11 @@ use crate::{BlockchainProxy, ExecutorError, NetworkQueryError, QueryExecutor, To
 use crate::network::query::proxy::NetworkBlockchainProxy;
 use crate::utils::transaction::normalization::NormalizationInOut;
 
-/// TODO A convenient type alias for `QueryNetworkExecutor` with `NetworkBlockchainProxy` as the generic type.
+/// A convenient type alias for `QueryNetworkExecutor` with `NetworkBlockchainProxy` as the generic type.
+/// This is the privileged query executor for network interaction.
 pub type ProxyQueryExecutor = QueryNetworkExecutor<NetworkBlockchainProxy>;
 
-/// TODO A structure to execute smart contract queries on a real blockchain environment via a specified gateway.
+/// A structure to execute smart contract queries on a real blockchain environment via a specified gateway.
 ///
 /// This executor utilizes a blockchain proxy to communicate with the blockchain network and
 /// execute the queries.
@@ -43,10 +44,7 @@ impl<Proxy: BlockchainProxy> QueryNetworkExecutor<Proxy> {
 
 #[async_trait]
 impl<Proxy: BlockchainProxy> QueryExecutor for QueryNetworkExecutor<Proxy> {
-    /// TODO Executes a smart contract query on the real blockchain environment.
-    ///
-    /// This method constructs a VM request from the provided `ScCallStep`, sends it to the blockchain network
-    /// via the blockchain proxy, and processes the result to return it in a native format.
+    /// Executes a smart contract query on the real blockchain environment.
     async fn execute<OutputManaged>(
         &self,
         to: &novax_data::Address,
@@ -91,7 +89,7 @@ impl<Proxy: BlockchainProxy> QueryExecutor for QueryNetworkExecutor<Proxy> {
 
 #[async_trait]
 impl QueryExecutor for &str {
-    /// TODO Allows using a string representing the gateway URL to execute a query on the real blockchain environment.
+    /// Convenience implementation which allows using a string representing the gateway URL to execute a query on the real blockchain environment.
     ///
     /// This implementation creates a new `ProxyQueryExecutor` instance using the string as the gateway URL,
     /// and delegates the query execution to it.
@@ -120,7 +118,7 @@ impl QueryExecutor for &str {
 
 #[async_trait]
 impl QueryExecutor for String {
-    /// TODO Allows using a string representing the gateway URL to execute a query on the real blockchain environment.
+    /// Convenience implementation which allows using a string representing the gateway URL to execute a query on the real blockchain environment.
     ///
     /// This implementation creates a new `ProxyQueryExecutor` instance using the string as the gateway URL,
     /// and delegates the query execution to it.

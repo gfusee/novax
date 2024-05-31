@@ -67,10 +67,10 @@ pub trait CachingStrategy: Clone + Send + Sync + Debug {
     /// - A `Result` indicating success or an error if the operation fails.
     async fn clear(&self) -> Result<(), NovaXError>;
 
-    /// TODO Creates a new `CachingStrategy` instance with a specified cache duration strategy.
+    /// Creates a new `CachingStrategy` instance with a specified cache duration strategy.
     ///
     /// # Parameters
-    /// - `strategy`: The duration for which cache entries should be kept.
+    /// - `strategy`: The duration strategy for which cache entries should be kept.
     ///
     /// # Returns
     /// - A new `CachingStrategy` instance with the specified cache duration strategy.

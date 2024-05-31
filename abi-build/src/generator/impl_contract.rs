@@ -412,7 +412,7 @@ fn impl_abi_endpoint_call_query(
     };
 
     let call_token = quote! {
-        /// TODO Executes the `#function_name` function on the smart contract.
+        /// Executes the `#function_name` function on the smart contract.
         ///
         /// # Description
         /// #abi_description
@@ -439,7 +439,7 @@ fn impl_abi_endpoint_call_query(
     };
 
     let query_token = quote! {
-        /// TODO Executes the `#function_name` query on the smart contract.
+        /// Executes the `#function_name` query on the smart contract.
         ///
         /// # Description
         /// #abi_description
@@ -487,33 +487,7 @@ fn impl_abi_constructor(contract_info_name: &str, abi_constructor: &AbiConstruct
     let (function_managed_outputs, function_native_outputs) = impl_endpoint_outputs(&abi_constructor.outputs, abi_types, &debug_api)?;
 
     let function_token = quote! {
-        /// TODO This asynchronous function encapsulates the logic for deploying a smart contract to the blockchain.
-        /// It takes in a `DeployData` instance, an executor, a gas limit, and additional function-specific inputs
-        /// to facilitate the deployment process.
-        ///
-        /// # Type Parameters
-        ///
-        /// - `Code`: This type represents the contract code and must implement the `AsBytesValue` trait to ensure
-        ///   it can be properly serialized for deployment.
-        /// - `Executor`: This type represents the executor that will carry out the deployment transaction and
-        ///   must implement the `DeployExecutor` trait.
-        ///
-        /// # Parameters
-        ///
-        /// - `_novax_deploy_data`: An instance of `DeployData` containing the contract code and metadata necessary
-        ///   for deployment.
-        /// - `_novax_executor`: A mutable reference to an executor that will perform the deployment transaction.
-        /// - `gas_limit`: The maximum amount of gas that can be consumed during the deployment process.
-        /// - `#function_inputs`: Additional inputs required for deploying the contract, as defined in the contract's ABI.
-        ///
-        /// # Returns
-        ///
-        /// A `Result` containing a tuple with the following elements upon successful deployment:
-        ///
-        /// - `Address`: The address of the newly deployed contract on the blockchain.
-        /// - `CallResult`: A `CallResult` instance containing the response data from the contract's deployment.
-        ///
-        /// Or a `NovaXError` if the deployment process fails.
+        /// This asynchronous function encapsulates the logic for deploying a smart contract to the blockchain.
         pub async fn #function_name<Code: AsBytesValue, Executor: DeployExecutor>(_novax_deploy_data: DeployData<Code>, _novax_executor: &mut Executor, _novax_egld_value: num_bigint::BigUint, _novax_gas_limit: u64, #function_inputs) -> Result<(Address, CallResult<#function_native_outputs>), NovaXError> {
             let mut _novax_contract = #contract_info_ident::new(&multiversx_sc::types::Address::from(<[u8;32]>::default()));
 

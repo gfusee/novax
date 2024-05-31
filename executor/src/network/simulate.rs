@@ -123,16 +123,7 @@ impl<Client> Debug for BaseSimulationNetworkExecutor<Client>
 
 #[async_trait]
 impl<Client: GatewayClient> TransactionExecutor for BaseSimulationNetworkExecutor<Client> {
-    /// TODO Executes a smart contract call in a simulated environment.
-    ///
-    /// # Type Parameters
-    /// - `OriginalResult`: The result type expected from the smart contract call.
-    ///
-    /// # Parameters
-    /// - `sc_call_step`: The smart contract call step to be executed.
-    ///
-    /// # Returns
-    /// A `Result` indicating the success or failure of the smart contract call execution.
+    /// Executes a smart contract call in a simulated environment.
     async fn sc_call<OutputManaged>(
         &mut self,
         to: &Address,

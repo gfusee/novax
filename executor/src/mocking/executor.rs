@@ -70,20 +70,9 @@ impl<A> TransactionExecutor for MockExecutor<A>
         A: Deref + Send + Sync,
         Address: for<'a> From<&'a A::Target>
 {
-    /// TODO Executes a smart contract call within a mocked environment.
+    /// Executes a smart contract call within a mocked environment.
     ///
-    /// This method extracts or determines the caller's address, performs a smart contract call,
-    /// and updates the world state accordingly, all within a controlled, mocked environment.
-    ///
-    /// # Parameters
-    /// - `sc_call_step`: A mutable reference to a `TypedScCall` object representing the smart contract call step.
-    ///
-    /// # Type Parameters
-    /// - `OriginalResult`: The type of the result expected from the smart contract call. Must implement the `Send` trait.
-    ///
-    /// # Returns
-    /// - A `Result` object with an empty `Ok(())` value if the call is successful,
-    ///   or an `Err(ExecutorError)` if the call fails for any reason.
+    /// This method updates the world state accordingly, all within a controlled, mocked environment.
     async fn sc_call<OutputManaged>(
         &mut self,
         to: &Address,
@@ -159,23 +148,7 @@ impl<A> DeployExecutor for MockExecutor<A>
         A: Deref + Send + Sync,
         Address: for<'a> From<&'a A::Target>
 {
-    /// TODO Asynchronously deploys a smart contract to the mock blockchain environment.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `OriginalResult`: Represents the result type expected from the smart contract deployment.
-    ///   This type must implement `TopEncodeMulti`, `Send`, and `Sync`.
-    /// * `S`: Represents the type encapsulating the smart contract deployment step.
-    ///   This type must implement `AsMut<TypedScDeploy<OriginalResult>>` and `Send`.
-    ///
-    /// # Parameters
-    ///
-    /// * `sc_deploy_step`: A mutable reference to the smart contract deployment step to be executed.
-    ///
-    /// # Returns
-    ///
-    /// A `Result` with an empty `Ok(())` value indicating success, or an `Err(ExecutorError)` indicating failure,
-    /// specifically a `MockDeployError::WalletAddressNotPresent` error if the wallet address is not present.
+    /// Asynchronously deploys a smart contract to the mock blockchain environment.
     async fn sc_deploy<
         OutputManaged
     >(
@@ -241,20 +214,7 @@ impl<A> QueryExecutor for MockExecutor<A>
         A: Clone + Deref + Send + Sync,
         Address: for<'a> From<&'a A::Target>
 {
-    /// TODO Executes a simulated smart contract query in the mock environment.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `OutputManaged`: The type representing the expected output of the smart contract query. It should implement `TopDecodeMulti`, `NativeConvertible`, `Send`, and `Sync`.
-    ///
-    /// # Parameters
-    ///
-    /// * `request`: A reference to the `ScCallStep` detailing the smart contract query to be executed.
-    ///
-    /// # Returns
-    ///
-    /// * `Result<OutputManaged::Native, ExecutorError>`: On successful execution, returns a `Result` containing the native converted query output.
-    ///   On failure, returns a `Result` containing an `ExecutorError`.
+    /// Executes a simulated smart contract query in the mock environment.
     async fn execute<OutputManaged>(
         &self,
         to: &Address,

@@ -11,7 +11,7 @@ pub struct FileCode(PathBuf);
 
 #[async_trait]
 impl AsBytesValue for &FileCode {
-    /// TODO Asynchronously reads the content of the file identified by the path contained in `self`,
+    /// Asynchronously reads the content of the file identified by the path contained in `self`,
     /// converting the file content into a `BytesValue`.
     ///
     /// # Errors
@@ -25,7 +25,7 @@ impl AsBytesValue for &FileCode {
 
 #[async_trait]
 impl AsBytesValue for &str {
-    /// TODO Asynchronously reads the content of the file identified by `self` as a path,
+    /// Asynchronously reads the content of the file identified by `self` as a path,
     /// converting the file content into a `BytesValue`.
     ///
     /// This implementation constructs a `FileCode` from `self` and delegates the task to the

@@ -41,12 +41,7 @@ impl BaseTransactionNetworkExecutor<Interactor> {
     }
 }
 
-/// TODO Custom implementation of `Clone` for `BaseTransactionNetworkExecutor`.
-///
-/// This implementation is necessary because the `Interactor` generic parameter might not
-/// implement `Clone`. However, since `Interactor` is used only as phantom data (it does not
-/// affect the state of `BaseTransactionNetworkExecutor`), we can safely implement `Clone`
-/// without the `Interactor` needing to be `Clone`.
+/// Custom implementation of `Clone` for `BaseTransactionNetworkExecutor`, when `Interactor` is `Clone`.
 impl<Interactor> Clone for BaseTransactionNetworkExecutor<Interactor>
     where
         Interactor: BlockchainInteractor + Clone
@@ -58,13 +53,9 @@ impl<Interactor> Clone for BaseTransactionNetworkExecutor<Interactor>
     }
 }
 
-/// TODO Custom implementation of `Debug` for `BaseTransactionNetworkExecutor`.
+/// Custom implementation of `Debug` for `BaseTransactionNetworkExecutor`, when `Interactor` is `Debug`.
 ///
-/// This implementation is necessary because the `Interactor` generic parameter might not
-/// implement `Debug`. As with `Clone`, since `Interactor` is only used as phantom data,
-/// it does not impact the debug representation of `BaseTransactionNetworkExecutor`. This
-/// implementation ensures that instances of `BaseTransactionNetworkExecutor` can be
-/// formatted using the `Debug` trait regardless of whether `Interactor` implements `Debug`.
+/// The implementation is basic, it prefixes "BaseTransactionNetworkExecutor" before the `Interactor`'s debug implementation.
 impl<Interactor> Debug for BaseTransactionNetworkExecutor<Interactor>
     where
         Interactor: BlockchainInteractor + Debug
@@ -76,14 +67,10 @@ impl<Interactor> Debug for BaseTransactionNetworkExecutor<Interactor>
 }
 
 impl<Interactor: BlockchainInteractor> BaseTransactionNetworkExecutor<Interactor> {
-    /// TODO Creates a new instance of `BaseTransactionNetworkExecutor`.
+    /// Creates a new instance of `BaseTransactionNetworkExecutor`.
     ///
-    /// # Parameters
-    /// - `gateway_url`: The URL of the blockchain network gateway.
-    /// - `wallet`: A reference to the wallet used for signing transactions.
-    ///
-    /// # Returns
-    /// A new `BaseTransactionNetworkExecutor` instance.
+    /// This function is async because the Interactor may perform some requests, such as retrieving the network configuration.
+    /// Those async operations might fail, thus the Result return type.
     pub async fn new(gateway_url: String, wallet: Wallet) -> Result<Self, ExecutorError> {
         let interactor = Interactor::new(
             gateway_url,
@@ -160,28 +147,13 @@ impl<Interactor: BlockchainInteractor> TransactionExecutor for BaseTransactionNe
     }
 }
 
-/// TODO Implementation of the `DeployExecutor` trait for the `BaseTransactionNetworkExecutor` struct.
+/// Implementation of the `DeployExecutor` trait for the `BaseTransactionNetworkExecutor` struct.
 /// This implementation enables the deployment of smart contracts on the blockchain
 /// using a specified blockchain interactor.
 #[async_trait]
 impl<Interactor: BlockchainInteractor> DeployExecutor for BaseTransactionNetworkExecutor<Interactor> {
 
-    /// TODO Asynchronously deploys a smart contract to the blockchain.
-    ///
-    /// # Type Parameters
-    ///
-    /// * `OriginalResult`: Represents the result type expected from the smart contract deployment.
-    ///    This type must implement `TopEncodeMulti`, `Send`, and `Sync`.
-    /// * `S`: Represents the type encapsulating the smart contract deployment step.
-    ///    This type must implement `AsMut<TypedScDeploy<OriginalResult>>` and `Send`.
-    ///
-    /// # Parameters
-    ///
-    /// * `sc_deploy_step`: A mutable reference to the smart contract deployment step to be executed.
-    ///
-    /// # Returns
-    ///
-    /// A `Result` with an empty `Ok(())` value indicating success, or an `Err(ExecutorError)` indicating failure.
+    /// Asynchronously deploys a smart contract to the blockchain.
     async fn sc_deploy<
         OutputManaged
     >(
