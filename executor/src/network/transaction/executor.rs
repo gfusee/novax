@@ -17,7 +17,7 @@ use crate::network::transaction::interactor::{BlockchainInteractor, Interactor, 
 use crate::network::utils::wallet::Wallet;
 use crate::utils::transaction::deploy::get_deploy_call_input;
 use crate::utils::transaction::normalization::NormalizationInOut;
-use crate::utils::transaction::results::{find_sc_deploy_event, find_smart_contract_result};
+use crate::utils::transaction::results::{find_sc_deploy_event, find_sc_error, find_smart_contract_result};
 use crate::utils::transaction::token_transfer::TokenTransfer;
 
 /// Alias for the `BaseTransactionNetworkExecutor` struct, parameterized with the `Interactor` type.
@@ -130,6 +130,15 @@ impl<Interactor: BlockchainInteractor> TransactionExecutor for BaseTransactionNe
             &result.transaction.smart_contract_results,
             result.transaction.logs.as_ref()
         )? else {
+            if let Some(logs) = result.transaction.logs.as_ref() {
+                if let Ok(Some(error_log)) = find_sc_error(logs) {
+                    return Err(TransactionError::SmartContractExecutionError { // TODO add tests for this
+                        status: error_log.status,
+                        message: error_log.message
+                    }.into())
+                }
+            }
+
             return Err(TransactionError::NoSmartContractResult.into())
         };
 

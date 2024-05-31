@@ -11,6 +11,7 @@ pub enum TransactionError {
     CannotDeserializeTransactionOnNetworkResponse { response: String },
     FailedToSendTheTransaction { message: String },
     NoSmartContractResult,
+    SmartContractExecutionError { status: u64, message: String },
     TimeoutWhenRetrievingTransactionOnNetwork,
     CannotDecodeSmartContractResult,
     NoSCDeployLogInTheResponse,
