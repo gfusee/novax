@@ -489,6 +489,8 @@ fn impl_abi_constructor(contract_info_name: &str, abi_constructor: &AbiConstruct
     let function_token = quote! {
         /// This asynchronous function encapsulates the logic for deploying a smart contract to the blockchain.
         pub async fn #function_name<Code: AsBytesValue, Executor: DeployExecutor>(_novax_deploy_data: DeployData<Code>, _novax_executor: &mut Executor, _novax_egld_value: num_bigint::BigUint, _novax_gas_limit: u64, #function_inputs) -> Result<(Address, CallResult<#function_native_outputs>), NovaXError> {
+            let _novax_request_arc = crate::utils::static_request_arc::get_static_request_arc_clone();
+
             let mut _novax_contract = #contract_info_ident::new(&multiversx_sc::types::Address::from(<[u8;32]>::default()));
 
             #endpoint_args_let_statements
