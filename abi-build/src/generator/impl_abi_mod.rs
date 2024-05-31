@@ -79,12 +79,12 @@ fn impl_mod(abi: &Abi) -> Result<TokenStream, BuildError> {
 fn get_mod_imports() -> TokenStream {
    quote! {
        #![allow(unused_imports)]
+       #![allow(dead_code)]
 
         multiversx_sc::imports!();
         multiversx_sc::derive_imports!();
         use novax_data::NativeConvertible;
         use multiversx_sc_scenario::api::StaticApi;
-        use multiversx_sdk::data::vm::VmValueRequest;
         use serde::{Deserialize, Serialize};
         use crate::errors::NovaXError;
         use crate::errors::CodingError;
@@ -97,20 +97,17 @@ fn get_mod_imports() -> TokenStream {
         use multiversx_sc_codec::Empty;
         use multiversx_sc_scenario::ContractInfo;
         use multiversx_sc_snippets::Interactor;
-        use crate::transaction::TokenTransfer;
-        use multiversx_sc_scenario::scenario_model::ScCallStep;
-        use multiversx_sc_scenario::scenario_model::TypedScCall;
-        use multiversx_sc_scenario::scenario_model::TxExpect;
         use multiversx_sc_scenario::scenario_model::AddressKey;
         use multiversx_sc::api::VMApi;
         use multiversx_sc_scenario::DebugApi;
-        use crate::transaction::CallResult;
         use std::sync::Arc;
         use tokio::sync::Mutex;
         use multiversx_sc_scenario::scenario_model::TxResponse;
         use multiversx_sc_scenario::scenario_model::ScQueryStep;
         use novax_executor::TransactionExecutor;
         use novax_executor::QueryExecutor;
+        use novax_executor::TokenTransfer;
+        use novax_executor::call_result::CallResult;
         use novax_data::ManagedConvertible;
         use multiversx_sc_scenario::scenario_model::ScDeployStep;
         use crate::code::AsBytesValue;
@@ -119,5 +116,8 @@ fn get_mod_imports() -> TokenStream {
         use std::ops::Deref;
         use multiversx_sc_scenario::scenario_model::AddressValue;
         use novax_data::Address;
+        use multiversx_sc_scenario::imports::Bech32Address;
+        use core::marker::PhantomData;
+        use multiversx_sc_codec::TopEncodeMulti;
    }
 }

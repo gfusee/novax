@@ -12,4 +12,7 @@ pub trait Tester: ContractBase + adder::AdderModule + printer::PrinterModule + c
     fn init(&self, initial_value: BigUint<Self::Api>) {
         self.sum().set(initial_value);
     }
+
+    #[upgrade]
+    fn upgrade(&self) {}
 }

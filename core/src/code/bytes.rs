@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use multiversx_sc_scenario::scenario_model::BytesValue;
+
 use crate::errors::NovaXError;
 
 /// An asynchronous trait defining a type that can be converted into a `BytesValue`.
@@ -16,5 +16,5 @@ pub trait AsBytesValue {
     ///
     /// A `Result` wrapping a `BytesValue` if the conversion is successful, or an `Err` wrapping
     /// a `NovaXError` if the conversion fails.
-    async fn into_bytes_value(self) -> Result<BytesValue, NovaXError>;
+    async fn into_bytes_value(self) -> Result<Vec<u8>, NovaXError>;
 }

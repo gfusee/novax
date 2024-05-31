@@ -47,7 +47,14 @@ fn main() {
 
                 if file_type.is_file() && file_name.ends_with(".abi.json") {
                     let abi_path = abis_path.join(file_name);
-                    let abi = parse_abi_file(&abi_path).unwrap();
+                    let mut abi = parse_abi_file(&abi_path).unwrap();
+
+                    // Backward compatibility.
+                    //
+                    // In a few versions of the Rust SDK, the upgrade function was an endpoint in the ABI.
+                    // It is now under the field upgradeConstructor.
+                    abi.endpoints.retain(|endpoint| endpoint.name != "upgrade");
+
                     let abi_generated_file = generate_from_abi(&abi).unwrap();
 
                     lib_file_content += &format!("#[allow(missing_docs)]\npub mod {};\n", abi_generated_file.mod_name);

@@ -4,11 +4,7 @@ use crate::ExecutorError;
 use crate::network::models::network::config::{NetworkGatewayConfig, NetworkGatewayConfigResponse};
 
 pub async fn get_network_config<Client: GatewayClient>(client: &Client) -> Result<NetworkGatewayConfig, ExecutorError> {
-    let Ok(response) = client.with_appended_url("/network/config").get().await else {
-        return Err(GatewayError::CannotFetchNetworkConfig.into())
-    };
-
-    let Ok(text) = response.text().await else {
+    let Ok((_, Some(text)))= client.with_appended_url("/network/config").get().await else {
         return Err(GatewayError::CannotFetchNetworkConfig.into())
     };
 

@@ -1,12 +1,8 @@
-#![feature(future_join)]
-#![feature(type_changing_struct_update)]
-
 pub mod world;
 pub mod gateway;
 pub mod errors;
 
 pub use multiversx_sc::codec::TopEncodeMulti;
-pub use multiversx_sc::codec::CodecFrom;
 pub use novax_executor::TypedResponse;
 pub use novax_executor::ScenarioWorld;
 pub use novax_executor::TypedScDeploy;

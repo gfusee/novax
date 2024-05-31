@@ -44,7 +44,7 @@
 //! For a deep dive into each module and to understand the various types, traits, and functions provided,
 //! navigate through the module documentation below.
 //!
-#![warn(missing_docs)]
+// TODO #![warn(missing_docs)]
 
 mod types;
 mod constants;

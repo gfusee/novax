@@ -1,19 +1,20 @@
 {
     "buildInfo": {
         "rustc": {
-            "version": "1.74.0-nightly",
-            "commitHash": "ec08a0337f3556212525dbf1d3b41e19bdf27621",
-            "commitDate": "2023-09-04",
-            "channel": "Nightly",
-            "short": "rustc 1.74.0-nightly (ec08a0337 2023-09-04)"
+            "version": "1.78.0",
+            "commitHash": "9b00956e56009bab2aa15d7bff10916599e3d6d6",
+            "commitDate": "2024-04-29",
+            "channel": "Stable",
+            "short": "rustc 1.78.0 (9b00956e5 2024-04-29)"
         },
         "contractCrate": {
             "name": "tester-contract",
-            "version": "0.0.0"
+            "version": "0.0.0",
+            "gitVersion": "0.1.6-17-gaeef5de"
         },
         "framework": {
             "name": "multiversx-sc",
-            "version": "0.43.3"
+            "version": "0.50.3"
         }
     },
     "name": "TesterWithReturningDeploy",
@@ -29,6 +30,10 @@
                 "type": "BigUint"
             }
         ]
+    },
+    "upgradeConstructor": {
+        "inputs": [],
+        "outputs": []
     },
     "endpoints": [
         {
@@ -53,6 +58,56 @@
             "outputs": []
         },
         {
+            "name": "returnNftProperties",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "TestTokenProperties"
+                }
+            ]
+        },
+        {
+            "name": "returnNftEnumProperties",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "TestEnumProperties"
+                }
+            ]
+        },
+        {
+            "name": "returnNftEnumFieldsProperties",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "TestEnumPropertiesWithFields"
+                }
+            ]
+        },
+        {
+            "name": "returnFungibleBalance",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "returnNonFungibleBalance",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
             "name": "noArgNoReturnEndpoint",
             "mutability": "mutable",
             "inputs": [],
@@ -75,6 +130,21 @@
             "outputs": [
                 {
                     "type": "bytes"
+                }
+            ]
+        },
+        {
+            "name": "returnContractAddress",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "contract_address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "Address"
                 }
             ]
         },
@@ -468,6 +538,34 @@
             ]
         },
         {
+            "name": "returnOptionalValueBool",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "optional<bool>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "returnOptionalValueBoolArg",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "arg",
+                    "type": "optional<bool>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "optional<bool>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
             "name": "returnMultiValueTwo",
             "mutability": "mutable",
             "inputs": [
@@ -483,10 +581,76 @@
                     "multi_result": true
                 }
             ]
+        },
+        {
+            "name": "returnBigIntArg",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "value",
+                    "type": "BigInt"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "BigInt"
+                }
+            ]
+        },
+        {
+            "name": "callAnotherContractReturnTwoU64",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                },
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "asyncCallAnotherContractReturnTwoU64NoCallback",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "asyncCallAnotherContractReturnTwoU64WithReturningCallback",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "asyncCallAnotherContractReturnTwoU64WithNonReturningCallback",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
         }
     ],
-    "events": [],
-    "hasCallback": false,
+    "esdtAttributes": [],
+    "hasCallback": true,
     "types": {
         "CustomEnum": {
             "type": "enum",
@@ -618,6 +782,61 @@
                 {
                     "name": "third",
                     "type": "CustomStruct"
+                }
+            ]
+        },
+        "TestEnumProperties": {
+            "type": "enum",
+            "variants": [
+                {
+                    "name": "First",
+                    "discriminant": 0
+                },
+                {
+                    "name": "Second",
+                    "discriminant": 1,
+                    "fields": [
+                        {
+                            "name": "0",
+                            "type": "bytes"
+                        },
+                        {
+                            "name": "1",
+                            "type": "BigUint"
+                        }
+                    ]
+                }
+            ]
+        },
+        "TestEnumPropertiesWithFields": {
+            "type": "enum",
+            "variants": [
+                {
+                    "name": "First",
+                    "discriminant": 0,
+                    "fields": [
+                        {
+                            "name": "buffer_value",
+                            "type": "bytes"
+                        },
+                        {
+                            "name": "integer",
+                            "type": "BigUint"
+                        }
+                    ]
+                }
+            ]
+        },
+        "TestTokenProperties": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "buffer",
+                    "type": "bytes"
+                },
+                {
+                    "name": "integer",
+                    "type": "BigUint"
                 }
             ]
         }

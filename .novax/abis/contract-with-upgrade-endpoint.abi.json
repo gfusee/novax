@@ -1,0 +1,37 @@
+{
+  "buildInfo": {
+    "rustc": {
+      "version": "1.76.0-nightly",
+      "commitHash": "d86d65bbc19b928387f68427fcc3a0da498d8a19",
+      "commitDate": "2023-12-10",
+      "channel": "Nightly",
+      "short": "rustc 1.76.0-nightly (d86d65bbc 2023-12-10)"
+    },
+    "contractCrate": {
+      "name": "contract",
+      "version": "0.0.0"
+    },
+    "framework": {
+      "name": "multiversx-sc",
+      "version": "0.48.0"
+    }
+  },
+  "name": "ContractWithUpgradeEndpoint",
+  "constructor": {
+    "inputs": [],
+    "outputs": []
+  },
+  "endpoints": [
+    {
+      "name": "upgrade",
+      "mutability": "mutable",
+      "inputs": [],
+      "outputs": []
+    }
+  ],
+  "esdtAttributes": [],
+  "hasCallback": false,
+  "types": {
+
+  }
+}

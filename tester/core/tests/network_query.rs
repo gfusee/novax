@@ -2,9 +2,8 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use novax::errors::NovaXError;
 use num_bigint::{BigInt, BigUint};
-use novax::{VMOutputApi, VmValueRequest, VmValuesResponseData};
 use novax::tester::tester::{CustomEnum, CustomEnumWithFields, CustomEnumWithValues, CustomStruct, CustomStructWithStructAndVec, TesterContract};
-use novax::executor::{BlockchainProxy, ExecutorError, QueryNetworkExecutor};
+use novax::executor::{BlockchainProxy, ExecutorError, QueryNetworkExecutor, VmValuesQueryRequest, VmValuesQueryResponseData, VmValuesQueryResponseDataData};
 
 const TESTER_CONTRACT_ADDRESS: &str = "erd1qqqqqqqqqqqqqpgq9wmk04e90fkhcuzns0pgwm33sdtxze346vpsq0ka9p";
 
@@ -13,11 +12,11 @@ struct MockProxy;
 
 #[async_trait]
 impl BlockchainProxy for MockProxy {
-    fn new(_gateway_url: &str) -> Self {
+    fn new(_gateway_url: String) -> Self {
         MockProxy
     }
 
-    async fn execute_vmquery(&self, vm_request: &VmValueRequest) -> Result<VmValuesResponseData, ExecutorError> {
+    async fn execute_vmquery(&self, vm_request: &VmValuesQueryRequest) -> Result<VmValuesQueryResponseData, ExecutorError> {
         let mut return_data: Option<Vec<String>> = None;
         if vm_request.func_name == "getSum" {
             return_data = Some(vec!["BQ==".to_string()]);
@@ -126,26 +125,17 @@ impl BlockchainProxy for MockProxy {
     }
 }
 
-fn get_success_vm_response_data(return_data: Vec<String>) -> VmValuesResponseData {
-    let output = VMOutputApi {
-        return_data,
-        return_code: "0".to_string(),
-        return_message: "".to_string(),
-        gas_remaining: 0,
-        gas_refund: 0,
-        output_accounts: Default::default(),
-        deleted_accounts: None,
-        touched_accounts: None,
-        logs: None,
-    };
-
-    VmValuesResponseData {
-        data: output,
+fn get_success_vm_response_data(return_data: Vec<String>) -> VmValuesQueryResponseData {
+    VmValuesQueryResponseData {
+        data: VmValuesQueryResponseDataData {
+            return_data: Some(return_data),
+            return_message: "".to_string()
+        }
     }
 }
 
 fn get_executor() -> Arc<QueryNetworkExecutor<MockProxy>> {
-    let executor = QueryNetworkExecutor::new("");
+    let executor = QueryNetworkExecutor::new("".to_string());
     Arc::new(executor)
 }
 

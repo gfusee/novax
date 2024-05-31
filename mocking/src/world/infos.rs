@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, HashMap};
 use std::fs::OpenOptions;
-use std::future::join;
+use tokio::join;
 use std::hash::Hash;
 use std::path::Path;
 use base64::Engine;
@@ -93,7 +93,7 @@ impl ScenarioWorldInfos {
             get_addresses_infos(gateway_url, addresses),
             get_addresses_keys(gateway_url, addresses),
             get_addresses_balances(gateway_url, addresses)
-        ).await;
+        );
 
         let infos = ScenarioWorldInfos {
             address_keys: keys?,

@@ -1,16 +1,23 @@
 use std::fmt::{Debug, Formatter};
+
 use async_trait::async_trait;
 use base64::Engine;
-use multiversx_sc_scenario::scenario_model::{TxResponse, TypedScCall};
-use multiversx_sdk::data::transaction::ApiSmartContractResult;
-use multiversx_sdk::data::vm::CallType;
+use multiversx_sc::codec::TopDecodeMulti;
+use num_bigint::BigUint;
 use tokio::join;
-use novax_data::Address;
+
+use novax_data::{Address, NativeConvertible};
 use novax_request::gateway::client::GatewayClient;
-use crate::{ExecutorError, GatewayError, SendableTransactionConvertible, SimulationError, SimulationGatewayRequest, SimulationGatewayResponse, TransactionExecutor};
+
+use crate::{ExecutorError, GatewayError, SimulationError, SimulationGatewayRequest, SimulationGatewayResponse, TransactionExecutor, TransactionOnNetwork, TransactionOnNetworkTransactionSmartContractResult};
+use crate::call_result::CallResult;
+use crate::error::transaction::TransactionError;
 use crate::network::models::simulate::request::SimulationGatewayRequestBody;
 use crate::network::utils::address::get_address_info;
 use crate::network::utils::network::get_network_config;
+use crate::utils::transaction::normalization::NormalizationInOut;
+use crate::utils::transaction::results::find_smart_contract_result;
+use crate::utils::transaction::token_transfer::TokenTransfer;
 
 /// Type alias for `BaseSimulationNetworkExecutor` with the `String` type as the generic `Client`.
 pub type SimulationNetworkExecutor = BaseSimulationNetworkExecutor<String>;
@@ -76,11 +83,7 @@ impl<Client: GatewayClient> BaseSimulationNetworkExecutor<Client> {
             version: network_config.erd_min_transaction_version,
         };
 
-        let Ok(response) = self.client.with_appended_url("/transaction/cost").post(&body).await else {
-            return Err(GatewayError::CannotSimulateTransaction.into())
-        };
-
-        let Ok(text) = response.text().await else {
+        let Ok((_, Some(text))) = self.client.with_appended_url("/transaction/cost").post(&body).await else {
             return Err(GatewayError::CannotSimulateTransaction.into())
         };
 
@@ -121,24 +124,43 @@ impl<Client> Debug for BaseSimulationNetworkExecutor<Client>
 #[async_trait]
 impl<Client: GatewayClient> TransactionExecutor for BaseSimulationNetworkExecutor<Client> {
     /// Executes a smart contract call in a simulated environment.
-    ///
-    /// # Type Parameters
-    /// - `OriginalResult`: The result type expected from the smart contract call.
-    ///
-    /// # Parameters
-    /// - `sc_call_step`: The smart contract call step to be executed.
-    ///
-    /// # Returns
-    /// A `Result` indicating the success or failure of the smart contract call execution.
-    async fn sc_call<OriginalResult: Send>(&mut self, sc_call_step: &mut TypedScCall<OriginalResult>) -> Result<(), ExecutorError> {
-        let sendable_transaction = sc_call_step.to_sendable_transaction();
+    async fn sc_call<OutputManaged>(
+        &mut self,
+        to: &Address,
+        function: String,
+        arguments: Vec<Vec<u8>>,
+        gas_limit: u64,
+        egld_value: BigUint,
+        esdt_transfers: Vec<TokenTransfer>
+    ) -> Result<CallResult<OutputManaged::Native>, ExecutorError>
+        where
+            OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
+    {
+        let function_name = if function.is_empty() {
+            None
+        } else {
+            Some(function)
+        };
+
+        let normalized = NormalizationInOut {
+            sender: self.sender_address.to_bech32_string()?,
+            receiver: to.to_bech32_string()?,
+            function_name,
+            arguments,
+            egld_value,
+            esdt_transfers,
+        }.normalize()?;
+
+        let normalized_egld_value = normalized.egld_value.clone();
+        let normalized_receiver = normalized.receiver.clone();
+        let normalized_sender = normalized.sender.clone();
 
         let simulation_data = SimulationGatewayRequest {
-            value: sendable_transaction.egld_value.to_string(),
-            receiver: sendable_transaction.receiver,
-            sender: self.sender_address.to_bech32_string()?,
-            gas_limit: sendable_transaction.gas_limit,
-            data: sendable_transaction.data,
+            value: normalized_egld_value.to_string(),
+            receiver: normalized_receiver,
+            sender: normalized_sender,
+            gas_limit,
+            data: normalized.get_transaction_data(),
         };
 
         let response = self.simulate_transaction(simulation_data).await?;
@@ -150,59 +172,29 @@ impl<Client: GatewayClient> TransactionExecutor for BaseSimulationNetworkExecuto
         let scrs = data.smart_contract_results
             .into_iter()
             .map(|(hash, result)| {
-                ApiSmartContractResult {
+                TransactionOnNetworkTransactionSmartContractResult {
                     hash,
                     nonce: result.nonce,
-                    value: result.value,
-                    receiver: multiversx_sdk::data::address::Address::from_bech32_string(&result.receiver).unwrap(),
-                    sender: multiversx_sdk::data::address::Address::from_bech32_string(&result.sender).unwrap(),
                     data: result.data,
-                    prev_tx_hash: "".to_string(),
-                    original_tx_hash: "".to_string(),
-                    gas_limit: 0,
-                    gas_price: 0,
-                    call_type: CallType::DirectCall,
-                    relayer_address: None,
-                    relayed_value: None,
-                    code: None,
-                    code_metadata: None,
-                    return_message: None,
-                    original_sender: None,
                 }
             })
             .collect();
 
-        let mut tx_response = TxResponse {
-            out: vec![],
-            new_deployed_address: None,
-            new_issued_token_identifier: None,
-            tx_error: Default::default(),
-            logs: vec![],
-            gas: data.tx_gas_units,
-            refund: 0,
-            api_scrs: scrs,
-            api_logs: None,
+        let mut raw_result = find_smart_contract_result(&Some(scrs), None)?
+            .unwrap_or_default();
+
+        let Ok(output_managed) = OutputManaged::multi_decode(&mut raw_result) else {
+            return Err(TransactionError::CannotDecodeSmartContractResult.into())
         };
 
-        process_out(&mut tx_response);
+        let mut response = TransactionOnNetwork::default();
+        response.transaction.status = "success".to_string();
 
-        sc_call_step.sc_call_step.save_response(tx_response);
+        let call_result = CallResult {
+            response,
+            result: Some(output_managed.to_native()),
+        };
 
-        Ok(())
-    }
-
-    /// Indicates whether deserialization should be skipped during execution.
-    /// Always returns `false` for this implementation.
-    async fn should_skip_deserialization(&self) -> bool {
-        false
-    }
-}
-
-/// Processes the output of a transaction response.
-fn process_out(step: &mut TxResponse) {
-    let out_scr = step.api_scrs.iter().find(multiversx_sc_scenario::scenario_model::is_out_scr);
-
-    if let Some(out_scr) = out_scr {
-        step.out = multiversx_sc_scenario::scenario_model::decode_scr_data_or_panic(&out_scr.data);
+        Ok(call_result)
     }
 }

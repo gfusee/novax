@@ -82,11 +82,7 @@ async fn fetch_token_properties<Client>(gateway_client: &Client, token_identifie
         )
         .await;
 
-    let Ok(response) = response else {
-        return Err(TokenError::UnknownErrorForToken { token_identifier: token_identifier.to_string() })
-    };
-
-    let Ok(text) = response.text().await else {
+    let Ok((_, Some(text))) = response else {
         return Err(TokenError::UnknownErrorForToken { token_identifier: token_identifier.to_string() })
     };
 

@@ -43,16 +43,13 @@
 //!
 //! The `novax` crate utilizes Rust's procedural macro facilities to perform code generation at compile time.
 //! This ensures that the generated code is type-safe, efficient, and ready-to-use right out of the box.
-#![warn(missing_docs)]
+// TODO #![warn(missing_docs)]
 
 /// The `caching` module provides caching strategies to optimize smart contract queries.
 pub mod caching;
 
 /// The `errors` module centralizes various error types encountered within the `novax` crate's operations.
 pub mod errors;
-
-/// The `transaction` module contains essential structs and types for handling blockchain transactions.
-pub mod transaction;
 
 /// The `code` module facilitates reading and handling of smart contract code.
 pub mod code;
@@ -69,12 +66,13 @@ pub mod utils;
 include!(concat!(env!("OUT_DIR"), "/generated_lib.rs"));
 
 pub use multiversx_sdk::data::address::Address as SDKAddress;
-pub use multiversx_sdk::data::vm::VmValueRequest;
-pub use multiversx_sdk::data::vm::VmValuesResponseData;
 pub use multiversx_sdk::data::vm::VMOutputApi;
-pub use multiversx_sdk::wallet::Wallet;
+pub use novax_executor::Wallet;
 pub use novax_data::Address;
 pub use multiversx_sc::types::CodeMetadata;
+use multiversx_sc_scenario::imports::StaticApi;
+
+pub type EgldOrMultiEsdtPayment = multiversx_sc::types::EgldOrMultiEsdtPayment<StaticApi>;
 
 /// The `executor` module provides re-exports of functionalities from the `novax_executor` crate.
 ///

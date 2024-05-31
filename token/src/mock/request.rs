@@ -1,7 +1,9 @@
 use async_trait::async_trait;
-use reqwest::{Error, Response, ResponseBuilderExt};
+use http::StatusCode;
 use serde::Serialize;
 use serde_json::Value;
+
+use novax_request::error::request::RequestError;
 use novax_request::gateway::client::GatewayClient;
 
 const MOCK_BASE_URL: &str = "https://test.test";
@@ -32,23 +34,15 @@ impl GatewayClient for MockClient {
         }
     }
 
-    async fn get(&self) -> Result<Response, Error> {
-        let (status, data) = if let Some((status, data)) = account::get_account_response(&self.url) {
-            (status, data)
+    async fn get(&self) -> Result<(StatusCode, Option<String>), RequestError> {
+        if let Some((status, data)) = account::get_account_response(&self.url) {
+            Ok((status, Some(data)))
         } else {
             panic!("Unknown url: {}", self.url)
-        };
-
-        let hyper_response = hyper::Response::builder()
-            .url(self.url.parse().unwrap())
-            .status(status)
-            .body(data)
-            .unwrap();
-
-        Ok(Response::from(hyper_response))
+        }
     }
 
-    async fn post<Body>(&self, body: &Body) -> Result<Response, Error>
+    async fn post<Body>(&self, body: &Body) -> Result<(StatusCode, Option<String>), RequestError>
         where
             Body: Serialize + Send + Sync
     {
@@ -59,19 +53,11 @@ impl GatewayClient for MockClient {
         let serialized = serde_json::to_string(body).unwrap();
         let decoded = serde_json::from_str::<Value>(&serialized).unwrap();
 
-        let (status, data) = if let Some((status, data)) = token::get_token_properties_vm_query_response(&decoded) {
-            (status, data)
+        if let Some((status, data)) = token::get_token_properties_vm_query_response(&decoded) {
+            Ok((status, Some(data)))
         } else {
-            todo!()
-        };
-
-        let hyper_response = hyper::Response::builder()
-            .url(self.url.parse().unwrap())
-            .status(status)
-            .body(data)
-            .unwrap();
-
-        Ok(Response::from(hyper_response))
+            unreachable!()
+        }
     }
 }
 

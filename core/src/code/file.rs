@@ -1,7 +1,8 @@
 use std::fs::read;
 use std::path::{Path, PathBuf};
+
 use async_trait::async_trait;
-use multiversx_sc_scenario::scenario_model::BytesValue;
+
 use crate::code::bytes::AsBytesValue;
 use crate::errors::{CodeError, NovaXError};
 
@@ -16,10 +17,9 @@ impl AsBytesValue for &FileCode {
     /// # Errors
     ///
     /// Returns a `CodeError` wrapped in a `NovaXError` if the file cannot be read.
-    async fn into_bytes_value(self) -> Result<BytesValue, NovaXError> {
-        let Ok(bytes) = read(&self.0) else { return Err(CodeError::UnableToReadCodeFromFile.into()) };
-
-        Ok(BytesValue::from(bytes))
+    async fn into_bytes_value(self) -> Result<Vec<u8>, NovaXError> {
+        read(&self.0)
+            .map_err(|_| CodeError::UnableToReadCodeFromFile.into())
     }
 }
 
@@ -34,7 +34,7 @@ impl AsBytesValue for &str {
     /// # Errors
     ///
     /// Returns a `CodeError` wrapped in a `NovaXError` if the file cannot be read.
-    async fn into_bytes_value(self) -> Result<BytesValue, NovaXError> {
+    async fn into_bytes_value(self) -> Result<Vec<u8>, NovaXError> {
         FileCode(Path::new(self).to_path_buf()).into_bytes_value().await
     }
 }

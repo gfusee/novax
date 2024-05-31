@@ -1,37 +1,44 @@
-mod utils;
-
 use std::sync::Arc;
+
 use async_trait::async_trait;
-use tokio::sync::Mutex;
-use novax::{Address, Wallet};
-use novax::errors::NovaXError;
 use num_bigint::{BigInt, BigUint};
+use tokio::sync::Mutex;
+
+use novax::Address;
+use novax::errors::NovaXError;
+use novax::executor::{BaseTransactionNetworkExecutor, BlockchainInteractor, ExecutorError, NetworkExecutor, TokenTransfer, TransactionOnNetwork, TransactionOnNetworkTransaction, TransactionOnNetworkTransactionLogs, TransactionOnNetworkTransactionSmartContractResult, Wallet};
 use novax::tester::tester::{CustomEnum, CustomEnumWithFields, CustomEnumWithValues, CustomStruct, CustomStructWithStructAndVec, TesterContract};
-use novax::executor::{BaseTransactionNetworkExecutor, BlockchainInteractor, NetworkExecutor, SendableTransactionConvertible};
-use novax_mocking::{ScCallStep, ScDeployStep, TxResponse};
-use crate::utils::decode_scr_data::decode_scr_data_or_panic;
+
+mod utils;
 
 const CALLER_PRIVATE_KEY: &str = "69417ce717e43d0d3a598f68b5e562d7d2a532a5a3ac1e8b3342515e0b2d950f"; // to anyone reading : this has been generated only for the tests below
 const CALLER: &str = "erd12wf7tlsk2z895vwmndheaknkp3uaqa7xuq847numkwlmcvy60wxql2ndlk";
 const TESTER_CONTRACT_ADDRESS: &str = "erd1qqqqqqqqqqqqqpgq9wmk04e90fkhcuzns0pgwm33sdtxze346vpsq0ka9p";
 
-struct MockInteractor;
+struct MockInteractor {
+    wallet: Wallet
+}
 
 #[async_trait]
 impl BlockchainInteractor for MockInteractor {
-    async fn new(_gateway_url: &str) -> Self {
-        MockInteractor
+    async fn new(_gateway_url: String, wallet: Wallet) -> Result<Self, ExecutorError> {
+        Ok(
+            MockInteractor {
+                wallet,
+            }
+        )
     }
 
-    fn register_wallet(&mut self, _wallet: Wallet) -> Address {
-        Address::from_bech32_string(CALLER).unwrap()
-    }
-
-    async fn sc_call<S>(&mut self, mut sc_call_step: S) where S: AsMut<ScCallStep> + Send {
+    async fn sc_call(
+        &mut self,
+        _to: String,
+        _value: BigUint,
+        data: String,
+        _gas_limit: u64
+    ) -> Result<TransactionOnNetwork, ExecutorError>
+    {
         let mut return_data: Option<String> = None;
-        let call_step = sc_call_step.as_mut();
-        let sendable_transaction = call_step.tx.to_sendable_transaction();
-        let data = sendable_transaction.data;
+
         if data == "returnCaller" {
             return_data = Some("@6f6b@5393e5fe16508e5a31db9b6f9eda760c79d077c6e00f5f4f9bb3bfbc309a7b8c".to_string());
         } else if data == "getSum" {
@@ -78,6 +85,12 @@ impl BlockchainInteractor for MockInteractor {
             return_data = Some("@6f6b@746573742174657374".to_string())
         } else if data == "returnConcatMultiBufferArgs@7465737431@7465737432" {
             return_data = Some("@6f6b@74657374317465737432".to_string())
+        } else if data == "ESDTTransfer@5745474c442d616263646566@2386f26fc10000@72657475726e436f6e6361744d756c746942756666657241726773@68656c6c6f@776f726c64" {
+            return_data = Some("@6f6b@68656c6c6f776f726c64".to_string())
+        } else if data == "ESDTNFTTransfer@5346542d616263646566@01@2386f26fc10000@000000000000000005002bb767d7257a6d7c705383c2876e318356616635d303@72657475726e436f6e6361744d756c746942756666657241726773@68656c6c6f@736674" {
+            return_data = Some("@6f6b@68656c6c6f736674".to_string())
+        } else if data == "MultiESDTNFTTransfer@000000000000000005002bb767d7257a6d7c705383c2876e318356616635d303@02@5745474c442d616263646566@@0de0b6b3a7640000@5346542d616263646566@01@2386f26fc10000@72657475726e436f6e6361744d756c746942756666657241726773@68656c6c6f@6d756c7469" {
+            return_data = Some("@6f6b@68656c6c6f6d756c7469".to_string())
         } else if data == "returnCustomEnumArg@02" {
             return_data = Some("@6f6b@02".to_string())
         } else if data == "returnCustomStructArg@00000004746573740000000218711a00000000080de0b6b3a7640000" {
@@ -115,34 +128,54 @@ impl BlockchainInteractor for MockInteractor {
             panic!("Unknown data for : \"{data}\"");
         };
 
-        let response = TxResponse::from_raw_results(decode_scr_data_or_panic(&return_data));
+        let response = TransactionOnNetwork {
+            transaction: TransactionOnNetworkTransaction {
+                gas_used: 0,
+                smart_contract_results: Some(vec![
+                    TransactionOnNetworkTransactionSmartContractResult {
+                        hash: "".to_string(),
+                        nonce: 1,
+                        data: return_data,
+                    }
+                ]),
+                status: "success".to_string(),
+                logs: Some(
+                    TransactionOnNetworkTransactionLogs {
+                        address: "".to_string(),
+                        events: vec![],
+                    }
+                ),
+            },
+        };
 
-        call_step.response = Some(response);
+        return Ok(response)
     }
 
-    async fn sc_deploy<S>(&mut self, _sc_deploy_step: S) where S: AsMut<ScDeployStep> + Send {
-        todo!()
+    fn get_sender_address(&self) -> Address {
+        self.wallet.get_address()
     }
 }
 
-fn get_executor() -> Arc<Mutex<BaseTransactionNetworkExecutor<MockInteractor>>> {
+async fn get_executor() -> Arc<Mutex<BaseTransactionNetworkExecutor<MockInteractor>>> {
     let wallet = Wallet::from_private_key(CALLER_PRIVATE_KEY).unwrap();
 
     let executor = BaseTransactionNetworkExecutor::new(
-        "",
-        &wallet
-    );
+        "".to_string(),
+        wallet
+    )
+        .await
+        .unwrap();
 
     Arc::new(Mutex::new(executor))
 }
 
 // The below test is a success if it compiles
+#[allow(clippy::map_clone)]
 #[tokio::test]
 async fn test_clone_network_executor() -> Result<(), NovaXError> {
     let wallet = Wallet::from_private_key(CALLER_PRIVATE_KEY).unwrap();
-    let executor = NetworkExecutor::new("", &wallet);
-    #[allow(clippy::redundant_clone)]
-    let _executor2 = executor.clone();
+    let executor = NetworkExecutor::new("".to_string(), wallet).await;
+    _ = executor.map(|e| e.clone());
 
     Ok(())
 }
@@ -151,16 +184,16 @@ async fn test_clone_network_executor() -> Result<(), NovaXError> {
 #[tokio::test]
 async fn test_debug_network_executor() -> Result<(), NovaXError> {
     let wallet = Wallet::from_private_key(CALLER_PRIVATE_KEY).unwrap();
-    let executor = NetworkExecutor::new("", &wallet);
+    let executor = NetworkExecutor::new("".to_string(), wallet).await;
 
-    println!("{executor:?}");
+    _ = executor.map(|e| println!("{:?}", e.clone()));
 
     Ok(())
 }
 
 #[tokio::test]
 async fn test_call_return_caller() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -177,7 +210,7 @@ async fn test_call_return_caller() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_with_biguint_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -194,7 +227,7 @@ async fn test_call_with_biguint_result() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_with_biguint_argument() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let contract = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -210,7 +243,7 @@ async fn test_call_with_biguint_argument() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_buffer_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let contract = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -235,7 +268,7 @@ async fn test_call_buffer_result() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_biguint_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -253,7 +286,7 @@ async fn test_call_biguint_result() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_u8_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -271,7 +304,7 @@ async fn test_call_u8_result() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_u16_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -289,7 +322,7 @@ async fn test_call_u16_result() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_u32_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -307,7 +340,7 @@ async fn test_call_u32_result() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_u64_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -325,7 +358,7 @@ async fn test_call_u64_result() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_u32_vec_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -343,7 +376,7 @@ async fn test_call_u32_vec_result() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_u64_vec_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -361,7 +394,7 @@ async fn test_call_u64_vec_result() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_buffer_vec_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -379,7 +412,7 @@ async fn test_call_buffer_vec_result() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_biguint_vec_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -400,7 +433,7 @@ async fn test_call_biguint_vec_result() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_two_u64_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -418,7 +451,7 @@ async fn test_call_two_u64_result() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_two_buffers_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -436,7 +469,7 @@ async fn test_call_two_buffers_result() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_one_buffer_one_u64_and_one_biguint_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -458,7 +491,7 @@ async fn test_call_one_buffer_one_u64_and_one_biguint_result() -> Result<(), Nov
 
 #[tokio::test]
 async fn test_call_double_of_u64_arg_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -476,7 +509,7 @@ async fn test_call_double_of_u64_arg_result() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_double_of_biguint_arg_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -494,7 +527,7 @@ async fn test_call_double_of_biguint_arg_result() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_appended_buffer_arg_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -512,7 +545,7 @@ async fn test_call_appended_buffer_arg_result() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_sum_of_two_biguint_args_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let first_arg = BigUint::from(10u8).pow(18);
     let second_arg = BigUint::from(10u8).pow(18) * BigUint::from(2u8);
@@ -533,7 +566,7 @@ async fn test_call_sum_of_two_biguint_args_result() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_concat_multi_buffer_args_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let first_arg = "test1".to_string();
     let second_arg = "test2".to_string();
@@ -554,8 +587,106 @@ async fn test_call_concat_multi_buffer_args_result() -> Result<(), NovaXError> {
 }
 
 #[tokio::test]
+async fn test_call_concat_multi_buffer_args_one_fungible_transfer_result() -> Result<(), NovaXError> {
+    let executor = get_executor().await;
+
+    let first_arg = "hello".to_string();
+    let second_arg = "world".to_string();
+    let args = vec![first_arg.clone(), second_arg.clone()];
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .call(executor, 600000000)
+        .with_esdt_transfers(
+            &vec![
+                TokenTransfer {
+                    identifier: "WEGLD-abcdef".to_string(),
+                    nonce: 0,
+                    amount: BigUint::from(10u8).pow(16),
+                }
+            ]
+        )
+        .return_concat_multi_buffer_args(&args)
+        .await?;
+
+    let expected = format!("{first_arg}{second_arg}");
+
+    assert_eq!(result.result.unwrap(), expected);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_call_concat_multi_buffer_args_one_non_fungible_transfer_result() -> Result<(), NovaXError> {
+    let executor = get_executor().await;
+
+    let first_arg = "hello".to_string();
+    let second_arg = "sft".to_string();
+    let args = vec![first_arg.clone(), second_arg.clone()];
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .call(executor, 600000000)
+        .with_esdt_transfers(
+            &vec![
+                TokenTransfer {
+                    identifier: "SFT-abcdef".to_string(),
+                    nonce: 1,
+                    amount: BigUint::from(10u8).pow(16),
+                }
+            ]
+        )
+        .return_concat_multi_buffer_args(&args)
+        .await?;
+
+    let expected = format!("{first_arg}{second_arg}");
+
+    assert_eq!(result.result.unwrap(), expected);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_call_concat_multi_buffer_args_multi_transfers_result() -> Result<(), NovaXError> {
+    let executor = get_executor().await;
+
+    let first_arg = "hello".to_string();
+    let second_arg = "multi".to_string();
+    let args = vec![first_arg.clone(), second_arg.clone()];
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .call(executor, 600000000)
+        .with_esdt_transfers(
+            &vec![
+                TokenTransfer {
+                    identifier: "WEGLD-abcdef".to_string(),
+                    nonce: 0,
+                    amount: BigUint::from(10u8).pow(18),
+                },
+                TokenTransfer {
+                    identifier: "SFT-abcdef".to_string(),
+                    nonce: 1,
+                    amount: BigUint::from(10u8).pow(16),
+                }
+            ]
+        )
+        .return_concat_multi_buffer_args(&args)
+        .await?;
+
+    let expected = format!("{first_arg}{second_arg}");
+
+    assert_eq!(result.result.unwrap(), expected);
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_call_sum_multi_u64_args_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let first_arg = 10u64;
     let second_arg = 9000000000u64;
@@ -577,7 +708,7 @@ async fn test_call_sum_multi_u64_args_result() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_sum_multi_biguint_args_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let first_arg = BigUint::from(10u8).pow(18);
     let second_arg = BigUint::from(10u8).pow(18) * BigUint::from(2u8);
@@ -599,7 +730,7 @@ async fn test_call_sum_multi_biguint_args_result() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_return_optional_value_bool_arg_some_true() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -619,7 +750,7 @@ async fn test_return_optional_value_bool_arg_some_true() -> Result<(), NovaXErro
 
 #[tokio::test]
 async fn test_return_optional_value_bool_arg_some_false() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -639,7 +770,7 @@ async fn test_return_optional_value_bool_arg_some_false() -> Result<(), NovaXErr
 
 #[tokio::test]
 async fn test_return_optional_value_bool_arg_none() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -659,7 +790,7 @@ async fn test_return_optional_value_bool_arg_none() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_custom_struct_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -681,7 +812,7 @@ async fn test_call_custom_struct_result() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_custom_struct_arg_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let input = CustomStruct {
         first: "test".to_string(),
@@ -705,7 +836,7 @@ async fn test_call_custom_struct_arg_result() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_custom_struct_with_struct_and_vec_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -735,7 +866,7 @@ async fn test_call_custom_struct_with_struct_and_vec_result() -> Result<(), Nova
 
 #[tokio::test]
 async fn test_call_custom_struct_with_struct_and_vec_arg_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let first_vec = vec![10u64, 9000000000u64];
     let second_vec = vec!["test1".to_string(), "test2".to_string()];
@@ -767,7 +898,7 @@ async fn test_call_custom_struct_with_struct_and_vec_arg_result() -> Result<(), 
 
 #[tokio::test]
 async fn test_call_custom_enum_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -785,7 +916,7 @@ async fn test_call_custom_enum_result() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_custom_enum_arg_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let input = CustomEnum::Third;
 
@@ -805,7 +936,7 @@ async fn test_call_custom_enum_arg_result() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_first_custom_enum_with_values_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -827,7 +958,7 @@ async fn test_call_first_custom_enum_with_values_result() -> Result<(), NovaXErr
 
 #[tokio::test]
 async fn test_call_second_custom_enum_with_values_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -857,7 +988,7 @@ async fn test_call_second_custom_enum_with_values_result() -> Result<(), NovaXEr
 
 #[tokio::test]
 async fn test_call_first_custom_enum_with_values_arg_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let first_vec = vec![10u64, 9000000000u64];
     let second_vec = vec!["test1".to_string(), "test2".to_string()];
@@ -889,7 +1020,7 @@ async fn test_call_first_custom_enum_with_values_arg_result() -> Result<(), Nova
 
 #[tokio::test]
 async fn test_call_second_custom_enum_with_values_arg_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let input = CustomEnumWithValues::First(
         "test".to_string(),
@@ -913,7 +1044,7 @@ async fn test_call_second_custom_enum_with_values_arg_result() -> Result<(), Nov
 
 #[tokio::test]
 async fn test_call_first_custom_enum_with_fields_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -935,7 +1066,7 @@ async fn test_call_first_custom_enum_with_fields_result() -> Result<(), NovaXErr
 
 #[tokio::test]
 async fn test_call_second_custom_enum_with_fields_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -965,7 +1096,7 @@ async fn test_call_second_custom_enum_with_fields_result() -> Result<(), NovaXEr
 
 #[tokio::test]
 async fn test_call_first_custom_enum_with_fields_arg_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let input = CustomEnumWithFields::First {
         first_first: "test".to_string(),
@@ -989,7 +1120,7 @@ async fn test_call_first_custom_enum_with_fields_arg_result() -> Result<(), Nova
 
 #[tokio::test]
 async fn test_call_second_custom_enum_with_fields_arg_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let first_vec = vec![10u64, 9000000000u64];
     let second_vec = vec!["test1".to_string(), "test2".to_string()];
@@ -1021,7 +1152,7 @@ async fn test_call_second_custom_enum_with_fields_arg_result() -> Result<(), Nov
 
 #[tokio::test]
 async fn test_call_with_bigint_arg_result() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor().await;
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS

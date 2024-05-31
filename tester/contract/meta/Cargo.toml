@@ -1,17 +1,12 @@
 [package]
-name = "tester-contract-meta"
+name = "contract-meta"
 version = "0.0.0"
-edition = "2018"
+edition = "2021"
 publish = false
-authors = [ "you",]
 
-[dev-dependencies]
+[dependencies.tester-contract]
+path = ".."
 
-[dependencies]
-multiversx-sc-meta = "=0.48.1"
-tester-contract = { path = ".." }
-
-[package.metadata.release]
-release = false
-
-
+[dependencies.multiversx-sc-meta]
+version = "0.50.3"
+default-features = false

@@ -42,7 +42,7 @@
 //! Error handling in `novax-executor` is comprehensive and designed to cover a range of issues that might arise while interacting with the blockchain.
 //! See [`ExecutorError`](enum.ExecutorError.html), [`NetworkQueryError`](enum.NetworkQueryError.html), and [`MockDeployError`](enum.MockDeployError.html) for more details.
 
-#![warn(missing_docs)]
+// TODO #![warn(missing_docs)]
 
 mod error;
 mod base;
@@ -54,6 +54,7 @@ mod utils;
 pub use error::executor::ExecutorError;
 pub use error::network::NetworkQueryError;
 pub use error::mock_deploy::MockDeployError;
+pub use error::mock_transaction::MockTransactionError;
 pub use error::gateway::GatewayError;
 pub use error::simulation::SimulationError;
 
@@ -61,16 +62,27 @@ pub use base::query::QueryExecutor;
 pub use base::transaction::TransactionExecutor;
 pub use base::deploy::DeployExecutor;
 
-pub use network::query::ProxyQueryExecutor;
-pub use network::query::QueryNetworkExecutor;
-pub use network::transaction::NetworkExecutor;
-pub use network::transaction::BaseTransactionNetworkExecutor;
-pub use network::interactor::BlockchainInteractor;
-pub use network::proxy::BlockchainProxy;
+pub use network::query::executor::ProxyQueryExecutor;
+pub use network::query::executor::QueryNetworkExecutor;
+pub use network::utils::wallet::Wallet;
+pub use network::transaction::executor::NetworkExecutor;
+pub use network::transaction::executor::BaseTransactionNetworkExecutor;
+pub use network::transaction::interactor::BlockchainInteractor;
+pub use network::transaction::interactor::TransactionRefreshStrategy;
+pub use network::query::proxy::BlockchainProxy;
 pub use network::simulate::SimulationNetworkExecutor;
 pub use network::simulate::BaseSimulationNetworkExecutor;
 pub use network::models::simulate::request::SimulationGatewayRequest;
 pub use network::models::simulate::response::SimulationGatewayResponse;
+pub use network::query::models::request::VmValuesQueryRequest;
+pub use network::query::models::response::VmValuesQueryResponseData;
+pub use network::query::models::response::VmValuesQueryResponseDataData;
+pub use network::transaction::models::transaction_on_network::TransactionOnNetworkResponse;
+pub use network::transaction::models::transaction_on_network::TransactionOnNetwork;
+pub use network::transaction::models::transaction_on_network::TransactionOnNetworkTransaction;
+pub use network::transaction::models::transaction_on_network::TransactionOnNetworkTransactionSmartContractResult;
+pub use network::transaction::models::transaction_on_network::TransactionOnNetworkTransactionLogs;
+pub use network::transaction::models::transaction_on_network::TransactionOnNetworkTransactionLogsEvents;
 
 pub use mocking::executor::StandardMockExecutor;
 pub use mocking::executor::MockExecutor;
@@ -81,6 +93,9 @@ pub use dummy::transaction::DummyDeployExecutor;
 
 pub use utils::transaction::data::SendableTransaction;
 pub use utils::transaction::data::SendableTransactionConvertible;
+pub use utils::transaction::token_transfer::TokenTransfer;
+pub use utils::transaction::call_result;
 
 pub use multiversx_sc_scenario::ScenarioWorld;
-pub use multiversx_sc_scenario::scenario_model::{ScCallStep, ScDeployStep, ScQueryStep, SetStateStep, Account, TxQuery, TxResponse, TypedScCall, TypedScDeploy, TypedScQuery, TypedResponse};
+pub use multiversx_sc_scenario::scenario_model::{ScCallStep, ScDeployStep, ScQueryStep, SetStateStep, Account, TxQuery, TxResponse, TypedScDeploy, TypedScQuery, TypedResponse};
+pub use multiversx_sc::codec::TopDecodeMulti;

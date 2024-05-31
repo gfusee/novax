@@ -6,6 +6,12 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use crate::errors::NovaXError;
 
+#[derive(Clone, Debug)]
+pub enum CachingDurationStrategy {
+    EachBlock,
+    Duration(Duration)
+}
+
 /// The `CachingStrategy` trait defines the interface for caching strategies used within the "novax" crate.
 ///
 /// This trait provides methods for getting, setting, and managing cache data while interacting with smart contracts.
@@ -61,20 +67,26 @@ pub trait CachingStrategy: Clone + Send + Sync + Debug {
     /// - A `Result` indicating success or an error if the operation fails.
     async fn clear(&self) -> Result<(), NovaXError>;
 
-    /// Creates a new `CachingStrategy` instance with a specified cache duration.
+    /// Creates a new `CachingStrategy` instance with a specified cache duration strategy.
     ///
     /// # Parameters
-    /// - `duration`: The duration for which cache entries should be kept.
+    /// - `strategy`: The duration strategy for which cache entries should be kept.
     ///
     /// # Returns
-    /// - A new `CachingStrategy` instance with the specified cache duration.
-    fn with_duration(&self, duration: Duration) -> Self;
+    /// - A new `CachingStrategy` instance with the specified cache duration strategy.
+    fn with_duration_strategy(&self, strategy: CachingDurationStrategy) -> Self;
 
-    /// Creates a new `CachingStrategy` instance that caches values until the next blockchain block.
-    ///
-    /// # Returns
-    /// - A new `CachingStrategy` instance with the caching behavior set to expire cache entries at the arrival of the next blockchain block.
-    fn until_next_block(&self) -> Self;
+    #[allow(missing_docs)]
+    #[deprecated(note = "This function will be removed soon, please use `with_duration_strategy`.")]
+    fn with_duration(&self, duration: Duration) -> Self {
+        self.with_duration_strategy(CachingDurationStrategy::Duration(duration))
+    }
+
+    #[allow(missing_docs)]
+    #[deprecated(note = "This function will be removed soon, please use `with_duration_strategy`.")]
+    fn until_next_block(&self) -> Self {
+        self.with_duration_strategy(CachingDurationStrategy::EachBlock)
+    }
 }
 
 

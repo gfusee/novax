@@ -6,24 +6,22 @@ use std::time::Duration;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use tokio::sync::Mutex;
-use novax::caching::CachingStrategy;
+use novax::caching::{CachingDurationStrategy, CachingStrategy};
 use novax::errors::NovaXError;
 use novax::errors::CachingError;
-use crate::date::get_current_timestamp::get_current_timestamp;
+use crate::date::get_current_timestamp::{get_current_timestamp, get_timestamp_of_next_block};
 
 #[derive(Clone, Debug)]
 pub struct CachingLocal {
-    duration: Duration,
-    until_next_block: bool,
+    duration_strategy: CachingDurationStrategy,
     value_map: Arc<Mutex<HashMap<u64, Vec<u8>>>>,
     expiration_timestamp_map: Arc<Mutex<HashMap<u64, Duration>>>
 }
 
 impl CachingLocal {
-    pub fn empty() -> CachingLocal {
+    pub fn empty(duration_strategy: CachingDurationStrategy) -> CachingLocal {
         CachingLocal {
-            duration: Duration::from_secs(0),
-            until_next_block: false,
+            duration_strategy,
             value_map: Arc::new(Mutex::new(HashMap::new())),
             expiration_timestamp_map: Arc::new(Mutex::new(HashMap::new()))
         }
@@ -41,15 +39,13 @@ impl CachingLocal {
 
     async fn set_value<T: Serialize + DeserializeOwned>(&self, key: u64, value: &T) -> Result<(), NovaXError> {
         let current_timestamp = get_current_timestamp()?;
-        let expiration_timestamp = if self.until_next_block {
-            let mut timestamp = current_timestamp.as_secs() + 1;
-            while timestamp % 6 != 5 {
-                timestamp += 1
+        let expiration_timestamp = match self.duration_strategy {
+            CachingDurationStrategy::EachBlock => {
+                get_timestamp_of_next_block(current_timestamp)?
             }
-
-            Duration::from_secs(timestamp)
-        } else {
-            current_timestamp + self.duration
+            CachingDurationStrategy::Duration(duration) => {
+                current_timestamp + duration
+            }
         };
         self.expiration_timestamp_map.lock().await.insert(key, expiration_timestamp);
 
@@ -65,7 +61,7 @@ impl CachingStrategy for CachingLocal {
     async fn get_cache<T: Serialize + DeserializeOwned + Send>(&self, key: u64) -> Result<Option<T>, NovaXError> {
         let Some(expiration_timestamp) = self.expiration_timestamp_map.lock().await.get(&key).cloned() else { return Ok(None) };
 
-        if get_current_timestamp()? > expiration_timestamp {
+        if get_current_timestamp()? >= expiration_timestamp {
             self.remove_key(key).await;
             Ok(None)
         } else {
@@ -101,19 +97,9 @@ impl CachingStrategy for CachingLocal {
         Ok(())
     }
 
-    fn with_duration(&self, duration: Duration) -> Self {
+    fn with_duration_strategy(&self, strategy: CachingDurationStrategy) -> Self {
         CachingLocal {
-            duration,
-            until_next_block: self.until_next_block,
-            value_map: self.value_map.clone(),
-            expiration_timestamp_map: self.expiration_timestamp_map.clone()
-        }
-    }
-
-    fn until_next_block(&self) -> Self {
-        CachingLocal {
-            duration: Duration::from_secs(0),
-            until_next_block: true,
+            duration_strategy: strategy,
             value_map: self.value_map.clone(),
             expiration_timestamp_map: self.expiration_timestamp_map.clone()
         }
@@ -123,14 +109,14 @@ impl CachingStrategy for CachingLocal {
 #[cfg(test)]
 mod test {
     use std::time::Duration;
-    use novax::caching::CachingStrategy;
+    use novax::caching::{CachingDurationStrategy, CachingStrategy};
     use novax::errors::NovaXError;
     use crate::date::get_current_timestamp::set_mock_time;
     use crate::local::caching_local::CachingLocal;
 
     #[tokio::test]
     async fn test_get_cache_key_not_found() -> Result<(), NovaXError> {
-        let caching = CachingLocal::empty();
+        let caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
         let key = 1;
 
         let result = caching.get_cache::<()>(key).await?;
@@ -142,7 +128,7 @@ mod test {
 
     #[tokio::test]
     async fn test_set_cache() -> Result<(), NovaXError> {
-        let caching = CachingLocal::empty();
+        let caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
         let key = 1;
         let value = "test".to_string();
 
@@ -158,13 +144,13 @@ mod test {
 
     #[tokio::test]
     async fn test_get_cache_before_expiration() -> Result<(), NovaXError> {
-        let caching = CachingLocal::empty().with_duration(Duration::from_secs(10));
+        let caching = CachingLocal::empty(CachingDurationStrategy::Duration(Duration::from_secs(10)));
         let key = 1;
         let value = "test".to_string();
 
         caching.set_cache(key, &value).await?;
 
-        set_mock_time(Duration::from_secs(10));
+        set_mock_time(Duration::from_secs(9));
 
         let result = caching.get_cache::<String>(key).await?;
         let expected = Some("test".to_string());
@@ -177,7 +163,7 @@ mod test {
 
     #[tokio::test]
     async fn test_get_cache_after_expiration() -> Result<(), NovaXError> {
-        let caching = CachingLocal::empty().with_duration(Duration::from_secs(10));
+        let caching = CachingLocal::empty(CachingDurationStrategy::Duration(Duration::from_secs(10)));
         let key = 1;
         let value = "test".to_string();
 
@@ -196,7 +182,7 @@ mod test {
     #[tokio::test]
     async fn test_get_cache_start_of_block() -> Result<(), NovaXError> {
         set_mock_time(Duration::from_secs(0));
-        let caching = CachingLocal::empty().until_next_block();
+        let caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
         let key = 1;
         let value = "test".to_string();
 
@@ -215,7 +201,7 @@ mod test {
     #[tokio::test]
     async fn test_get_cache_same_block() -> Result<(), NovaXError> {
         set_mock_time(Duration::from_secs(3));
-        let caching = CachingLocal::empty().until_next_block();
+        let caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
         let key = 1;
         let value = "test".to_string();
 
@@ -234,7 +220,7 @@ mod test {
     #[tokio::test]
     async fn test_get_cache_next_block() -> Result<(), NovaXError> {
         set_mock_time(Duration::from_secs(3));
-        let caching = CachingLocal::empty().until_next_block();
+        let caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
         let key = 1;
         let value = "test".to_string();
 
@@ -252,7 +238,7 @@ mod test {
 
     #[tokio::test]
     async fn test_get_or_set_cache_without_previous_value() -> Result<(), NovaXError> {
-        let caching = CachingLocal::empty();
+        let caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
         let key = 1;
 
         let result = caching.get_or_set_cache(
@@ -271,7 +257,7 @@ mod test {
 
     #[tokio::test]
     async fn test_get_or_set_cache_with_previous_value() -> Result<(), NovaXError> {
-        let caching = CachingLocal::empty();
+        let caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
         let key = 1;
 
         caching.set_cache(key, &"old value".to_string()).await?;
@@ -292,7 +278,7 @@ mod test {
 
     #[tokio::test]
     async fn test_get_or_set_cache_with_previous_value_after_expiration() -> Result<(), NovaXError> {
-        let caching = CachingLocal::empty().with_duration(Duration::from_secs(10));
+        let caching = CachingLocal::empty(CachingDurationStrategy::Duration(Duration::from_secs(10)));
         let key = 1;
 
         caching.set_cache(key, &"old value".to_string()).await?;
@@ -315,7 +301,7 @@ mod test {
 
     #[tokio::test]
     async fn test_clear() -> Result<(), NovaXError> {
-        let caching = CachingLocal::empty();
+        let caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
 
         caching.set_cache(1, &"test".to_string()).await?;
         caching.set_cache(2, &"test2".to_string()).await?;
