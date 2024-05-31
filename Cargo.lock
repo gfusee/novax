@@ -321,7 +321,7 @@ checksum = "2382f75942f4b3be3690fe4f86365e9c853c1587d6ee58212cebf6e2a9ccd101"
 
 [[package]]
 name = "contract-meta"
-version = "0.0.0"
+version = "0.1.7-beta.0"
 dependencies = [
  "multiversx-sc-meta",
  "tester-contract",
@@ -1359,7 +1359,7 @@ dependencies = [
 
 [[package]]
 name = "novax"
-version = "0.1.6"
+version = "0.1.7-beta.0"
 dependencies = [
  "async-trait",
  "hex",
@@ -1381,7 +1381,7 @@ dependencies = [
 
 [[package]]
 name = "novax-abi-build"
-version = "0.1.6"
+version = "0.1.7-beta.0"
 dependencies = [
  "convert_case",
  "prettyplease",
@@ -1395,7 +1395,7 @@ dependencies = [
 
 [[package]]
 name = "novax-caching"
-version = "0.1.6"
+version = "0.1.7-beta.0"
 dependencies = [
  "async-trait",
  "novax",
@@ -1407,7 +1407,7 @@ dependencies = [
 
 [[package]]
 name = "novax-data"
-version = "0.1.6"
+version = "0.1.7-beta.0"
 dependencies = [
  "base64 0.21.7",
  "multiversx-sc",
@@ -1420,7 +1420,7 @@ dependencies = [
 
 [[package]]
 name = "novax-executor"
-version = "0.1.6"
+version = "0.1.7-beta.0"
 dependencies = [
  "async-trait",
  "base64 0.21.7",
@@ -1442,7 +1442,7 @@ dependencies = [
 
 [[package]]
 name = "novax-mocking"
-version = "0.1.6"
+version = "0.1.7-beta.0"
 dependencies = [
  "async-trait",
  "base64 0.21.7",
@@ -1463,7 +1463,7 @@ dependencies = [
 
 [[package]]
 name = "novax-request"
-version = "0.1.6"
+version = "0.1.7-beta.0"
 dependencies = [
  "async-trait",
  "http 1.1.0",
@@ -1473,7 +1473,7 @@ dependencies = [
 
 [[package]]
 name = "novax-token"
-version = "0.1.6"
+version = "0.1.7-beta.0"
 dependencies = [
  "async-trait",
  "base64 0.21.7",
@@ -2303,7 +2303,7 @@ dependencies = [
 
 [[package]]
 name = "tester-contract"
-version = "0.0.0"
+version = "0.1.7-beta.0"
 dependencies = [
  "multiversx-sc",
  "multiversx-sc-scenario",
