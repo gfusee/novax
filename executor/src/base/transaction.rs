@@ -11,12 +11,12 @@ use crate::call_result::CallResult;
 use crate::error::executor::ExecutorError;
 use crate::utils::transaction::token_transfer::TokenTransfer;
 
-/// A trait defining the necessary operations for executing smart contract transactions.
+/// TODO A trait defining the necessary operations for executing smart contract transactions.
 ///
 /// Implementations of this trait can vary based on the specific environment (e.g., real blockchain, mock blockchain).
 #[async_trait]
 pub trait TransactionExecutor: Send + Sync {
-    /// Executes a smart contract call with the specified parameters.
+    ///  TODO Executes a smart contract call with the specified parameters.
     ///
     /// # Parameters
     /// - `sc_call_step`: A mutable reference to the typed smart contract call step.
@@ -39,12 +39,12 @@ pub trait TransactionExecutor: Send + Sync {
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync;
 }
 
-/// An implementation of `TransactionExecutor` trait for types wrapped in `Arc<Mutex<T>>`.
+/// TODO An implementation of `TransactionExecutor` trait for types wrapped in `Arc<Mutex<T>>`.
 ///
 /// This implementation allows shared access to a transaction executor instance across multiple threads.
 #[async_trait]
 impl<T: TransactionExecutor> TransactionExecutor for Arc<Mutex<T>> {
-    /// Executes a smart contract call using the underlying `TransactionExecutor` implementation.
+    /// TODO Executes a smart contract call using the underlying `TransactionExecutor` implementation.
     async fn sc_call<OutputManaged>(
         &mut self,
         to: &Address,

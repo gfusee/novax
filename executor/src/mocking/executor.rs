@@ -70,7 +70,7 @@ impl<A> TransactionExecutor for MockExecutor<A>
         A: Deref + Send + Sync,
         Address: for<'a> From<&'a A::Target>
 {
-    /// Executes a smart contract call within a mocked environment.
+    /// TODO Executes a smart contract call within a mocked environment.
     ///
     /// This method extracts or determines the caller's address, performs a smart contract call,
     /// and updates the world state accordingly, all within a controlled, mocked environment.
@@ -159,7 +159,7 @@ impl<A> DeployExecutor for MockExecutor<A>
         A: Deref + Send + Sync,
         Address: for<'a> From<&'a A::Target>
 {
-    /// Asynchronously deploys a smart contract to the mock blockchain environment.
+    /// TODO Asynchronously deploys a smart contract to the mock blockchain environment.
     ///
     /// # Type Parameters
     ///
@@ -241,7 +241,7 @@ impl<A> QueryExecutor for MockExecutor<A>
         A: Clone + Deref + Send + Sync,
         Address: for<'a> From<&'a A::Target>
 {
-    /// Executes a simulated smart contract query in the mock environment.
+    /// TODO Executes a simulated smart contract query in the mock environment.
     ///
     /// # Type Parameters
     ///

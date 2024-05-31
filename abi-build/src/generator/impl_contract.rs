@@ -412,7 +412,7 @@ fn impl_abi_endpoint_call_query(
     };
 
     let call_token = quote! {
-        /// Executes the `#function_name` function on the smart contract.
+        /// TODO Executes the `#function_name` function on the smart contract.
         ///
         /// # Description
         /// #abi_description
@@ -439,7 +439,7 @@ fn impl_abi_endpoint_call_query(
     };
 
     let query_token = quote! {
-        /// Executes the `#function_name` query on the smart contract.
+        /// TODO Executes the `#function_name` query on the smart contract.
         ///
         /// # Description
         /// #abi_description
@@ -487,7 +487,7 @@ fn impl_abi_constructor(contract_info_name: &str, abi_constructor: &AbiConstruct
     let (function_managed_outputs, function_native_outputs) = impl_endpoint_outputs(&abi_constructor.outputs, abi_types, &debug_api)?;
 
     let function_token = quote! {
-        /// This asynchronous function encapsulates the logic for deploying a smart contract to the blockchain.
+        /// TODO This asynchronous function encapsulates the logic for deploying a smart contract to the blockchain.
         /// It takes in a `DeployData` instance, an executor, a gas limit, and additional function-specific inputs
         /// to facilitate the deployment process.
         ///

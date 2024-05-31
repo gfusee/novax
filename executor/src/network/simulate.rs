@@ -123,7 +123,7 @@ impl<Client> Debug for BaseSimulationNetworkExecutor<Client>
 
 #[async_trait]
 impl<Client: GatewayClient> TransactionExecutor for BaseSimulationNetworkExecutor<Client> {
-    /// Executes a smart contract call in a simulated environment.
+    /// TODO Executes a smart contract call in a simulated environment.
     ///
     /// # Type Parameters
     /// - `OriginalResult`: The result type expected from the smart contract call.

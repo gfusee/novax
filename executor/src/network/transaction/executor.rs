@@ -41,7 +41,7 @@ impl BaseTransactionNetworkExecutor<Interactor> {
     }
 }
 
-/// Custom implementation of `Clone` for `BaseTransactionNetworkExecutor`.
+/// TODO Custom implementation of `Clone` for `BaseTransactionNetworkExecutor`.
 ///
 /// This implementation is necessary because the `Interactor` generic parameter might not
 /// implement `Clone`. However, since `Interactor` is used only as phantom data (it does not
@@ -58,7 +58,7 @@ impl<Interactor> Clone for BaseTransactionNetworkExecutor<Interactor>
     }
 }
 
-/// Custom implementation of `Debug` for `BaseTransactionNetworkExecutor`.
+/// TODO Custom implementation of `Debug` for `BaseTransactionNetworkExecutor`.
 ///
 /// This implementation is necessary because the `Interactor` generic parameter might not
 /// implement `Debug`. As with `Clone`, since `Interactor` is only used as phantom data,
@@ -76,7 +76,7 @@ impl<Interactor> Debug for BaseTransactionNetworkExecutor<Interactor>
 }
 
 impl<Interactor: BlockchainInteractor> BaseTransactionNetworkExecutor<Interactor> {
-    /// Creates a new instance of `BaseTransactionNetworkExecutor`.
+    /// TODO Creates a new instance of `BaseTransactionNetworkExecutor`.
     ///
     /// # Parameters
     /// - `gateway_url`: The URL of the blockchain network gateway.
@@ -160,13 +160,13 @@ impl<Interactor: BlockchainInteractor> TransactionExecutor for BaseTransactionNe
     }
 }
 
-/// Implementation of the `DeployExecutor` trait for the `BaseTransactionNetworkExecutor` struct.
+/// TODO Implementation of the `DeployExecutor` trait for the `BaseTransactionNetworkExecutor` struct.
 /// This implementation enables the deployment of smart contracts on the blockchain
 /// using a specified blockchain interactor.
 #[async_trait]
 impl<Interactor: BlockchainInteractor> DeployExecutor for BaseTransactionNetworkExecutor<Interactor> {
 
-    /// Asynchronously deploys a smart contract to the blockchain.
+    /// TODO Asynchronously deploys a smart contract to the blockchain.
     ///
     /// # Type Parameters
     ///

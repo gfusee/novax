@@ -7,7 +7,7 @@ use novax_data::{Address, NativeConvertible};
 use crate::error::executor::ExecutorError;
 use crate::TokenTransfer;
 
-/// A trait representing the execution of smart contract queries.
+/// TODO A trait representing the execution of smart contract queries.
 ///
 /// This trait is implemented by types that can execute smart contract queries in a specific environment,
 /// like a real blockchain or a mocked one. The trait's associated function, `execute`, is responsible for
@@ -15,7 +15,7 @@ use crate::TokenTransfer;
 /// and returning the result of the query.
 #[async_trait]
 pub trait QueryExecutor: Send + Sync {
-    /// Executes a smart contract query and returns the result.
+    /// TODO Executes a smart contract query and returns the result.
     ///
     /// # Parameters
     ///
@@ -42,7 +42,7 @@ pub trait QueryExecutor: Send + Sync {
             OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync;
 }
 
-/// An implementation of `QueryExecutor` for `Arc<T>` where `T: QueryExecutor`.
+/// TODO An implementation of `QueryExecutor` for `Arc<T>` where `T: QueryExecutor`.
 ///
 /// This implementation allows shared access to an executor instance.
 #[async_trait]
@@ -69,7 +69,7 @@ impl<T: QueryExecutor> QueryExecutor for Arc<T> {
     }
 }
 
-/// An implementation of `QueryExecutor` for `Arc<Mutex<T>>` where `T: QueryExecutor`.
+/// TODO An implementation of `QueryExecutor` for `Arc<Mutex<T>>` where `T: QueryExecutor`.
 ///
 /// This implementation allows exclusive access to an executor instance, ensuring safe mutable access.
 #[async_trait]

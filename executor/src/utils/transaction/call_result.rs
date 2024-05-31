@@ -1,12 +1,12 @@
 use crate::TransactionOnNetwork;
 
-/// A structure encapsulating the result of a contract call.
+/// TODO A structure encapsulating the result of a contract call.
 ///
 /// `CallResult` is designed to hold the outcome of a contract call operation. It provides
 /// a clear separation between the transaction response and the actual result data, if any,
 /// returned by the contract call.
 pub struct CallResult<T> {
-    /// The response of the transaction triggered by the contract call.
+    /// TODO The response of the transaction triggered by the contract call.
     ///
     /// This field holds all the general transaction-related information returned after a contract call,
     /// such as the transaction status, error messages (if any), and other relevant data pertaining to

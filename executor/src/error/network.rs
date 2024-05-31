@@ -1,7 +1,7 @@
 use crate::error::executor::ExecutorError;
 use serde::{Deserialize, Serialize};
 
-/// An enumeration representing the various errors that can occur during network query operations.
+/// TODO An enumeration representing the various errors that can occur during network query operations.
 ///
 /// It includes the following variants:
 /// * `EmptyArgs` - Indicates that the arguments provided for the network query are empty when they shouldn't be.
