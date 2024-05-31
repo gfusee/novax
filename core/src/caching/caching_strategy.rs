@@ -75,6 +75,18 @@ pub trait CachingStrategy: Clone + Send + Sync + Debug {
     /// # Returns
     /// - A new `CachingStrategy` instance with the specified cache duration strategy.
     fn with_duration_strategy(&self, strategy: CachingDurationStrategy) -> Self;
+
+    #[allow(missing_docs)]
+    #[deprecated(note = "This function will be removed soon, please use `with_duration_strategy`.")]
+    fn with_duration(&self, duration: Duration) -> Self {
+        self.with_duration_strategy(CachingDurationStrategy::Duration(duration))
+    }
+
+    #[allow(missing_docs)]
+    #[deprecated(note = "This function will be removed soon, please use `with_duration_strategy`.")]
+    fn until_next_block(&self) -> Self {
+        self.with_duration_strategy(CachingDurationStrategy::EachBlock)
+    }
 }
 
 
