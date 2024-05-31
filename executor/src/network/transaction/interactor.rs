@@ -50,7 +50,7 @@ pub enum TransactionRefreshStrategy {
 
 impl Interactor {
     async fn get_account_info(&self) -> Result<AddressGatewayInfoAccount, ExecutorError> {
-        let address = Address::from(self.wallet.get_address());
+        let address = self.wallet.get_address();
 
         Ok(get_address_info(&self.gateway_url, address).await?.account)
     }
@@ -85,7 +85,8 @@ impl Interactor {
             }
         }
     }
-    
+
+    #[allow(clippy::too_many_arguments)]
     fn get_sendable_transaction(
         &self,
         nonce: u64,

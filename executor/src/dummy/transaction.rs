@@ -87,7 +87,7 @@ impl TransactionExecutor for DummyExecutor<SendableTransaction> {
             esdt_transfers,
         }.normalize()?;
 
-        self.tx = Some(normalized.to_sendable_transaction(gas_limit));
+        self.tx = Some(normalized.into_sendable_transaction(gas_limit));
 
         let dummy_result = CallResult {
             response: Default::default(),

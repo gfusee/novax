@@ -13,6 +13,12 @@ pub struct NormalizationInOut {
     pub esdt_transfers: Vec<TokenTransfer>
 }
 
+struct TokenPaymentBytes {
+    token_identifier: Vec<u8>,
+    nonce: Vec<u8>,
+    amount: Vec<u8>
+}
+
 impl NormalizationInOut {
     pub fn normalize(mut self) -> Result<NormalizationInOut, ExecutorError> {
         let esdt_transfers_len = self.esdt_transfers.len();
@@ -26,23 +32,23 @@ impl NormalizationInOut {
         } else if esdt_transfers_len == 1 {
             let transfer = self.esdt_transfers.remove(0);
             let is_fungible = transfer.nonce == 0;
-            let (encoded_identifier, encoded_nonce, encoded_amount) = encode_transfer(transfer)?;
+            let encoded_token_payment = encode_transfer(transfer)?;
 
 
             let (receiver, function_name, mut built_in_args) = if is_fungible {
                 let function_name = "ESDTTransfer".to_string();
                 let built_in_args = vec![
-                    encoded_identifier,
-                    encoded_amount
+                    encoded_token_payment.token_identifier,
+                    encoded_token_payment.amount
                 ];
 
                 (self.receiver, Some(function_name), built_in_args)
             } else {
                 let function_name = "ESDTNFTTransfer".to_string();
                 let built_in_args = vec![
-                    encoded_identifier,
-                    encoded_nonce,
-                    encoded_amount,
+                    encoded_token_payment.token_identifier,
+                    encoded_token_payment.nonce,
+                    encoded_token_payment.amount,
                     Address::from_bech32_string(&self.receiver)?.to_bytes().to_vec(),
                 ];
 
@@ -74,11 +80,11 @@ impl NormalizationInOut {
             ];
 
             for transfer in self.esdt_transfers {
-                let (encoded_identifier, encoded_nonce, encoded_amount) = encode_transfer(transfer)?;
+                let encoded_token_payment = encode_transfer(transfer)?;
 
-                built_in_args.push(encoded_identifier);
-                built_in_args.push(encoded_nonce);
-                built_in_args.push(encoded_amount);
+                built_in_args.push(encoded_token_payment.token_identifier);
+                built_in_args.push(encoded_token_payment.nonce);
+                built_in_args.push(encoded_token_payment.amount);
             }
 
             if let Some(function_name) = self.function_name {
@@ -117,7 +123,7 @@ impl NormalizationInOut {
         args_string.join("@")
     }
 
-    pub fn to_sendable_transaction(self, gas_limit: u64) -> SendableTransaction {
+    pub fn into_sendable_transaction(self, gas_limit: u64) -> SendableTransaction {
         SendableTransaction {
             receiver: self.receiver.clone(),
             egld_value: self.egld_value.clone(),
@@ -142,7 +148,7 @@ fn encode_u64(value: u64) -> Vec<u8> {
         bytes
 }
 
-fn encode_transfer(token_transfer: TokenTransfer) -> Result<(Vec<u8>, Vec<u8>, Vec<u8>), ExecutorError> {
+fn encode_transfer(token_transfer: TokenTransfer) -> Result<TokenPaymentBytes, ExecutorError> {
     let encoded_identifier = encode_string(&token_transfer.identifier)
         .map_err(|_| TransactionError::CannotEncodeTransfer)?;
 
@@ -151,7 +157,13 @@ fn encode_transfer(token_transfer: TokenTransfer) -> Result<(Vec<u8>, Vec<u8>, V
     let encoded_amount = hex::decode(hex::encode(token_transfer.amount.to_bytes_be()))
         .map_err(|_| TransactionError::CannotEncodeTransfer)?;
 
-    Ok((encoded_identifier, encoded_nonce, encoded_amount))
+    let result = TokenPaymentBytes {
+        token_identifier: encoded_identifier,
+        nonce: encoded_nonce,
+        amount: encoded_amount,
+    };
+
+    Ok(result)
 }
 
 #[cfg(test)]

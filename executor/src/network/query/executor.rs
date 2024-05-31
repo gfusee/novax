@@ -147,7 +147,7 @@ impl QueryExecutor for String {
 
 fn encode_arguments(arguments: &[Vec<u8>]) -> Vec<String> {
     arguments.iter()
-        .map(|arg| hex::encode(arg))
+        .map(hex::encode)
         .collect()
 }
 
@@ -162,7 +162,7 @@ mod tests {
 
     #[test]
     fn test_encode_arguments_empty() {
-        let result = encode_arguments(&vec![]);
+        let result = encode_arguments(&[]);
         let expected: Vec<String> = vec![];
 
         assert_eq!(result, expected);

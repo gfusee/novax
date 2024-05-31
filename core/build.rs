@@ -53,9 +53,7 @@ fn main() {
                     //
                     // In a few versions of the Rust SDK, the upgrade function was an endpoint in the ABI.
                     // It is now under the field upgradeConstructor.
-                    abi.endpoints = abi.endpoints.into_iter()
-                        .filter(|endpoint| endpoint.name != "upgrade")
-                        .collect();
+                    abi.endpoints.retain(|endpoint| endpoint.name != "upgrade");
 
                     let abi_generated_file = generate_from_abi(&abi).unwrap();
 

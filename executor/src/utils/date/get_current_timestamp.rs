@@ -32,7 +32,7 @@ mod implementation {
     use crate::ExecutorError;
 
     thread_local! {
-        static MOCK_TIME: RefCell<Duration> = RefCell::new(Duration::from_secs(0));
+        static MOCK_TIME: RefCell<Duration> = const { RefCell::new(Duration::from_secs(0)) };
     }
 
     pub(crate) fn get_current_timestamp() -> Result<Duration, ExecutorError> {

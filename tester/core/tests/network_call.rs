@@ -170,6 +170,7 @@ async fn get_executor() -> Arc<Mutex<BaseTransactionNetworkExecutor<MockInteract
 }
 
 // The below test is a success if it compiles
+#[allow(clippy::map_clone)]
 #[tokio::test]
 async fn test_clone_network_executor() -> Result<(), NovaXError> {
     let wallet = Wallet::from_private_key(CALLER_PRIVATE_KEY).unwrap();

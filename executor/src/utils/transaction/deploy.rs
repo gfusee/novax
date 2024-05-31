@@ -22,7 +22,7 @@ pub fn get_deploy_call_input(
     gas_limit: u64
 ) -> DeployCallInput {
     let mut encoded_metadata: ManagedBuffer<StaticApi> = ManagedBuffer::new();
-    _ = code_metadata.top_encode(&mut encoded_metadata).unwrap();
+    code_metadata.top_encode(&mut encoded_metadata).unwrap();
 
     let built_in_arguments: Vec<Vec<u8>> = vec![
         bytes,

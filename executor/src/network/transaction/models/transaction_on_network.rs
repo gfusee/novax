@@ -61,11 +61,7 @@ impl TransactionOnNetwork {
             return true
         };
 
-        if let Ok(None) = find_sc_error(logs) {
-            true
-        } else {
-            false
-        }
+        matches!(find_sc_error(logs), Ok(None))
     }
 }
 
