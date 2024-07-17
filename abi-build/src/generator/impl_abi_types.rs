@@ -517,6 +517,10 @@ fn is_enum_fieldless(variants: &AbiTypeVariants) -> bool {
 
 fn should_struct_derive_managed_vec_item(abi_fields: &AbiTypeFields, all_abi_types: &AbiTypes) -> bool {
     for field in abi_fields {
+        if field.r#type.0.starts_with("tuple<") {
+            return false
+        }
+
         let Some(abi_type) = all_abi_types.get(&field.r#type.0) else { continue };
         let should_derive = match abi_type.r#type {
             AbiPossibleType::Enum => {
