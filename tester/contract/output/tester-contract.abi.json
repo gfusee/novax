@@ -1,16 +1,16 @@
 {
     "buildInfo": {
         "rustc": {
-            "version": "1.78.0",
-            "commitHash": "9b00956e56009bab2aa15d7bff10916599e3d6d6",
-            "commitDate": "2024-04-29",
+            "version": "1.79.0",
+            "commitHash": "129f3b9964af4d4a709d1383930ade12dfe7c081",
+            "commitDate": "2024-06-10",
             "channel": "Stable",
-            "short": "rustc 1.78.0 (9b00956e5 2024-04-29)"
+            "short": "rustc 1.79.0 (129f3b996 2024-06-10)"
         },
         "contractCrate": {
             "name": "tester-contract",
-            "version": "0.0.0",
-            "gitVersion": "0.1.6-17-gaeef5de"
+            "version": "0.1.7-beta.1",
+            "gitVersion": "0.1.7-beta.1-1-g8eb6db8"
         },
         "framework": {
             "name": "multiversx-sc",
@@ -594,6 +594,21 @@
             ]
         },
         {
+            "name": "returnStructWithTupleField",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "arg",
+                    "type": "CustomStructWithTupleField"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "CustomStructWithTupleField"
+                }
+            ]
+        },
+        {
             "name": "callAnotherContractReturnTwoU64",
             "mutability": "mutable",
             "inputs": [
@@ -778,6 +793,15 @@
                 {
                     "name": "third",
                     "type": "CustomStruct"
+                }
+            ]
+        },
+        "CustomStructWithTupleField": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "tuple",
+                    "type": "tuple<BigUint,bytes>"
                 }
             ]
         },

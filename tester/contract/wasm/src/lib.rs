@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           50
+// Endpoints:                           51
 // Async Callback:                       1
-// Total number of exported functions:  53
+// Total number of exported functions:  54
 
 #![no_std]
 
@@ -66,6 +66,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         returnOptionalValueBoolArg => return_optional_value_bool_arg
         returnMultiValueTwo => return_optional_multi_value_three_arg
         returnBigIntArg => return_bigint_arg
+        returnStructWithTupleField => return_struct_with_tuple_field
         callAnotherContractReturnTwoU64 => call_another_contract_return_u64
         asyncCallAnotherContractReturnTwoU64NoCallback => async_call_another_contract_return_u64_no_callback
         asyncCallAnotherContractReturnTwoU64WithReturningCallback => async_call_another_contract_return_u64_with_returning_callback

@@ -51,6 +51,11 @@ pub enum CustomEnumWithFields<M: ManagedTypeApi> {
     Second { second_first: ManagedVec<M, u64>, second_second: ManagedVec<M, ManagedBuffer<M>>, second_third: CustomStruct<M> }
 }
 
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi)]
+struct CustomStructWithTupleField<M: ManagedTypeApi> {
+    pub tuple: (BigUint<M>, ManagedBuffer<M>)
+}
+
 #[multiversx_sc::module]
 pub trait PrinterModule: ContractBase {
     #[endpoint(returnNftProperties)]
@@ -401,5 +406,13 @@ pub trait PrinterModule: ContractBase {
     #[endpoint(returnBigIntArg)]
     fn return_bigint_arg(&self, value: BigInt<Self::Api>) -> BigInt<Self::Api> {
         value
+    }
+
+    #[endpoint(returnStructWithTupleField)]
+    fn return_struct_with_tuple_field(
+        &self,
+        arg: CustomStructWithTupleField<Self::Api>
+    ) -> CustomStructWithTupleField<Self::Api> {
+        arg
     }
 }
