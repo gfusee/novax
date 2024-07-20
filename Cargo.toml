@@ -6,6 +6,7 @@ exclude = [
 ]
 
 members = [
+    "account",
     "data",
     "executor",
     "mocking",
