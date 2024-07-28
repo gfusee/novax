@@ -2,6 +2,8 @@ use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 use async_trait::async_trait;
+use base64::Engine;
+use novax::CodeMetadata;
 use num_bigint::BigUint;
 use novax_data::Address;
 use serde::{Deserialize, Serialize};
@@ -9,6 +11,7 @@ use novax::caching::CachingStrategy;
 use novax::errors::NovaXError;
 use novax_request::gateway::client::GatewayClient;
 use crate::error::account::AccountError;
+use crate::utils::data::{code_metadata_deserialize, code_metadata_serialize};
 
 #[derive(Serialize, Deserialize, Default)]
 struct GatewayAccountInfo {
@@ -62,8 +65,10 @@ pub struct AccountInfo {
     pub code_hash: Option<String>,
     #[serde(rename = "rootHash")]
     pub root_hash: String,
+    #[serde(serialize_with = "code_metadata_serialize")]
+    #[serde(deserialize_with = "code_metadata_deserialize")]
     #[serde(rename = "codeMetadata")]
-    pub code_metadata: Option<String>, // TODO: parse code metadata
+    pub code_metadata: Option<CodeMetadata>,
     #[serde(rename = "developerReward")]
     pub developer_reward: BigUint,
     #[serde(rename = "ownerAddress")]
@@ -126,6 +131,12 @@ async fn fetch_account_info_for_address<Client, Caching>(gateway_client: &Client
                 address
             };
 
+            let code_metadata = if let Some(raw_code_metadata) = raw_info.code_metadata {
+                Some(decode_code_meta_data(raw_code_metadata)?)
+            } else {
+                None
+            };
+
             Ok(AccountInfo {
                 nonce: raw_info.nonce,
                 balance,
@@ -133,12 +144,22 @@ async fn fetch_account_info_for_address<Client, Caching>(gateway_client: &Client
                 code: raw_info.code,
                 code_hash: raw_info.code_hash,
                 root_hash: raw_info.root_hash,
-                code_metadata: raw_info.code_metadata, // TODO: parse code metadata
+                code_metadata: code_metadata,
                 developer_reward: developer_reward,
                 owner_address,
             })
         }
     ).await
+}
+
+pub fn decode_code_meta_data(encoded: String) -> Result<CodeMetadata, AccountError> {
+    let decoded_bytes = base64::engine::general_purpose::STANDARD.decode(encoded.clone()).or(Err(AccountError::CannotDecodeCodeMetadata { metadata: encoded.clone() }))?;
+    if decoded_bytes.len() != 2 {
+        return Err(AccountError::CannotDecodeCodeMetadata { metadata: encoded });
+    }
+
+    let byte_array: [u8; 2] = decoded_bytes.as_slice().try_into().or(Err(AccountError::CannotDecodeCodeMetadata { metadata: encoded }))?;
+    Ok(CodeMetadata::from(byte_array))
 }
 
 #[cfg(test)]
@@ -159,7 +180,12 @@ mod tests {
         assert_eq!(result.code,"fakecodestring".to_string(),);
         assert_eq!(result.code_hash, Some("gVgRRf6HhmTGlxziasAFoCgBlP7/DH0i9IhTbj7lsxA=".to_string()));
         assert_eq!(result.root_hash, "A3RZ7aYh4NzkunNL+fu09ggnItEeC7SuPWJDfIHmAcI=".to_string());
-        assert_eq!(result.code_metadata, Some("BQA=".to_string()));
+        if let Some(code_metadata) = result.code_metadata {
+            assert!(code_metadata.is_upgradeable());
+            assert!(code_metadata.is_readable());
+            assert!(!code_metadata.is_payable());
+            assert!(!code_metadata.is_payable_by_sc());
+        }
         assert_eq!(result.developer_reward, BigUint::from(2288888045322000000u64));
         assert_eq!(result.owner_address, Address::from_bech32_string("erd1kj7l40rmklhp06treukh8c2merl2h78v2939wyxwc5000t25dl3s85klfd").unwrap());
     }

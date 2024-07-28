@@ -1398,6 +1398,7 @@ name = "novax-account"
 version = "0.1.7-beta.2"
 dependencies = [
  "async-trait",
+ "base64 0.21.7",
  "http 1.1.0",
  "hyper 1.1.0",
  "novax",

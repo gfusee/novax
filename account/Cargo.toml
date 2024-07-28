@@ -9,6 +9,7 @@ repository = "https://github.com/gfusee/novax"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+base64 = "0.21.5"
 serde = "1.0.188"
 serde_json = "1.0.105"
 novax = { path = "../core", version = "0.1.7-beta.2" }
