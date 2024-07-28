@@ -1,0 +1,26 @@
+[package]
+name = "novax-account"
+version = "0.1.7-beta.2"
+edition = "2021"
+license = "GPL-3.0-only"
+description = "The `novax-account` crate offers utilities for retrieving account information from the blockchain, such as address balance, nonce, code or code hash."
+repository = "https://github.com/gfusee/novax"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+base64 = "0.21.5"
+serde = "1.0.188"
+serde_json = "1.0.105"
+novax = { path = "../core", version = "0.1.7-beta.2" }
+novax-data = { path = "../data", version = "0.1.7-beta.2" }
+novax-request = { path = "../request", version = "0.1.7-beta.2" }
+num-bigint = "0.4.4"
+async-trait = "0.1.73"
+
+[dev-dependencies]
+tokio = "1.32.0"
+async-trait = "0.1.73"
+hyper = "1.1.0"
+http = "1.1.0"
+
