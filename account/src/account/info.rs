@@ -72,7 +72,7 @@ pub struct AccountInfo {
     #[serde(rename = "developerReward")]
     pub developer_reward: BigUint,
     #[serde(rename = "ownerAddress")]
-    pub owner_address: Address,
+    pub owner_address: Option<Address>,
 
 }
 
@@ -123,12 +123,12 @@ async fn fetch_account_info_for_address<Client, Caching>(gateway_client: &Client
             };
 
             let owner_address = if raw_info.owner_address.len() == 0 {
-                Address::default()
+               None
             } else {
                 let Ok(address) = Address::from_bech32_string(&raw_info.owner_address) else {
                     return Err(AccountError::CannotParseAccountOwnerAddress { address: bech32_address, owner: raw_info.owner_address})
                 };
-                address
+                Some(address)
             };
 
             let code_metadata = if let Some(raw_code_metadata) = raw_info.code_metadata {
@@ -187,7 +187,7 @@ mod tests {
             assert!(!code_metadata.is_payable_by_sc());
         }
         assert_eq!(result.developer_reward, BigUint::from(2288888045322000000u64));
-        assert_eq!(result.owner_address, Address::from_bech32_string("erd1kj7l40rmklhp06treukh8c2merl2h78v2939wyxwc5000t25dl3s85klfd").unwrap());
+        assert_eq!(result.owner_address, Some(Address::from_bech32_string("erd1kj7l40rmklhp06treukh8c2merl2h78v2939wyxwc5000t25dl3s85klfd").unwrap()));
     }
 
     #[tokio::test]
@@ -202,6 +202,6 @@ mod tests {
         assert_eq!(result.root_hash, "Juj3aJQOKv4DzZG3XOueG934NL7pq/7bmiVnR4zzXAo=".to_string());
         assert_eq!(result.code_metadata, None);
         assert_eq!(result.developer_reward, BigUint::from(0u64));
-        assert_eq!(result.owner_address, Address::default());
+        assert_eq!(result.owner_address, None);
     }
 }
