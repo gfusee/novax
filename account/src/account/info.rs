@@ -23,7 +23,7 @@ struct GatewayAccountInfo {
     #[serde(rename = "codeHash")]
     pub code_hash: Option<String>,
     #[serde(rename = "rootHash")]
-    pub root_hash: String,
+    pub root_hash: Option<String>,
     #[serde(rename = "codeMetadata")]
     pub code_metadata: Option<String>,
     #[serde(rename = "developerReward")]
@@ -65,7 +65,7 @@ pub struct AccountInfo {
     #[serde(rename = "codeHash")]
     pub code_hash: Option<String>,
     #[serde(rename = "rootHash")]
-    pub root_hash: String,
+    pub root_hash: Option<String>,
     #[serde(serialize_with = "code_metadata_serialize")]
     #[serde(deserialize_with = "code_metadata_deserialize")]
     #[serde(rename = "codeMetadata")]
@@ -191,7 +191,7 @@ mod tests {
             username: "".to_string(),
             code: Some("fakecodestring".to_string()),
             code_hash: Some("gVgRRf6HhmTGlxziasAFoCgBlP7/DH0i9IhTbj7lsxA=".to_string()),
-            root_hash: "A3RZ7aYh4NzkunNL+fu09ggnItEeC7SuPWJDfIHmAcI=".to_string(),
+            root_hash: Some("A3RZ7aYh4NzkunNL+fu09ggnItEeC7SuPWJDfIHmAcI=".to_string()),
             code_metadata: Some(CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE),
             developer_reward: BigUint::from(2288888045322000000u64),
             owner_address: Some(Address::from_bech32_string("erd1kj7l40rmklhp06treukh8c2merl2h78v2939wyxwc5000t25dl3s85klfd").unwrap())
@@ -211,7 +211,7 @@ mod tests {
             username: "".to_string(),
             code: None,
             code_hash: None,
-            root_hash: "Juj3aJQOKv4DzZG3XOueG934NL7pq/7bmiVnR4zzXAo=".to_string(),
+            root_hash: Some("Juj3aJQOKv4DzZG3XOueG934NL7pq/7bmiVnR4zzXAo=".to_string()),
             code_metadata: None,
             developer_reward: BigUint::from(0u64),
             owner_address: None
@@ -224,6 +224,26 @@ mod tests {
         let result = fetch_account_info_for_address(&MockClient::new(), &address, &CachingNone).await;
 
         assert_eq!(result, Err(CannotParseAccountInfo { address: "erd1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsl6e0p7".to_string() }))
+
+    }
+
+    #[tokio::test]
+    pub async fn test_with_non_existant_address() {
+        let result = fetch_account_info_for_address(&MockClient::new(), &"erd16k7f023jt0a6wgnlwv4c2lz42p7t64xlsvk8a3d6vu6l5cl4htmseymu7y".into(), &CachingNone).await.unwrap();
+
+        assert_eq!(result, AccountInfo {
+            address: "erd16k7f023jt0a6wgnlwv4c2lz42p7t64xlsvk8a3d6vu6l5cl4htmseymu7y".into(),
+            nonce: 0,
+            balance: BigUint::from(0u64),
+            username: "".to_string(),
+            code: None,
+            code_hash: None,
+            root_hash: None,
+            code_metadata: None,
+            developer_reward: BigUint::from(0u64),
+            owner_address: None
+        });
+
 
     }
 }
