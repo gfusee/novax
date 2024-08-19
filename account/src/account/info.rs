@@ -57,6 +57,7 @@ struct GatewayAccount {
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct AccountInfo {
+    pub address: Address,
     pub nonce: u64,
     pub balance: BigUint,
     pub username: String,
@@ -138,6 +139,7 @@ async fn fetch_account_info_for_address<Client, Caching>(gateway_client: &Client
             };
 
             Ok(AccountInfo {
+                address: address.clone(),
                 nonce: raw_info.nonce,
                 balance,
                 username: raw_info.username,
@@ -174,6 +176,7 @@ mod tests {
     pub async fn test_with_valid_sc_address() {
         let result = fetch_account_info_for_address(&MockClient::new(), &"erd1qqqqqqqqqqqqqpgqr7een4m5z44frr3k35yjdjcrfe6703cwdl3s3wkddz".into(), &CachingNone).await.unwrap();
 
+        assert_eq!(result.address, "erd1qqqqqqqqqqqqqpgqr7een4m5z44frr3k35yjdjcrfe6703cwdl3s3wkddz".into());
         assert_eq!(result.nonce, 0);
         assert_eq!(result.balance, BigUint::from(0u64));
         assert_eq!(result.username, "".to_string());
@@ -194,6 +197,7 @@ mod tests {
     pub async fn test_with_valid_user_address() {
         let result = fetch_account_info_for_address(&MockClient::new(), &"erd1kj7l40rmklhp06treukh8c2merl2h78v2939wyxwc5000t25dl3s85klfd".into(), &CachingNone).await.unwrap();
 
+        assert_eq!(result.address, "erd1kj7l40rmklhp06treukh8c2merl2h78v2939wyxwc5000t25dl3s85klfd".into());
         assert_eq!(result.nonce, 6);
         assert_eq!(result.balance, BigUint::from(412198271210000000u64));
         assert_eq!(result.username, "".to_string());
