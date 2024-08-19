@@ -55,7 +55,7 @@ struct GatewayAccount {
     data: GatewayAccountInfoData
 }
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, PartialEq, Debug)]
 pub struct AccountInfo {
     pub address: Address,
     pub nonce: u64,
@@ -166,46 +166,48 @@ pub fn decode_code_metadata(encoded: String) -> Result<CodeMetadata, AccountErro
 
 #[cfg(test)]
 mod tests {
+    use novax::CodeMetadata;
     use num_bigint::BigUint;
     use novax::caching::CachingNone;
     use novax_data::Address;
-    use crate::account::info::fetch_account_info_for_address;
+    use crate::account::info::{fetch_account_info_for_address, AccountInfo};
     use crate::mock::request::MockClient;
 
     #[tokio::test]
     pub async fn test_with_valid_sc_address() {
         let result = fetch_account_info_for_address(&MockClient::new(), &"erd1qqqqqqqqqqqqqpgqr7een4m5z44frr3k35yjdjcrfe6703cwdl3s3wkddz".into(), &CachingNone).await.unwrap();
 
-        assert_eq!(result.address, "erd1qqqqqqqqqqqqqpgqr7een4m5z44frr3k35yjdjcrfe6703cwdl3s3wkddz".into());
-        assert_eq!(result.nonce, 0);
-        assert_eq!(result.balance, BigUint::from(0u64));
-        assert_eq!(result.username, "".to_string());
-        assert_eq!(result.code, "fakecodestring".to_string());
-        assert_eq!(result.code_hash, Some("gVgRRf6HhmTGlxziasAFoCgBlP7/DH0i9IhTbj7lsxA=".to_string()));
-        assert_eq!(result.root_hash, "A3RZ7aYh4NzkunNL+fu09ggnItEeC7SuPWJDfIHmAcI=".to_string());
-        if let Some(code_metadata) = result.code_metadata {
-            assert!(code_metadata.is_upgradeable());
-            assert!(code_metadata.is_readable());
-            assert!(!code_metadata.is_payable());
-            assert!(!code_metadata.is_payable_by_sc());
-        }
-        assert_eq!(result.developer_reward, BigUint::from(2288888045322000000u64));
-        assert_eq!(result.owner_address, Some(Address::from_bech32_string("erd1kj7l40rmklhp06treukh8c2merl2h78v2939wyxwc5000t25dl3s85klfd").unwrap()));
+        assert_eq!(result, AccountInfo {
+            address: "erd1qqqqqqqqqqqqqpgqr7een4m5z44frr3k35yjdjcrfe6703cwdl3s3wkddz".into(),
+            nonce: 0,
+            balance: BigUint::from(0u64),
+            username: "".to_string(),
+            code: "fakecodestring".to_string(),
+            code_hash: Some("gVgRRf6HhmTGlxziasAFoCgBlP7/DH0i9IhTbj7lsxA=".to_string()),
+            root_hash: "A3RZ7aYh4NzkunNL+fu09ggnItEeC7SuPWJDfIHmAcI=".to_string(),
+            code_metadata: Some(CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE),
+            developer_reward: BigUint::from(2288888045322000000u64),
+            owner_address: Some(Address::from_bech32_string("erd1kj7l40rmklhp06treukh8c2merl2h78v2939wyxwc5000t25dl3s85klfd").unwrap())
+        });
+
     }
 
     #[tokio::test]
     pub async fn test_with_valid_user_address() {
         let result = fetch_account_info_for_address(&MockClient::new(), &"erd1kj7l40rmklhp06treukh8c2merl2h78v2939wyxwc5000t25dl3s85klfd".into(), &CachingNone).await.unwrap();
 
-        assert_eq!(result.address, "erd1kj7l40rmklhp06treukh8c2merl2h78v2939wyxwc5000t25dl3s85klfd".into());
-        assert_eq!(result.nonce, 6);
-        assert_eq!(result.balance, BigUint::from(412198271210000000u64));
-        assert_eq!(result.username, "".to_string());
-        assert_eq!(result.code, "".to_string());
-        assert_eq!(result.code_hash, None);
-        assert_eq!(result.root_hash, "Juj3aJQOKv4DzZG3XOueG934NL7pq/7bmiVnR4zzXAo=".to_string());
-        assert_eq!(result.code_metadata, None);
-        assert_eq!(result.developer_reward, BigUint::from(0u64));
-        assert_eq!(result.owner_address, None);
+
+        assert_eq!(result, AccountInfo {
+            address: "erd1kj7l40rmklhp06treukh8c2merl2h78v2939wyxwc5000t25dl3s85klfd".into(),
+            nonce: 6,
+            balance: BigUint::from(412198271210000000u64),
+            username: "".to_string(),
+            code: "".to_string(),
+            code_hash: None,
+            root_hash: "Juj3aJQOKv4DzZG3XOueG934NL7pq/7bmiVnR4zzXAo=".to_string(),
+            code_metadata: None,
+            developer_reward: BigUint::from(0u64),
+            owner_address: None
+        });
     }
 }
