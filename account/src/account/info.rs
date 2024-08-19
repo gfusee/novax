@@ -61,7 +61,7 @@ pub struct AccountInfo {
     pub nonce: u64,
     pub balance: BigUint,
     pub username: String,
-    pub code: String,
+    pub code: Option<String>,
     #[serde(rename = "codeHash")]
     pub code_hash: Option<String>,
     #[serde(rename = "rootHash")]
@@ -138,16 +138,22 @@ async fn fetch_account_info_for_address<Client, Caching>(gateway_client: &Client
                 None
             };
 
+            let code = if raw_info.code.len() == 0 {
+                None
+            } else {
+                Some(raw_info.code)
+            };
+
             Ok(AccountInfo {
                 address: address.clone(),
                 nonce: raw_info.nonce,
                 balance,
                 username: raw_info.username,
-                code: raw_info.code,
+                code,
                 code_hash: raw_info.code_hash,
                 root_hash: raw_info.root_hash,
-                code_metadata: code_metadata,
-                developer_reward: developer_reward,
+                code_metadata,
+                developer_reward,
                 owner_address,
             })
         }
@@ -182,7 +188,7 @@ mod tests {
             nonce: 0,
             balance: BigUint::from(0u64),
             username: "".to_string(),
-            code: "fakecodestring".to_string(),
+            code: Some("fakecodestring".to_string()),
             code_hash: Some("gVgRRf6HhmTGlxziasAFoCgBlP7/DH0i9IhTbj7lsxA=".to_string()),
             root_hash: "A3RZ7aYh4NzkunNL+fu09ggnItEeC7SuPWJDfIHmAcI=".to_string(),
             code_metadata: Some(CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE),
@@ -202,7 +208,7 @@ mod tests {
             nonce: 6,
             balance: BigUint::from(412198271210000000u64),
             username: "".to_string(),
-            code: "".to_string(),
+            code: None,
             code_hash: None,
             root_hash: "Juj3aJQOKv4DzZG3XOueG934NL7pq/7bmiVnR4zzXAo=".to_string(),
             code_metadata: None,
