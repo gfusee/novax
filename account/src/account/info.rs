@@ -180,7 +180,7 @@ mod tests {
         assert_eq!(result.nonce, 0);
         assert_eq!(result.balance, BigUint::from(0u64));
         assert_eq!(result.username, "".to_string());
-        assert_eq!(result.code,"fakecodestring".to_string(),);
+        assert_eq!(result.code, "fakecodestring".to_string());
         assert_eq!(result.code_hash, Some("gVgRRf6HhmTGlxziasAFoCgBlP7/DH0i9IhTbj7lsxA=".to_string()));
         assert_eq!(result.root_hash, "A3RZ7aYh4NzkunNL+fu09ggnItEeC7SuPWJDfIHmAcI=".to_string());
         if let Some(code_metadata) = result.code_metadata {
@@ -201,7 +201,7 @@ mod tests {
         assert_eq!(result.nonce, 6);
         assert_eq!(result.balance, BigUint::from(412198271210000000u64));
         assert_eq!(result.username, "".to_string());
-        assert_eq!(result.code,"".to_string(),);
+        assert_eq!(result.code, "".to_string());
         assert_eq!(result.code_hash, None);
         assert_eq!(result.root_hash, "Juj3aJQOKv4DzZG3XOueG934NL7pq/7bmiVnR4zzXAo=".to_string());
         assert_eq!(result.code_metadata, None);
