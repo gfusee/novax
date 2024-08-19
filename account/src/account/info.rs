@@ -177,6 +177,7 @@ mod tests {
     use novax::caching::CachingNone;
     use novax_data::Address;
     use crate::account::info::{fetch_account_info_for_address, AccountInfo};
+    use crate::account::info::AccountError::CannotParseAccountInfo;
     use crate::mock::request::MockClient;
 
     #[tokio::test]
@@ -215,5 +216,14 @@ mod tests {
             developer_reward: BigUint::from(0u64),
             owner_address: None
         });
+    }
+
+    #[tokio::test]
+    pub async fn test_with_invalid_address() {
+        let address = Address::from_bytes([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
+        let result = fetch_account_info_for_address(&MockClient::new(), &address, &CachingNone).await;
+
+        assert_eq!(result, Err(CannotParseAccountInfo { address: "erd1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsl6e0p7".to_string() }))
+
     }
 }

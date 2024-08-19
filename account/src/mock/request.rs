@@ -57,7 +57,7 @@ mod account {
             Some(get_xportal_xp_sc_account())
         } else if url.ends_with("/address/erd1kj7l40rmklhp06treukh8c2merl2h78v2939wyxwc5000t25dl3s85klfd") {
             Some(get_xportal_xp_sc_owner_account())
-        } else if url.ends_with("/address/erd1n7ed3f6rkqvwkpfevulvhyl4hskx2vqyleed5lqfq9jp2csfw8esg88f5") {
+        } else if url.ends_with("/address/erd1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsl6e0p7") {
             Some(get_invalid_address_account())
         } else {
             None
