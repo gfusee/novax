@@ -160,7 +160,7 @@ async fn fetch_account_info_for_address<Client, Caching>(gateway_client: &Client
     ).await
 }
 
-pub fn decode_code_metadata(encoded: String) -> Result<CodeMetadata, AccountError> {
+fn decode_code_metadata(encoded: String) -> Result<CodeMetadata, AccountError> {
     let decoded_bytes = base64::engine::general_purpose::STANDARD.decode(encoded.clone()).or(Err(AccountError::CannotDecodeCodeMetadata { metadata: encoded.clone() }))?;
     if decoded_bytes.len() != 2 {
         return Err(AccountError::CannotDecodeCodeMetadata { metadata: encoded });
