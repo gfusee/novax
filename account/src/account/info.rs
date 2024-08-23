@@ -176,9 +176,39 @@ mod tests {
     use num_bigint::BigUint;
     use novax::caching::CachingNone;
     use novax_data::Address;
-    use crate::account::info::{fetch_account_info_for_address, AccountInfo};
+    use crate::account::info::{decode_code_metadata, fetch_account_info_for_address, AccountInfo};
     use crate::account::info::AccountError::CannotParseAccountInfo;
     use crate::mock::request::MockClient;
+
+    #[test]
+    pub fn test_all_code_metadata_decoding() {
+        // Given 
+        let code_metadata_string = "BQY=".to_string();
+        // When
+        let code_metadata = decode_code_metadata(code_metadata_string).expect("code meta data should be decodable");
+        // Then
+        assert_eq!(code_metadata, CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE | CodeMetadata::PAYABLE | CodeMetadata::PAYABLE_BY_SC);
+    }
+
+    #[test]
+    pub fn test_no_code_metadata_decoding() {
+        // Given 
+        let code_metadata_string = "AAA=".to_string();
+        // When
+        let code_metadata = decode_code_metadata(code_metadata_string).expect("code meta data should be decodable");
+        // Then
+        assert_eq!(code_metadata, CodeMetadata::DEFAULT);
+    }
+
+    #[test]
+    pub fn test_some_code_metadata_decoding() {
+        // Given 
+        let code_metadata_string = "BQQ=".to_string();
+        // When
+        let code_metadata = decode_code_metadata(code_metadata_string).expect("code meta data should be decodable");
+        // Then
+        assert_eq!(code_metadata, CodeMetadata::UPGRADEABLE | CodeMetadata::READABLE | CodeMetadata::PAYABLE_BY_SC);
+    }
 
     #[tokio::test]
     pub async fn test_with_valid_sc_address() {
