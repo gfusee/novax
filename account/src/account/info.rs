@@ -123,7 +123,7 @@ async fn fetch_account_info_for_address<Client, Caching>(gateway_client: &Client
                 return Err(AccountError::CannotParseAccountDeveloperReward { address: bech32_address, reward: raw_info.developer_reward})
             };
 
-            let owner_address = if raw_info.owner_address.len() == 0 {
+            let owner_address = if raw_info.owner_address.is_empty() {
                None
             } else {
                 let Ok(address) = Address::from_bech32_string(&raw_info.owner_address) else {
@@ -138,7 +138,7 @@ async fn fetch_account_info_for_address<Client, Caching>(gateway_client: &Client
                 None
             };
 
-            let code = if raw_info.code.len() == 0 {
+            let code = if raw_info.code.is_empty() {
                 None
             } else {
                 Some(raw_info.code)
