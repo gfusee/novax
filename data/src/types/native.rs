@@ -17,7 +17,7 @@ multiversx_sc::derive_imports!();
 ///
 /// # Methods
 /// - `to_native`: Performs the conversion from the managed type to the specified
-/// native Rust type.
+///   native Rust type.
 pub trait NativeConvertible {
     /// The native Rust type to which the managed type will be converted.
     type Native;

@@ -1,5 +1,5 @@
 use base64::Engine;
-use multiversx_sc_scenario::scenario_model::decode_scr_data_or_panic;
+use multiversx_sc_snippets::network_response::decode_scr_data_or_panic;
 use multiversx_sdk::utils::base64_decode;
 
 use crate::{ExecutorError, TransactionOnNetworkTransactionLogs, TransactionOnNetworkTransactionLogsEvents, TransactionOnNetworkTransactionSmartContractResult};
