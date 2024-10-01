@@ -135,8 +135,9 @@ impl ScenarioWorldInfos {
                         let opt_attributes_expr = balance.opt_attributes
                             .as_deref()
                             .map(|e| {
-                                base64::engine::general_purpose::STANDARD.decode(e).unwrap()
-                            });
+                                base64::engine::general_purpose::STANDARD.decode(e)
+                            })
+                            .and_then(|res| res.ok());
 
                         account = account.esdt_nft_balance(token_identifier, balance.nonce, &balance.amount, opt_attributes_expr);
                     }
