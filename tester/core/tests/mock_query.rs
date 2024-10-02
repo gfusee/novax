@@ -1,5 +1,6 @@
 use std::path::Path;
 use std::sync::Arc;
+use base64::Engine;
 use tokio::sync::Mutex;
 use novax::errors::NovaXError;
 use novax_mocking::world::infos::{ScenarioWorldInfosEsdtTokenAmount, ScenarioWorldInfos};
@@ -33,7 +34,7 @@ fn get_executor() -> Arc<StandardMockExecutor> {
             token_identifier: "NFT-abcdef".to_string(),
             nonce: 6,
             amount: BigUint::from(1u8),
-            opt_attributes: Some(b"AAAAC3Rlc3QgYnVmZmVyAAAAAQo=".to_vec()),
+            opt_attributes: Some(base64::engine::general_purpose::STANDARD.decode("AAAAC3Rlc3QgYnVmZmVyAAAAAQo=").unwrap())
         }
     );
 
