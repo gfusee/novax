@@ -132,14 +132,7 @@ impl ScenarioWorldInfos {
                     if balance.nonce == 0 {
                         account = account.esdt_balance(token_identifier, &balance.amount)
                     } else {
-                        let opt_attributes_expr = balance.opt_attributes
-                            .as_deref()
-                            .map(|e| {
-                                base64::engine::general_purpose::STANDARD.decode(e)
-                            })
-                            .and_then(|res| res.ok());
-
-                        account = account.esdt_nft_balance(token_identifier, balance.nonce, &balance.amount, opt_attributes_expr);
+                        account = account.esdt_nft_balance(token_identifier, balance.nonce, &balance.amount, balance.opt_attributes.clone());
                     }
                 }
             }
