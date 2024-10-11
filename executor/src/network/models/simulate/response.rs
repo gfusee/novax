@@ -42,5 +42,5 @@ pub struct SimulationGatewayResponseDataScResultInfo {
     pub sender: String,
 
     /// Additional data associated with the smart contract call, often in a specific encoded format.
-    pub data: String,
+    pub data: Option<String>,
 }
