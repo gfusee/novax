@@ -171,12 +171,16 @@ impl<Client: GatewayClient> TransactionExecutor for BaseSimulationNetworkExecuto
 
         let scrs = data.smart_contract_results
             .into_iter()
-            .map(|(hash, result)| {
-                TransactionOnNetworkTransactionSmartContractResult {
-                    hash,
-                    nonce: result.nonce,
-                    data: result.data,
-                }
+            .filter_map(|(hash, result)| {
+                let data = result.data?;
+
+                Some(
+                    TransactionOnNetworkTransactionSmartContractResult {
+                        hash,
+                        nonce: result.nonce,
+                        data,
+                    }
+                )
             })
             .collect();
 

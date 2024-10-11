@@ -3,7 +3,6 @@ use std::fs::OpenOptions;
 use tokio::join;
 use std::hash::Hash;
 use std::path::Path;
-use base64::Engine;
 use num_bigint::BigUint;
 use futures::future::join_all;
 use multiversx_sc_snippets::hex;

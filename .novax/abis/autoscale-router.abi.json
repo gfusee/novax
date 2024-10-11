@@ -1,0 +1,1007 @@
+{
+    "buildInfo": {
+        "rustc": {
+            "version": "1.81.0",
+            "commitHash": "eeb90cda1969383f56a2637cbd3037bdf598841c",
+            "commitDate": "2024-09-04",
+            "channel": "Stable",
+            "short": "rustc 1.81.0 (eeb90cda1 2024-09-04)"
+        },
+        "contractCrate": {
+            "name": "router",
+            "version": "0.0.0"
+        },
+        "framework": {
+            "name": "multiversx-sc",
+            "version": "0.52.3"
+        }
+    },
+    "name": "AutoscaleRouterContract",
+    "constructor": {
+        "inputs": [
+            {
+                "name": "wrap_contract_address",
+                "type": "Address"
+            },
+            {
+                "name": "fees_percent",
+                "type": "u64"
+            }
+        ],
+        "outputs": []
+    },
+    "upgradeConstructor": {
+        "inputs": [],
+        "outputs": []
+    },
+    "endpoints": [
+        {
+            "name": "setWrapContractAddress",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "wrapped_contract_address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "addContractToWhitelist",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "removeContractToWhitelist",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "setFeesPercent",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "fees_percent",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "getWrappedEgldContractAddress",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "Address"
+                }
+            ]
+        },
+        {
+            "name": "getFeesPercent",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "swap",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [
+                {
+                    "name": "opt_min_amount",
+                    "type": "Option<BigUint>"
+                },
+                {
+                    "name": "should_unwrap_egld",
+                    "type": "bool"
+                },
+                {
+                    "name": "swap_operations",
+                    "type": "variadic<SwapOperation>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "EgldOrEsdtTokenPayment"
+                }
+            ]
+        },
+        {
+            "name": "simulateSwap",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "opt_min_amount",
+                    "type": "Option<BigUint>"
+                },
+                {
+                    "name": "should_unwrap_egld",
+                    "type": "bool"
+                },
+                {
+                    "name": "payment",
+                    "type": "EsdtTokenPayment"
+                },
+                {
+                    "name": "simulation_params",
+                    "type": "SimulationParams"
+                },
+                {
+                    "name": "swap_operations",
+                    "type": "variadic<SwapOperation>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "EgldOrEsdtTokenPayment"
+                }
+            ]
+        },
+        {
+            "name": "swapNoFee",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [
+                {
+                    "name": "opt_min_amount",
+                    "type": "Option<BigUint>"
+                },
+                {
+                    "name": "should_unwrap_egld",
+                    "type": "bool"
+                },
+                {
+                    "name": "swap_operations",
+                    "type": "variadic<SwapOperation>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "EgldOrEsdtTokenPayment"
+                }
+            ]
+        },
+        {
+            "name": "zapIn",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [
+                {
+                    "name": "add_liquidity_operation",
+                    "type": "AddLiquidityOperation"
+                },
+                {
+                    "name": "opt_min_amount",
+                    "type": "Option<BigUint>"
+                },
+                {
+                    "name": "all_swap_operations",
+                    "type": "variadic<List<SwapOperation>>"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "ZapInResultInfos"
+                }
+            ]
+        },
+        {
+            "name": "simulateZapIn",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "add_liquidity_operation",
+                    "type": "AddLiquidityOperation"
+                },
+                {
+                    "name": "opt_min_amount",
+                    "type": "Option<BigUint>"
+                },
+                {
+                    "name": "payment",
+                    "type": "EsdtTokenPayment"
+                },
+                {
+                    "name": "simulation_params",
+                    "type": "SimulationParams"
+                },
+                {
+                    "name": "all_swap_operations",
+                    "type": "variadic<List<SwapOperation>>"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "ZapInResultInfos"
+                }
+            ]
+        },
+        {
+            "name": "zapInNoFee",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [
+                {
+                    "name": "add_liquidity_operation",
+                    "type": "AddLiquidityOperation"
+                },
+                {
+                    "name": "opt_min_amount",
+                    "type": "Option<BigUint>"
+                },
+                {
+                    "name": "all_swap_operations",
+                    "type": "variadic<List<SwapOperation>>"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "ZapInResultInfos"
+                }
+            ]
+        },
+        {
+            "name": "zapOut",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [
+                {
+                    "name": "remove_liquidity_operation",
+                    "type": "RemoveLiquidityOperation"
+                },
+                {
+                    "name": "opt_min_amount",
+                    "type": "Option<BigUint>"
+                },
+                {
+                    "name": "should_unwrap_egld",
+                    "type": "bool"
+                },
+                {
+                    "name": "all_swap_operations",
+                    "type": "variadic<SwapOperationsForToken>"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "EgldOrEsdtTokenPayment"
+                }
+            ]
+        },
+        {
+            "name": "simulateZapOut",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "remove_liquidity_operation",
+                    "type": "RemoveLiquidityOperation"
+                },
+                {
+                    "name": "opt_min_amount",
+                    "type": "Option<BigUint>"
+                },
+                {
+                    "name": "should_unwrap_egld",
+                    "type": "bool"
+                },
+                {
+                    "name": "payment",
+                    "type": "EsdtTokenPayment"
+                },
+                {
+                    "name": "simulation_params",
+                    "type": "SimulationParams"
+                },
+                {
+                    "name": "all_swap_operations",
+                    "type": "variadic<SwapOperationsForToken>"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "EgldOrEsdtTokenPayment"
+                }
+            ]
+        },
+        {
+            "name": "zapOutNoFee",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [
+                {
+                    "name": "remove_liquidity_operation",
+                    "type": "RemoveLiquidityOperation"
+                },
+                {
+                    "name": "opt_min_amount",
+                    "type": "Option<BigUint>"
+                },
+                {
+                    "name": "should_unwrap_egld",
+                    "type": "bool"
+                },
+                {
+                    "name": "all_swap_operations",
+                    "type": "variadic<SwapOperationsForToken>"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "EgldOrEsdtTokenPayment"
+                }
+            ]
+        },
+        {
+            "name": "swapAndDepositInVault",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [
+                {
+                    "name": "vault_address",
+                    "type": "Address"
+                },
+                {
+                    "name": "opt_min_shares_amount",
+                    "type": "Option<BigUint>"
+                },
+                {
+                    "name": "swap_operations",
+                    "type": "variadic<SwapOperation>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "EsdtTokenPayment"
+                }
+            ]
+        },
+        {
+            "name": "zapInAndDepositInVault",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [
+                {
+                    "name": "vault_address",
+                    "type": "Address"
+                },
+                {
+                    "name": "add_liquidity_operation",
+                    "type": "AddLiquidityOperation"
+                },
+                {
+                    "name": "opt_min_shares_amount",
+                    "type": "Option<BigUint>"
+                },
+                {
+                    "name": "all_swap_operations",
+                    "type": "variadic<List<SwapOperation>>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "List<EsdtTokenPayment>"
+                }
+            ]
+        },
+        {
+            "name": "withdrawFromVaultAndSwap",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [
+                {
+                    "name": "vault_address",
+                    "type": "Address"
+                },
+                {
+                    "name": "opt_min_amount",
+                    "type": "Option<BigUint>"
+                },
+                {
+                    "name": "should_unwrap_egld",
+                    "type": "bool"
+                },
+                {
+                    "name": "all_swap_operations",
+                    "type": "variadic<SwapOperationsForToken>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "SmartWithdrawResult"
+                }
+            ]
+        },
+        {
+            "name": "withdrawFromVaultAndZapOut",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [
+                {
+                    "name": "vault_address",
+                    "type": "Address"
+                },
+                {
+                    "name": "remove_liquidity_operation",
+                    "type": "RemoveLiquidityOperation"
+                },
+                {
+                    "name": "opt_min_amount",
+                    "type": "Option<BigUint>"
+                },
+                {
+                    "name": "should_unwrap_egld",
+                    "type": "bool"
+                },
+                {
+                    "name": "all_swap_operations",
+                    "type": "variadic<SwapOperationsForToken>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "SmartWithdrawResult"
+                }
+            ]
+        }
+    ],
+    "events": [
+        {
+            "identifier": "",
+            "inputs": [
+                {
+                    "name": "caller",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "epoch",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "event",
+                    "type": "SwapEvent"
+                }
+            ]
+        },
+        {
+            "identifier": "",
+            "inputs": [
+                {
+                    "name": "caller",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "epoch",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "event",
+                    "type": "ZapInEvent"
+                }
+            ]
+        },
+        {
+            "identifier": "",
+            "inputs": [
+                {
+                    "name": "caller",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "epoch",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "event",
+                    "type": "ZapOutEvent"
+                }
+            ]
+        },
+        {
+            "identifier": "",
+            "inputs": [
+                {
+                    "name": "caller",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "epoch",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "event",
+                    "type": "SwapAndDepositInVaultEvent"
+                }
+            ]
+        },
+        {
+            "identifier": "",
+            "inputs": [
+                {
+                    "name": "caller",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "epoch",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "event",
+                    "type": "ZapInAndDepositInVaultEvent"
+                }
+            ]
+        },
+        {
+            "identifier": "",
+            "inputs": [
+                {
+                    "name": "caller",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "epoch",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "event",
+                    "type": "WithdrawFromVaultAndSwapEvent"
+                }
+            ]
+        },
+        {
+            "identifier": "",
+            "inputs": [
+                {
+                    "name": "caller",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "epoch",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "event",
+                    "type": "WithdrawFromVaultAndZapOutEvent"
+                }
+            ]
+        }
+    ],
+    "esdtAttributes": [],
+    "hasCallback": false,
+    "types": {
+        "AddLiquidityOperation": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "pool_type",
+                    "type": "PoolType"
+                },
+                {
+                    "name": "pool_address",
+                    "type": "Address"
+                },
+                {
+                    "name": "tokens",
+                    "type": "List<bytes>"
+                }
+            ]
+        },
+        "EgldOrEsdtTokenPayment": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "token_identifier",
+                    "type": "EgldOrEsdtTokenIdentifier"
+                },
+                {
+                    "name": "token_nonce",
+                    "type": "u64"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ]
+        },
+        "EsdtTokenPayment": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "token_identifier",
+                    "type": "TokenIdentifier"
+                },
+                {
+                    "name": "token_nonce",
+                    "type": "u64"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ]
+        },
+        "PoolType": {
+            "type": "enum",
+            "variants": [
+                {
+                    "name": "XExchange",
+                    "discriminant": 0
+                },
+                {
+                    "name": "AshSwap",
+                    "discriminant": 1
+                },
+                {
+                    "name": "AshSwapV2",
+                    "discriminant": 2
+                }
+            ]
+        },
+        "RemoveLiquidityOperation": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "pool_type",
+                    "type": "PoolType"
+                },
+                {
+                    "name": "pool_address",
+                    "type": "Address"
+                },
+                {
+                    "name": "tokens",
+                    "type": "List<bytes>"
+                }
+            ]
+        },
+        "SimulationParams": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "xexchange_router",
+                    "type": "Address"
+                },
+                {
+                    "name": "ashswap_router",
+                    "type": "Address"
+                },
+                {
+                    "name": "dummy_xexchange_lp",
+                    "type": "Address"
+                },
+                {
+                    "name": "dummy_ashswap_stable_lp",
+                    "type": "Address"
+                },
+                {
+                    "name": "dummy_ashswap_v2_lp",
+                    "type": "Address"
+                }
+            ]
+        },
+        "SmartWithdrawResult": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "out_token_payment",
+                    "type": "EgldOrEsdtTokenPayment"
+                },
+                {
+                    "name": "boost_token_payment",
+                    "type": "Option<EsdtTokenPayment>"
+                }
+            ]
+        },
+        "SwapAndDepositInVaultEvent": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "caller",
+                    "type": "Address"
+                },
+                {
+                    "name": "vault_address",
+                    "type": "Address"
+                },
+                {
+                    "name": "input_asset_payment",
+                    "type": "EsdtTokenPayment"
+                },
+                {
+                    "name": "input_shares_payments",
+                    "type": "List<EsdtTokenPayment>"
+                },
+                {
+                    "name": "charged_fees",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "swap_output_payment",
+                    "type": "EsdtTokenPayment"
+                },
+                {
+                    "name": "shares_output_payment",
+                    "type": "EsdtTokenPayment"
+                }
+            ]
+        },
+        "SwapEvent": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "caller",
+                    "type": "Address"
+                },
+                {
+                    "name": "input_payment",
+                    "type": "EsdtTokenPayment"
+                },
+                {
+                    "name": "charged_fees",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "output_payment",
+                    "type": "EgldOrEsdtTokenPayment"
+                }
+            ]
+        },
+        "SwapOperation": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "token_out",
+                    "type": "TokenIdentifier"
+                },
+                {
+                    "name": "pool_address",
+                    "type": "Address"
+                },
+                {
+                    "name": "function_name",
+                    "type": "bytes"
+                },
+                {
+                    "name": "arguments",
+                    "type": "List<bytes>"
+                }
+            ]
+        },
+        "SwapOperationsForToken": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "token",
+                    "type": "TokenIdentifier"
+                },
+                {
+                    "name": "operations",
+                    "type": "List<SwapOperation>"
+                }
+            ]
+        },
+        "WithdrawFromVaultAndSwapEvent": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "caller",
+                    "type": "Address"
+                },
+                {
+                    "name": "vault_address",
+                    "type": "Address"
+                },
+                {
+                    "name": "input_shares_payments",
+                    "type": "List<EsdtTokenPayment>"
+                },
+                {
+                    "name": "charged_fees",
+                    "type": "List<EsdtTokenPayment>"
+                },
+                {
+                    "name": "withdraw_output_assets_payments",
+                    "type": "List<EsdtTokenPayment>"
+                },
+                {
+                    "name": "withdraw_output_boosted_rewards_payments",
+                    "type": "Option<EsdtTokenPayment>"
+                },
+                {
+                    "name": "swap_output_payment",
+                    "type": "EgldOrEsdtTokenPayment"
+                }
+            ]
+        },
+        "WithdrawFromVaultAndZapOutEvent": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "caller",
+                    "type": "Address"
+                },
+                {
+                    "name": "vault_address",
+                    "type": "Address"
+                },
+                {
+                    "name": "input_shares_payments",
+                    "type": "List<EsdtTokenPayment>"
+                },
+                {
+                    "name": "charged_fees",
+                    "type": "List<EsdtTokenPayment>"
+                },
+                {
+                    "name": "withdraw_output_assets_payments",
+                    "type": "List<EsdtTokenPayment>"
+                },
+                {
+                    "name": "withdraw_output_boosted_rewards_payments",
+                    "type": "Option<EsdtTokenPayment>"
+                },
+                {
+                    "name": "zap_output_payment",
+                    "type": "EgldOrEsdtTokenPayment"
+                }
+            ]
+        },
+        "ZapInAndDepositInVaultEvent": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "caller",
+                    "type": "Address"
+                },
+                {
+                    "name": "vault_address",
+                    "type": "Address"
+                },
+                {
+                    "name": "input_asset_payment",
+                    "type": "EsdtTokenPayment"
+                },
+                {
+                    "name": "input_shares_payments",
+                    "type": "List<EsdtTokenPayment>"
+                },
+                {
+                    "name": "charged_fees",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "zap_in_output_payment",
+                    "type": "EsdtTokenPayment"
+                },
+                {
+                    "name": "zap_in_left_payments",
+                    "type": "List<EsdtTokenPayment>"
+                },
+                {
+                    "name": "shares_output_payment",
+                    "type": "EsdtTokenPayment"
+                }
+            ]
+        },
+        "ZapInEvent": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "caller",
+                    "type": "Address"
+                },
+                {
+                    "name": "input_payment",
+                    "type": "EsdtTokenPayment"
+                },
+                {
+                    "name": "charged_fees",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "output_payment",
+                    "type": "EsdtTokenPayment"
+                },
+                {
+                    "name": "left_payments",
+                    "type": "List<EsdtTokenPayment>"
+                }
+            ]
+        },
+        "ZapInResultInfos": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "lp_payment",
+                    "type": "EsdtTokenPayment"
+                },
+                {
+                    "name": "left_payments",
+                    "type": "List<EsdtTokenPayment>"
+                }
+            ]
+        },
+        "ZapOutEvent": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "caller",
+                    "type": "Address"
+                },
+                {
+                    "name": "input_payment",
+                    "type": "EsdtTokenPayment"
+                },
+                {
+                    "name": "charged_fees",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "output_payment",
+                    "type": "EgldOrEsdtTokenPayment"
+                }
+            ]
+        }
+    }
+}
