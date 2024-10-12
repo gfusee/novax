@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use serde::Deserialize;
 use crate::network::models::generic::response::GatewayResponse;
+use crate::TransactionOnNetworkTransactionLogs;
 
 /// Type alias for `GatewayResponse` specialized for simulation responses.
 /// It encapsulates the data specific to the simulation of blockchain transactions.
@@ -18,7 +19,10 @@ pub struct SimulationGatewayResponseData {
 
     /// A collection of results from smart contracts invoked during the simulation.
     /// Each entry in the map corresponds to a smart contract result, keyed by a unique identifier.
-    pub smart_contract_results: SimulationGatewayResponseDataScResults
+    pub smart_contract_results: SimulationGatewayResponseDataScResults,
+
+    /// A collection of logs from smart contracts invoked during the simulation.
+    pub logs: Option<TransactionOnNetworkTransactionLogs>
 }
 
 /// Type alias for a map holding smart contract results as part of the simulation response.
