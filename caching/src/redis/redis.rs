@@ -5,21 +5,27 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use novax::caching::{CachingDurationStrategy, CachingStrategy};
 use novax::errors::{CachingError, NovaXError};
+use crate::date::get_current_timestamp::{get_current_timestamp, GetDuration};
 use crate::redis::client::RedisClient;
 use crate::redis::error::CachingRedisError;
 
 #[derive(Clone, Debug)]
 pub struct CachingRedis<Client: RedisClient> {
-    pub(crate) client: Client
+    pub(crate) client: Client,
+    pub duration_strategy: CachingDurationStrategy
 }
 
 impl<Client: RedisClient> CachingRedis<Client> {
-    fn new<Info: IntoConnectionInfo>(info: Info) -> Result<Self, CachingRedisError> {
+    fn new<Info: IntoConnectionInfo>(
+        info: Info,
+        duration_strategy: CachingDurationStrategy
+    ) -> Result<Self, CachingRedisError> {
         let client = Client::open(info)?;
 
         Ok(
             CachingRedis {
-                client
+                client,
+                duration_strategy
             }
         )
     }
@@ -52,7 +58,7 @@ impl<Client: RedisClient> CachingStrategy for CachingRedis<Client> {
         };
 
         self.client
-            .set(key, encoded)
+            .set(key, encoded, self.duration_strategy.get_duration_from_now(&get_current_timestamp()?)?.as_secs())
             .await
             .map_err(|_| {
                 CachingError::UnknownError.into()
@@ -65,14 +71,33 @@ impl<Client: RedisClient> CachingStrategy for CachingRedis<Client> {
         FutureGetter: Future<Output=Result<T, Error>> + Send,
         Error: From<NovaXError>
     {
-        todo!()
+        let opt_value = self.get_cache(key).await?;
+
+        match opt_value {
+            None => {
+                let value_to_set = getter.await?;
+                self.set_cache(key, &value_to_set).await?;
+                Ok(value_to_set)
+            },
+            Some(value) => {
+                Ok(value)
+            }
+        }
     }
 
     async fn clear(&self) -> Result<(), NovaXError> {
-        todo!()
+        self.client
+            .clear()
+            .await
+            .map_err(|_| {
+                CachingError::UnknownError.into()
+            })
     }
 
     fn with_duration_strategy(&self, strategy: CachingDurationStrategy) -> Self {
-        todo!()
+        CachingRedis {
+            client: self.client.clone(),
+            duration_strategy: strategy,
+        }
     }
 }
