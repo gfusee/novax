@@ -253,7 +253,7 @@ mod test {
         let result = caching.get_or_set_cache::<Vec<u8>, _, NovaXError>(key, async {
             // error if serialized
 
-            Ok(panic!())
+            panic!()
         }).await?;
 
         assert_eq!(result, vec![0u8, 1u8]);

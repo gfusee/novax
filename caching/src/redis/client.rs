@@ -31,7 +31,7 @@ impl RedisClient for redis::Client {
         let options = redis::SetOptions::default()
             .with_expiration(SetExpiry::EX(duration));
 
-        if !connection.set_options::<_, _, ()>(key, value, options).await.is_ok() {
+        if connection.set_options::<_, _, ()>(key, value, options).await.is_err() {
             return Err(CachingRedisError::CannotSetValue)
         }
 
@@ -55,7 +55,7 @@ impl RedisClient for redis::Client {
             return Err(CachingRedisError::CannotGetConnection)
         };
 
-        if !redis::cmd("FLUSHALL").exec_async(&mut connection).await.is_ok() {
+        if redis::cmd("FLUSHALL").exec_async(&mut connection).await.is_err() {
             return Err(CachingRedisError::CannotSetValue)
         };
 
