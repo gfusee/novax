@@ -152,7 +152,6 @@ mod test {
         let result = caching.get_cache::<String>(key).await?;
         let expected = Some("test".to_string());
 
-
         assert_eq!(result, expected);
 
         Ok(())

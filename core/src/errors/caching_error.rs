@@ -1,4 +1,7 @@
+use std::fmt::Debug;
+
 use serde::{Deserialize, Serialize};
+
 use crate::errors::novax_error::NovaXError;
 
 /// An enumeration of errors that may occur during caching operations within the contract framework.
@@ -35,6 +38,7 @@ pub enum CachingError {
     /// Encountered when an error occurs in the getter function which is used to fetch data in case
     /// it is not found in the cache.
     ErrorInGetter,
+    OtherError { description: String, code: usize, type_name: String },
 
     /// A catch-all for other unforeseen errors that may occur during caching operations.
     UnknownError,
