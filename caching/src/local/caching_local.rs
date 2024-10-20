@@ -44,7 +44,7 @@ impl CachingLocal {
         let expiration_timestamp = self.duration_strategy.get_duration_timestamp(&get_current_timestamp()?)?;
         self.expiration_timestamp_map.lock().await.insert(key, expiration_timestamp);
 
-        let Ok(serialized) = bitcode::serialize(value) else { return Err(CachingError::UnableToSerialize.into())};
+        let Ok(serialized) = rmp_serde::to_vec(value) else { return Err(CachingError::UnableToSerialize.into())};
         self.value_map.lock().await.insert(key, serialized);
 
         Ok(())
@@ -61,7 +61,9 @@ impl CachingStrategy for CachingLocal {
             Ok(None)
         } else {
             let Some(encoded_value) = self.value_map.lock().await.get(&key).cloned() else { return Ok(None) };
-            let Ok(value) = bitcode::deserialize(&encoded_value) else { return Err(CachingError::UnableToDeserialize.into()) };
+            let Ok(value) = rmp_serde::from_slice(&encoded_value) else {
+                return Err(CachingError::UnableToDeserialize.into())
+            };
 
             Ok(Some(value))
         }

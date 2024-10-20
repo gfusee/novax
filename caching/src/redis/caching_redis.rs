@@ -1,10 +1,6 @@
 use std::future::Future;
 
 use async_trait::async_trait;
-pub use redis::ConnectionInfo;
-pub use redis::IntoConnectionInfo;
-pub use redis::RedisConnectionInfo;
-pub use redis::RedisError;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
@@ -14,6 +10,7 @@ use novax::errors::{CachingError, NovaXError};
 use crate::date::get_current_timestamp::{get_current_timestamp, GetDuration};
 use crate::redis::client::RedisClient;
 use crate::redis::error::CachingRedisError;
+use crate::redis::IntoConnectionInfo;
 
 pub type CachingRedis = BaseCachingRedis<redis::Client>;
 
@@ -53,7 +50,7 @@ impl<Client: RedisClient> CachingStrategy for BaseCachingRedis<Client> {
             return Ok(None);
         };
 
-        let Ok(decoded) = bitcode::deserialize(&value_encoded) else {
+        let Ok(decoded) = rmp_serde::from_slice(&value_encoded) else {
             return Err(CachingError::UnableToDeserialize.into())
         };
 
@@ -61,7 +58,7 @@ impl<Client: RedisClient> CachingStrategy for BaseCachingRedis<Client> {
     }
 
     async fn set_cache<T: Serialize + DeserializeOwned + Send + Sync>(&self, key: u64, value: &T) -> Result<(), NovaXError> {
-        let Ok(encoded) = bitcode::serialize(value) else {
+        let Ok(encoded) = rmp_serde::to_vec(value) else {
             return Err(CachingError::UnableToSerialize.into())
         };
 
@@ -122,7 +119,7 @@ mod test {
     use crate::date::get_current_timestamp::set_mock_time;
     use crate::redis::client::RedisClient;
     use crate::redis::error::CachingRedisError;
-    use crate::redis::redis::BaseCachingRedis;
+    use crate::redis::caching_redis::BaseCachingRedis;
 
     #[derive(Clone, Debug)]
     struct MockRedisClient;
@@ -137,14 +134,14 @@ mod test {
             if key.to_redis_args() == 1.to_redis_args() { // Not found
                 Ok(None)
             } else if key.to_redis_args() == 2.to_redis_args() { // Found
-                Ok(Some(RV::from_byte_vec(&[2, 0, 1]).unwrap().into_iter().next().unwrap()))
+                Ok(Some(RV::from_byte_vec(&[146, 0, 1]).unwrap().into_iter().next().unwrap()))
             } else {
                 Ok(None)
             }
         }
 
         async fn set<K: ToRedisArgs + Send + Sync, V: ToRedisArgs + Send + Sync>(&self, key: K, value: V, duration: u64) -> Result<(), CachingRedisError> {
-            if value.to_redis_args() != bitcode::serialize("test").unwrap().to_redis_args() {
+            if value.to_redis_args() != rmp_serde::to_vec("test").unwrap().to_redis_args() {
                 panic!();
             }
 
