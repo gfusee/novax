@@ -20,8 +20,8 @@ pub struct CachingLocal {
     duration_strategy: CachingDurationStrategy,
     value_map: Arc<Mutex<HashMap<u64, Vec<u8>>>>,
     expiration_timestamp_map: Arc<Mutex<HashMap<u64, Duration>>>,
-    clean_up_interval: Arc<Mutex<Duration>>,
-    is_clean_up_process_started: Arc<Mutex<bool>>,
+    cleanup_interval: Arc<Mutex<Duration>>,
+    is_cleanup_process_started: Arc<Mutex<bool>>,
 }
 
 impl CachingLocal {
@@ -30,11 +30,11 @@ impl CachingLocal {
             duration_strategy,
             value_map: Arc::new(Mutex::new(HashMap::new())),
             expiration_timestamp_map: Arc::new(Mutex::new(HashMap::new())),
-            clean_up_interval: Arc::new(Mutex::new(Duration::from_secs(0))),
-            is_clean_up_process_started: Arc::new(Mutex::new(false)),
+            cleanup_interval: Arc::new(Mutex::new(Duration::from_secs(0))),
+            is_cleanup_process_started: Arc::new(Mutex::new(false)),
         };
 
-        caching.start_clean_up_process_if_needed().await;
+        caching.start_cleanup_process_if_needed().await;
 
         caching
     }
@@ -59,9 +59,16 @@ impl CachingLocal {
         Ok(())
     }
 
-    async fn start_clean_up_process_if_needed(&self) {
+    /// Set the cleanup duration for self and all the cloned instances.
+    pub async fn set_cleanup_interval(&mut self, interval: Duration) {
+        let mut locked = self.cleanup_interval.lock().await;
+
+        *locked = interval;
+    }
+
+    async fn start_cleanup_process_if_needed(&self) {
         {
-            let mut locked = self.is_clean_up_process_started.lock().await;
+            let mut locked = self.is_cleanup_process_started.lock().await;
 
             if *locked {
                 return;
@@ -75,14 +82,14 @@ impl CachingLocal {
         task::spawn(async move {
             loop {
                 let duration = {
-                    let locked = self_value.clean_up_interval.lock().await;
+                    let locked = self_value.cleanup_interval.lock().await;
                     locked.clone()
                 };
 
                 let wait_duration = if duration.is_zero() {
                     Duration::from_secs(10)
                 } else {
-                    self_value.perform_clean_up().await?;
+                    self_value.perform_cleanup().await?;
 
                     duration
                 };
@@ -95,7 +102,7 @@ impl CachingLocal {
         });
     }
 
-    async fn perform_clean_up(&self) -> Result<(), NovaXError> {
+    async fn perform_cleanup(&self) -> Result<(), NovaXError> {
         let current_timestamp = get_current_timestamp()?;
         let mut value_map_locked = self.value_map.lock().await;
         let mut expiration_map_locked = self.expiration_timestamp_map.lock().await;
@@ -159,8 +166,8 @@ impl CachingStrategy for CachingLocal {
             duration_strategy: strategy,
             value_map: self.value_map.clone(),
             expiration_timestamp_map: self.expiration_timestamp_map.clone(),
-            clean_up_interval: self.clean_up_interval.clone(),
-            is_clean_up_process_started: self.is_clean_up_process_started.clone()
+            cleanup_interval: self.cleanup_interval.clone(),
+            is_cleanup_process_started: self.is_cleanup_process_started.clone()
         }
     }
 }
@@ -374,7 +381,7 @@ mod test {
     }
 
     #[tokio::test]
-    async fn test_perform_clean_up_before_expiration() -> Result<(), NovaXError> {
+    async fn test_perform_cleanup_before_expiration() -> Result<(), NovaXError> {
         let caching = CachingLocal::empty(CachingDurationStrategy::Duration(Duration::from_secs(10))).await;
         let key = 1;
         let value = "test".to_string();
@@ -383,7 +390,7 @@ mod test {
 
         set_mock_time(Duration::from_secs(10));
 
-        caching.perform_clean_up().await?;
+        caching.perform_cleanup().await?;
 
         let value_map_locked = caching.value_map.lock().await;
         let expiration_timestamp_locked = caching.expiration_timestamp_map.lock().await;
@@ -395,7 +402,7 @@ mod test {
     }
 
     #[tokio::test]
-    async fn test_perform_clean_up_after_expiration() -> Result<(), NovaXError> {
+    async fn test_perform_cleanup_after_expiration() -> Result<(), NovaXError> {
         let caching = CachingLocal::empty(CachingDurationStrategy::Duration(Duration::from_secs(10))).await;
         let key = 1;
         let value = "test".to_string();
@@ -404,7 +411,7 @@ mod test {
 
         set_mock_time(Duration::from_secs(11));
 
-        caching.perform_clean_up().await?;
+        caching.perform_cleanup().await?;
 
         let value_map_locked = caching.value_map.lock().await;
         let expiration_timestamp_locked = caching.expiration_timestamp_map.lock().await;
@@ -416,7 +423,7 @@ mod test {
     }
 
     #[tokio::test]
-    async fn test_perform_clean_up_one_before_and_after_expiration() -> Result<(), NovaXError> {
+    async fn test_perform_cleanup_one_before_and_after_expiration() -> Result<(), NovaXError> {
         let caching = CachingLocal::empty(CachingDurationStrategy::Duration(Duration::from_secs(10))).await;
         let key_long_duration = 1;
         let value_long_duration = "test1".to_string();
@@ -444,7 +451,7 @@ mod test {
             assert_eq!(expiration_timestamp_locked.len(), 2);
         }
 
-        caching.perform_clean_up().await?;
+        caching.perform_cleanup().await?;
 
         {
             let value_map_locked = caching.value_map.lock().await;
