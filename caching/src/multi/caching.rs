@@ -65,8 +65,11 @@ where
         FutureGetter: Future<Output=Result<T, Error>> + Send,
         Error: From<NovaXError>
     {
-        if let Some(cached_value) = self.get_cache(key).await? {
-            Ok(cached_value)
+        if let Some(cached_value_from_first) = self.first.get_cache(key).await? {
+            Ok(cached_value_from_first)
+        } else if let Some(cached_value_from_second) = self.second.get_cache(key).await? {
+            self.first.set_cache(key, &cached_value_from_second).await?;
+            Ok(cached_value_from_second)
         } else {
             let value = getter.await?;
             self.set_cache(key, &value).await?;
@@ -202,6 +205,77 @@ mod test {
 
         assert_eq!(first_result, expected);
         assert_eq!(second_result, expected);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_or_set_cache_first_and_second_have_value() -> Result<(), NovaXError> {
+        let key = 1u64;
+        let first_value = "test1".to_string();
+        let first_caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
+        first_caching.set_cache(key, &first_value).await?;
+
+        let second_value = "test2".to_string();
+        let second_caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
+        second_caching.set_cache(key, &second_value).await?;
+
+        let caching = CachingMulti::new(first_caching, second_caching);
+
+        let result = caching.get_or_set_cache::<String, _, NovaXError>(key, async {
+            panic!()
+        }).await?;
+
+        let expected = "test1".to_string();
+
+        assert_eq!(result, expected);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_or_set_cache_only_second_has_value() -> Result<(), NovaXError> {
+        let key = 1u64;
+        let first_caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
+
+        let second_value = "test2".to_string();
+        let second_caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
+        second_caching.set_cache(key, &second_value).await?;
+
+        let caching = CachingMulti::new(first_caching.clone(), second_caching);
+
+        let result = caching.get_or_set_cache::<String, _, NovaXError>(key, async {
+            panic!()
+        }).await?;
+
+        let first_cached_value = first_caching.get_cache::<String>(key).await?.unwrap();
+        let expected = "test2".to_string();
+
+        assert_eq!(first_cached_value, expected);
+        assert_eq!(result, expected);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_or_set_cache_no_cached_value() -> Result<(), NovaXError> {
+        let key = 1u64;
+        let first_caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
+        let second_caching = CachingLocal::empty(CachingDurationStrategy::EachBlock);
+
+        let caching = CachingMulti::new(first_caching.clone(), second_caching.clone());
+
+        let result = caching.get_or_set_cache::<String, _, NovaXError>(key, async {
+            Ok("test".to_string())
+        }).await?;
+
+        let first_cached_value = first_caching.get_cache::<String>(key).await?.unwrap();
+        let second_cached_value = second_caching.get_cache::<String>(key).await?.unwrap();
+        let expected = "test".to_string();
+
+        assert_eq!(first_cached_value, expected);
+        assert_eq!(second_cached_value, expected);
+        assert_eq!(result, expected);
 
         Ok(())
     }
