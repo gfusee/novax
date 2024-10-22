@@ -1,15 +1,18 @@
-use async_trait::async_trait;
-use std::sync::Arc;
 use std::collections::HashMap;
 use std::future::Future;
+use std::sync::Arc;
 use std::time::Duration;
-use serde::Serialize;
+
+use async_trait::async_trait;
 use serde::de::DeserializeOwned;
+use serde::Serialize;
 use tokio::sync::Mutex;
+
 use novax::caching::{CachingDurationStrategy, CachingStrategy};
-use novax::errors::NovaXError;
 use novax::errors::CachingError;
-use crate::date::get_current_timestamp::{get_current_timestamp, get_timestamp_of_next_block};
+use novax::errors::NovaXError;
+
+use crate::date::get_current_timestamp::{get_current_timestamp, GetDuration};
 
 #[derive(Clone, Debug)]
 pub struct CachingLocal {
@@ -38,15 +41,7 @@ impl CachingLocal {
     }
 
     async fn set_value<T: Serialize + DeserializeOwned>(&self, key: u64, value: &T) -> Result<(), NovaXError> {
-        let current_timestamp = get_current_timestamp()?;
-        let expiration_timestamp = match self.duration_strategy {
-            CachingDurationStrategy::EachBlock => {
-                get_timestamp_of_next_block(current_timestamp)?
-            }
-            CachingDurationStrategy::Duration(duration) => {
-                current_timestamp + duration
-            }
-        };
+        let expiration_timestamp = self.duration_strategy.get_duration_timestamp(&get_current_timestamp()?)?;
         self.expiration_timestamp_map.lock().await.insert(key, expiration_timestamp);
 
         let Ok(serialized) = rmp_serde::to_vec(value) else { return Err(CachingError::UnableToSerialize.into())};
@@ -66,7 +61,9 @@ impl CachingStrategy for CachingLocal {
             Ok(None)
         } else {
             let Some(encoded_value) = self.value_map.lock().await.get(&key).cloned() else { return Ok(None) };
-            let Ok(value) = rmp_serde::from_slice(&encoded_value) else { return Err(CachingError::UnableToDeserialize.into()) };
+            let Ok(value) = rmp_serde::from_slice(&encoded_value) else {
+                return Err(CachingError::UnableToDeserialize.into())
+            };
 
             Ok(Some(value))
         }
@@ -109,8 +106,10 @@ impl CachingStrategy for CachingLocal {
 #[cfg(test)]
 mod test {
     use std::time::Duration;
+
     use novax::caching::{CachingDurationStrategy, CachingStrategy};
     use novax::errors::NovaXError;
+
     use crate::date::get_current_timestamp::set_mock_time;
     use crate::local::caching_local::CachingLocal;
 
@@ -154,7 +153,6 @@ mod test {
 
         let result = caching.get_cache::<String>(key).await?;
         let expected = Some("test".to_string());
-
 
         assert_eq!(result, expected);
 

@@ -10,10 +10,11 @@ repository = "https://github.com/gfusee/novax"
 
 [dependencies]
 serde = "1.0.180"
-rmp-serde = "1.1.2"
 tokio = "1.29.1"
 async-trait = "0.1.72"
+redis = { version = "0.27.4", features = ["aio", "tokio-comp"] }
 novax = { path = "../core", version = "0.1.13" }
+rmp-serde = "=1.1.2"
 
 [dev-dependencies]
 thread_local = "1.1.7"

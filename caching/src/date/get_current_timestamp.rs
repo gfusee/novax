@@ -1,10 +1,30 @@
-pub(crate) fn get_timestamp_of_next_block(current_timestamp: Duration) -> Result<Duration, NovaXError> {
+pub(crate) fn get_timestamp_of_next_block(current_timestamp: &Duration) -> Result<Duration, NovaXError> {
     let mut timestamp = current_timestamp.as_secs() + 1;
     while timestamp % 6 != 0 {
         timestamp += 1
     }
 
     Ok(Duration::from_secs(timestamp))
+}
+
+pub(crate) trait GetDuration {
+    fn get_duration_timestamp(&self, current_timestamp: &Duration) -> Result<Duration, NovaXError>;
+    fn get_duration_from_now(&self, current_timestamp: &Duration) -> Result<Duration, NovaXError> {
+        Ok(self.get_duration_timestamp(current_timestamp)? - *current_timestamp)
+    }
+}
+
+impl GetDuration for CachingDurationStrategy {
+    fn get_duration_timestamp(&self, current_timestamp: &Duration) -> Result<Duration, NovaXError> {
+        match self {
+            CachingDurationStrategy::EachBlock => {
+                get_timestamp_of_next_block(current_timestamp)
+            }
+            CachingDurationStrategy::Duration(duration) => {
+                Ok(*current_timestamp + *duration)
+            }
+        }
+    }
 }
 
 #[cfg(not(test))]
@@ -26,6 +46,7 @@ pub(crate) use implementation::get_current_timestamp;
 
 #[cfg(test)]
 pub(crate) use implementation::set_mock_time;
+use novax::caching::CachingDurationStrategy;
 use novax::errors::NovaXError;
 
 #[cfg(test)]
@@ -62,7 +83,7 @@ mod tests {
 
     #[test]
     fn test_get_timestamp_of_next_block_start_of_block() {
-        let result = get_timestamp_of_next_block(Duration::from_secs(6)).unwrap();
+        let result = get_timestamp_of_next_block(&Duration::from_secs(6)).unwrap();
         let expected = Duration::from_secs(12);
 
         assert_eq!(result, expected);
@@ -70,7 +91,7 @@ mod tests {
 
     #[test]
     fn test_get_timestamp_of_next_block_mid_of_block() {
-        let result = get_timestamp_of_next_block(Duration::from_secs(8)).unwrap();
+        let result = get_timestamp_of_next_block(&Duration::from_secs(8)).unwrap();
         let expected = Duration::from_secs(12);
 
         assert_eq!(result, expected);
@@ -78,7 +99,7 @@ mod tests {
 
     #[test]
     fn test_get_timestamp_of_next_block_end_of_block() {
-        let result = get_timestamp_of_next_block(Duration::from_secs(11)).unwrap();
+        let result = get_timestamp_of_next_block(&Duration::from_secs(11)).unwrap();
         let expected = Duration::from_secs(12);
 
         assert_eq!(result, expected);
