@@ -1,37 +1,62 @@
 use std::collections::HashMap;
+use std::fmt::Debug;
 use std::future::Future;
 use std::sync::Arc;
 
 use async_trait::async_trait;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use novax::caching::{CachingDurationStrategy, CachingStrategy};
 use novax::errors::NovaXError;
 
-#[derive(Clone, Debug)]
-pub struct CachingLocked<C: CachingStrategy> {
-    pub caching: C,
-    _lockers_map: Arc<Mutex<HashMap<u64, Arc<RwLock<()>>>>>
+pub type CachingLocked<C: CachingStrategy> = BaseCachingLocked<C, Arc<RwLock<()>>>;
+
+#[async_trait]
+pub trait Locker: Send + Sync + Clone + Debug {
+    fn new() -> Self;
+    async fn read(&self) -> RwLockReadGuard<'_, ()>;
+    async fn write(&self) -> RwLockWriteGuard<'_, ()>;
 }
 
-impl<C: CachingStrategy> CachingLocked<C> {
-    pub fn new(caching: C) -> CachingLocked<C> {
-        CachingLocked {
+#[async_trait]
+impl Locker for Arc<RwLock<()>> {
+    fn new() -> Self {
+        Self::new(RwLock::new(()))
+    }
+
+    async fn read(&self) -> RwLockReadGuard<'_, ()> {
+        self.read().await
+    }
+
+    async fn write(&self) -> RwLockWriteGuard<'_, ()> {
+        self.write().await
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct BaseCachingLocked<C: CachingStrategy, L: Locker> {
+    pub caching: C,
+    _lockers_map: Arc<Mutex<HashMap<u64, L>>>
+}
+
+impl<C: CachingStrategy, L: Locker> BaseCachingLocked<C, L> {
+    pub fn new(caching: C) -> BaseCachingLocked<C, L> {
+        BaseCachingLocked {
             caching,
             _lockers_map: Arc::new(Mutex::new(HashMap::new()))
         }
     }
 }
 
-impl<C: CachingStrategy> CachingLocked<C> {
-    async fn get_locker(&self, key: u64) -> Result<Arc<RwLock<()>>, NovaXError> {
+impl<C: CachingStrategy, L: Locker> BaseCachingLocked<C, L> {
+    async fn get_locker(&self, key: u64) -> Result<L, NovaXError> {
         let mut lockers_map = self._lockers_map.lock().await;
         let locker = if let Some(locker) = lockers_map.get(&key) {
             locker.clone()
         } else {
-            let locker = Arc::new(RwLock::new(()));
+            let locker = L::new();
             lockers_map.insert(key, locker.clone());
             locker
         };
@@ -41,7 +66,7 @@ impl<C: CachingStrategy> CachingLocked<C> {
 }
 
 #[async_trait]
-impl<C: CachingStrategy> CachingStrategy for CachingLocked<C> {
+impl<C: CachingStrategy, L: Locker> CachingStrategy for BaseCachingLocked<C, L> {
     async fn get_cache<T: Serialize + DeserializeOwned + Send + Sync>(&self, key: u64) -> Result<Option<T>, NovaXError> {
         let locker = self.get_locker(key).await?;
         let lock_value = locker.read().await;
@@ -83,7 +108,7 @@ impl<C: CachingStrategy> CachingStrategy for CachingLocked<C> {
     }
 
     fn with_duration_strategy(&self, strategy: CachingDurationStrategy) -> Self {
-        CachingLocked::new(self.caching.with_duration_strategy(strategy))
+        Self::new(self.caching.with_duration_strategy(strategy))
     }
 }
 
@@ -103,7 +128,7 @@ mod test {
 
     use crate::date::get_current_timestamp::set_mock_time;
     use crate::local::caching_local::CachingLocal;
-    use crate::locked::caching::CachingLocked;
+    use crate::locked::caching::{BaseCachingLocked, CachingLocked};
 
     #[derive(Clone, Debug)]
     struct CachingLocalDelayedSet {
