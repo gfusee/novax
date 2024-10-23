@@ -11,6 +11,7 @@ use tokio::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use novax::caching::{CachingDurationStrategy, CachingStrategy};
 use novax::errors::NovaXError;
 
+#[allow(type_alias_bounds)]
 pub type CachingLocked<C: CachingStrategy> = BaseCachingLocked<C, Arc<RwLock<()>>>;
 
 #[async_trait]
@@ -128,7 +129,7 @@ mod test {
 
     use crate::date::get_current_timestamp::set_mock_time;
     use crate::local::caching_local::CachingLocal;
-    use crate::locked::caching::{BaseCachingLocked, CachingLocked};
+    use crate::locked::caching::CachingLocked;
 
     #[derive(Clone, Debug)]
     struct CachingLocalDelayedSet {
