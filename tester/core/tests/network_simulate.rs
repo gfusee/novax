@@ -10,7 +10,7 @@ use tokio::sync::Mutex;
 
 use novax::Address;
 use novax::errors::NovaXError;
-use novax::executor::{BaseSimulationNetworkExecutor, SimulationNetworkExecutor, TokenTransfer};
+use novax::executor::{BaseSimulationNetworkExecutor, ExecutorError, SimulationError, SimulationNetworkExecutor, TokenTransfer};
 use novax::tester::tester::TesterContract;
 use novax_request::error::request::RequestError;
 use novax_request::gateway::client::GatewayClient;
@@ -362,7 +362,16 @@ async fn test_autoscale_zap_in_error_signaled_by_smart_contract() -> Result<(), 
         .err()
         .unwrap();
 
-    todo!();
+    let expected = NovaXError::Executor(
+        ExecutorError::Simulation(
+            SimulationError::SmartContractExecutionError {
+                status: 10,
+                message: "error signalled by smartcontract".to_string()
+            }
+        )
+    );
+
+    assert_eq!(result, expected);
 
     Ok(())
 }

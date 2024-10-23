@@ -11,12 +11,11 @@ use novax_request::gateway::client::GatewayClient;
 
 use crate::{ExecutorError, GatewayError, SimulationError, SimulationGatewayRequest, SimulationGatewayResponse, TransactionExecutor, TransactionOnNetwork, TransactionOnNetworkTransactionSmartContractResult};
 use crate::call_result::CallResult;
-use crate::error::transaction::TransactionError;
 use crate::network::models::simulate::request::SimulationGatewayRequestBody;
 use crate::network::utils::address::get_address_info;
 use crate::network::utils::network::get_network_config;
 use crate::utils::transaction::normalization::NormalizationInOut;
-use crate::utils::transaction::results::find_smart_contract_result;
+use crate::utils::transaction::results::{find_sc_error, find_smart_contract_result};
 use crate::utils::transaction::token_transfer::TokenTransfer;
 
 /// Type alias for `BaseSimulationNetworkExecutor` with the `String` type as the generic `Client`.
@@ -184,11 +183,28 @@ impl<Client: GatewayClient> TransactionExecutor for BaseSimulationNetworkExecuto
             })
             .collect();
 
-        let mut raw_result = find_smart_contract_result(&Some(scrs), data.logs.as_ref())?
-            .unwrap_or_default();
+        let opt_smart_contract_results = find_smart_contract_result(&Some(scrs), data.logs.as_ref())?;
+
+        let mut raw_result = match opt_smart_contract_results {
+            None => {
+                if let Some(logs) = data.logs.as_ref() {
+                    if let Ok(Some(error_log)) = find_sc_error(logs) {
+                        return Err(SimulationError::SmartContractExecutionError { // TODO add tests for this
+                            status: error_log.status,
+                            message: error_log.message
+                        }.into());
+                    }
+                }
+
+                vec![]
+            }
+            Some(results) => {
+                results
+            }
+        };
 
         let Ok(output_managed) = OutputManaged::multi_decode(&mut raw_result) else {
-            return Err(TransactionError::CannotDecodeSmartContractResult.into())
+            return Err(SimulationError::CannotDecodeSmartContractResult.into())
         };
 
         let mut response = TransactionOnNetwork::default();
