@@ -28,11 +28,11 @@ impl Locker for Arc<RwLock<()>> {
     }
 
     async fn read(&self) -> RwLockReadGuard<'_, ()> {
-        self.read().await
+        self.as_ref().read().await
     }
 
     async fn write(&self) -> RwLockWriteGuard<'_, ()> {
-        self.write().await
+        self.as_ref().write().await
     }
 }
 
