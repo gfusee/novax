@@ -5,6 +5,8 @@ use multiversx_sdk::utils::base64_decode;
 use crate::{ExecutorError, TransactionOnNetworkTransactionLogs, TransactionOnNetworkTransactionLogsEvents, TransactionOnNetworkTransactionSmartContractResult};
 use crate::error::transaction::TransactionError;
 
+const ERROR_SIGNALLED_BY_SMART_CONTRACT: &str = "error signalled by smartcontract";
+
 #[derive(Clone, Debug)]
 pub(crate) struct SmartContractError {
     pub status: u64,
@@ -49,8 +51,14 @@ pub(crate) fn find_sc_error(logs: &TransactionOnNetworkTransactionLogs) -> Resul
         }
 
         let error = decode_topic(topics.get(1).unwrap())?;
+        let status = if error.contains(ERROR_SIGNALLED_BY_SMART_CONTRACT) {
+            10
+        } else {
+            4
+        };
+
         let result = SmartContractError {
-            status: 4,
+            status,
             message: error,
         };
         return Ok(Some(result));

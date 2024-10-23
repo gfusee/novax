@@ -16,7 +16,9 @@ pub enum SimulationError {
         code: String
     },
 
-    NoSmartContractResult
+    NoSmartContractResult,
+    SmartContractExecutionError { status: u64, message: String },
+    CannotDecodeSmartContractResult
 }
 
 impl From<SimulationError> for ExecutorError {
