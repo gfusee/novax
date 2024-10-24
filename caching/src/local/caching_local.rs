@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::{Debug, Formatter};
 use std::future::Future;
 use std::sync::Arc;
 use std::time::Duration;
@@ -14,17 +15,67 @@ use novax::errors::CachingError;
 use novax::errors::NovaXError;
 
 use crate::date::get_current_timestamp::{get_current_timestamp, GetDuration};
+use crate::utils::lock::MutexLike;
 
-#[derive(Clone, Debug)]
-pub struct CachingLocal {
+pub type CachingLocal = BaseCachingLocal<Mutex<HashMap<u64, Vec<u8>>>, Mutex<HashMap<u64, Duration>>, Mutex<Duration>, Mutex<bool>>;
+
+pub struct BaseCachingLocal<MutexValue, MutexExpiration, MutexCleanupInterval, MutexIsCleanupProcessStarted>
+where
+    MutexValue: MutexLike<T = HashMap<u64, Vec<u8>>>,
+    MutexExpiration: MutexLike<T = HashMap<u64, Duration>>,
+    MutexCleanupInterval: MutexLike<T = Duration>,
+    MutexIsCleanupProcessStarted: MutexLike<T = bool>
+{
     duration_strategy: CachingDurationStrategy,
-    value_map: Arc<Mutex<HashMap<u64, Vec<u8>>>>,
-    expiration_timestamp_map: Arc<Mutex<HashMap<u64, Duration>>>,
-    cleanup_interval: Arc<Mutex<Duration>>,
-    is_cleanup_process_started: Arc<Mutex<bool>>,
+    value_map: Arc<MutexValue>,
+    expiration_timestamp_map: Arc<MutexExpiration>,
+    cleanup_interval: Arc<MutexCleanupInterval>,
+    is_cleanup_process_started: Arc<MutexIsCleanupProcessStarted>,
 }
 
-impl CachingLocal {
+impl<MutexValue, MutexExpiration, MutexCleanupInterval, MutexIsCleanupProcessStarted> Clone for BaseCachingLocal<MutexValue, MutexExpiration, MutexCleanupInterval, MutexIsCleanupProcessStarted>
+where
+    MutexValue: MutexLike<T = HashMap<u64, Vec<u8>>>,
+    MutexExpiration: MutexLike<T = HashMap<u64, Duration>>,
+    MutexCleanupInterval: MutexLike<T = Duration>,
+    MutexIsCleanupProcessStarted: MutexLike<T = bool>
+{
+    fn clone(&self) -> Self {
+        Self {
+            duration_strategy: self.duration_strategy.clone(),
+            value_map: self.value_map.clone(),
+            expiration_timestamp_map: self.expiration_timestamp_map.clone(),
+            cleanup_interval: self.cleanup_interval.clone(),
+            is_cleanup_process_started: self.is_cleanup_process_started.clone(),
+        }
+    }
+}
+
+impl<MutexValue, MutexExpiration, MutexCleanupInterval, MutexIsCleanupProcessStarted> Debug for BaseCachingLocal<MutexValue, MutexExpiration, MutexCleanupInterval, MutexIsCleanupProcessStarted>
+where
+    MutexValue: MutexLike<T = HashMap<u64, Vec<u8>>>,
+    MutexExpiration: MutexLike<T = HashMap<u64, Duration>>,
+    MutexCleanupInterval: MutexLike<T = Duration>,
+    MutexIsCleanupProcessStarted: MutexLike<T = bool>
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("BaseCachingLocal")
+            .field("duration_strategy", &self.duration_strategy)
+            .field("value_map", &self.value_map)
+            .field("expiration_timestamp_map", &self.expiration_timestamp_map)
+            .field("cleanup_interval", &self.cleanup_interval)
+            .field("is_cleanup_process_started", &self.is_cleanup_process_started)
+            .finish()
+    }
+}
+
+impl<MutexValue, MutexExpiration, MutexCleanupInterval, MutexIsCleanupProcessStarted> BaseCachingLocal<MutexValue, MutexExpiration, MutexCleanupInterval, MutexIsCleanupProcessStarted>
+where
+    MutexValue: MutexLike<T = HashMap<u64, Vec<u8>>>,
+    MutexExpiration: MutexLike<T = HashMap<u64, Duration>>,
+    MutexCleanupInterval: MutexLike<T = Duration>,
+    MutexIsCleanupProcessStarted: MutexLike<T = bool>
+{
     pub fn empty(duration_strategy: CachingDurationStrategy) -> CachingLocal {
         CachingLocal {
             duration_strategy,
@@ -35,30 +86,9 @@ impl CachingLocal {
         }
     }
 
-    pub async fn empty_with_auto_cleanup(
-        duration_strategy: CachingDurationStrategy,
-        cleanup_interval: Duration
-    ) -> Result<CachingLocal, NovaXError> {
-        let caching = CachingLocal::empty(duration_strategy);
-
-        {
-            let mut locked = caching.cleanup_interval.lock().await;
-            *locked = cleanup_interval;
-        }
-
-        caching.start_cleanup_process_if_needed().await;
-
-        Ok(caching)
-    }
-
     async fn remove_key(&self, key: u64) {
         let _ = self.expiration_timestamp_map.lock().await.remove(&key);
         let _ = self.value_map.lock().await.remove(&key);
-    }
-
-    async fn clear(&self) {
-        self.expiration_timestamp_map.lock().await.clear();
-        self.value_map.lock().await.clear();
     }
 
     async fn set_value<T: Serialize + DeserializeOwned>(&self, key: u64, value: &T) -> Result<(), NovaXError> {
@@ -76,6 +106,25 @@ impl CachingLocal {
         let mut locked = self.cleanup_interval.lock().await;
 
         *locked = interval;
+    }
+}
+
+impl CachingLocal
+{
+    pub async fn empty_with_auto_cleanup(
+        duration_strategy: CachingDurationStrategy,
+        cleanup_interval: Duration
+    ) -> Result<CachingLocal, NovaXError> {
+        let caching = CachingLocal::empty(duration_strategy);
+
+        {
+            let mut locked = caching.cleanup_interval.lock().await;
+            *locked = cleanup_interval;
+        }
+
+        caching.start_cleanup_process_if_needed().await;
+
+        Ok(caching)
     }
 
     async fn start_cleanup_process_if_needed(&self) {
@@ -132,7 +181,13 @@ impl CachingLocal {
 }
 
 #[async_trait]
-impl CachingStrategy for CachingLocal {
+impl<MutexValue, MutexExpiration, MutexCleanupInterval, MutexIsCleanupProcessStarted> CachingStrategy for BaseCachingLocal<MutexValue, MutexExpiration, MutexCleanupInterval, MutexIsCleanupProcessStarted>
+where
+    MutexValue: MutexLike<T = HashMap<u64, Vec<u8>>>,
+    MutexExpiration: MutexLike<T = HashMap<u64, Duration>>,
+    MutexCleanupInterval: MutexLike<T = Duration>,
+    MutexIsCleanupProcessStarted: MutexLike<T = bool>
+{
     async fn get_cache<T: Serialize + DeserializeOwned + Send>(&self, key: u64) -> Result<Option<T>, NovaXError> {
         let Some(expiration_timestamp) = self.expiration_timestamp_map.lock().await.get(&key).cloned() else { return Ok(None) };
 
@@ -169,13 +224,14 @@ impl CachingStrategy for CachingLocal {
     }
 
     async fn clear(&self) -> Result<(), NovaXError> {
-        self.clear().await;
+        self.expiration_timestamp_map.lock().await.clear();
+        self.value_map.lock().await.clear();
 
         Ok(())
     }
 
     fn with_duration_strategy(&self, strategy: CachingDurationStrategy) -> Self {
-        CachingLocal {
+        Self {
             duration_strategy: strategy,
             value_map: self.value_map.clone(),
             expiration_timestamp_map: self.expiration_timestamp_map.clone(),
@@ -385,7 +441,7 @@ mod test {
 
         caching.set_cache(1, &"test".to_string()).await?;
         caching.set_cache(2, &"test2".to_string()).await?;
-        caching.clear().await;
+        caching.clear().await?;
 
         assert!(caching.value_map.lock().await.is_empty());
         assert!(caching.expiration_timestamp_map.lock().await.is_empty());

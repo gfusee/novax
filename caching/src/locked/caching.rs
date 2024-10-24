@@ -1,63 +1,84 @@
 use std::collections::HashMap;
-use std::fmt::Debug;
+use std::fmt::{Debug, Formatter};
 use std::future::Future;
 use std::sync::Arc;
 
 use async_trait::async_trait;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use tokio::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
+use tokio::sync::{Mutex, RwLock};
 
+use crate::utils::lock::{Locker, MutexLike};
 use novax::caching::{CachingDurationStrategy, CachingStrategy};
 use novax::errors::NovaXError;
 
 #[allow(type_alias_bounds)]
-pub type CachingLocked<C: CachingStrategy> = BaseCachingLocked<C, Arc<RwLock<()>>>;
+pub type CachingLocked<C: CachingStrategy> = BaseCachingLocked<C, RwLock<()>, Mutex<HashMap<u64, Arc<RwLock<()>>>>>;
 
-#[async_trait]
-pub trait Locker: Send + Sync + Clone + Debug {
-    fn new() -> Self;
-    async fn read(&self) -> RwLockReadGuard<'_, ()>;
-    async fn write(&self) -> RwLockWriteGuard<'_, ()>;
-}
-
-#[async_trait]
-impl Locker for Arc<RwLock<()>> {
-    fn new() -> Self {
-        Self::new(RwLock::new(()))
-    }
-
-    async fn read(&self) -> RwLockReadGuard<'_, ()> {
-        self.as_ref().read().await
-    }
-
-    async fn write(&self) -> RwLockWriteGuard<'_, ()> {
-        self.as_ref().write().await
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct BaseCachingLocked<C: CachingStrategy, L: Locker> {
+pub struct BaseCachingLocked<C, L, M>
+where
+    C: CachingStrategy,
+    L: Locker,
+    M: MutexLike<T = HashMap<u64, Arc<L>>>,
+{
     pub caching: C,
-    _lockers_map: Arc<Mutex<HashMap<u64, L>>>
+    _lockers_map: Arc<M>
 }
 
-impl<C: CachingStrategy, L: Locker> BaseCachingLocked<C, L> {
-    pub fn new(caching: C) -> BaseCachingLocked<C, L> {
-        BaseCachingLocked {
-            caching,
-            _lockers_map: Arc::new(Mutex::new(HashMap::new()))
+impl<C, L, M> Clone for BaseCachingLocked<C, L, M>
+where
+    C: CachingStrategy,
+    L: Locker,
+    M: MutexLike<T = HashMap<u64, Arc<L>>>,
+{
+    fn clone(&self) -> Self {
+        Self {
+            caching: self.caching.clone(),
+            _lockers_map: self._lockers_map.clone(),
         }
     }
 }
 
-impl<C: CachingStrategy, L: Locker> BaseCachingLocked<C, L> {
-    async fn get_locker(&self, key: u64) -> Result<L, NovaXError> {
+impl<C, L, M> Debug for BaseCachingLocked<C, L, M>
+where
+    C: CachingStrategy,
+    L: Locker,
+    M: MutexLike<T = HashMap<u64, Arc<L>>>,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("BaseCachingLocked")
+            .field("caching", &self.caching)
+            .field("_lockers_map", &self._lockers_map)
+            .finish()
+    }
+}
+
+impl<C, L, M> BaseCachingLocked<C, L, M>
+where
+    C: CachingStrategy,
+    L: Locker,
+    M: MutexLike<T = HashMap<u64, Arc<L>>>,
+{
+    pub fn new(caching: C) -> BaseCachingLocked<C, L, M> {
+        BaseCachingLocked {
+            caching,
+            _lockers_map: Arc::new(M::new(HashMap::new()))
+        }
+    }
+}
+
+impl<C, L, M> BaseCachingLocked<C, L, M>
+where
+    C: CachingStrategy,
+    L: Locker,
+    M: MutexLike<T = HashMap<u64, Arc<L>>>,
+{
+    async fn get_locker(&self, key: u64) -> Result<Arc<L>, NovaXError> {
         let mut lockers_map = self._lockers_map.lock().await;
         let locker = if let Some(locker) = lockers_map.get(&key) {
             locker.clone()
         } else {
-            let locker = L::new();
+            let locker = Arc::new(L::new());
             lockers_map.insert(key, locker.clone());
             locker
         };
@@ -67,7 +88,12 @@ impl<C: CachingStrategy, L: Locker> BaseCachingLocked<C, L> {
 }
 
 #[async_trait]
-impl<C: CachingStrategy, L: Locker> CachingStrategy for BaseCachingLocked<C, L> {
+impl<C, L, M> CachingStrategy for BaseCachingLocked<C, L, M>
+where
+    C: CachingStrategy,
+    L: Locker,
+    M: MutexLike<T = HashMap<u64, Arc<L>>>,
+{
     async fn get_cache<T: Serialize + DeserializeOwned + Send + Sync>(&self, key: u64) -> Result<Option<T>, NovaXError> {
         let locker = self.get_locker(key).await?;
         let lock_value = locker.read().await;
