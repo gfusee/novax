@@ -1,6 +1,6 @@
 [package]
 name = "novax-account"
-version = "0.1.19"
+version = "0.1.20"
 edition = "2021"
 license = "GPL-3.0-only"
 description = "The `novax-account` crate offers utilities for retrieving account information from the blockchain, such as address balance, nonce, code or code hash."
@@ -12,9 +12,9 @@ repository = "https://github.com/gfusee/novax"
 base64 = "0.21.5"
 serde = "1.0.188"
 serde_json = "1.0.105"
-novax = { path = "../core", version = "0.1.19" }
-novax-data = { path = "../data", version = "0.1.19" }
-novax-request = { path = "../request", version = "0.1.19" }
+novax = { path = "../core", version = "0.1.20" }
+novax-data = { path = "../data", version = "0.1.20" }
+novax-request = { path = "../request", version = "0.1.20" }
 num-bigint = "0.4.4"
 async-trait = "0.1.73"
 
