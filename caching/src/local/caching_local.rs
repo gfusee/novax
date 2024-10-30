@@ -119,7 +119,7 @@ where
         let Ok(serialized) = rmp_serde::to_vec(value) else { return Err(CachingError::UnableToSerialize.into())};
         
         if contains_key {
-            let mut expiration_timestamp_map_read_guard = self.expiration_timestamp_map.read().await;
+            let expiration_timestamp_map_read_guard = self.expiration_timestamp_map.read().await;
             // Important: the key might have been removed since the contains_key assignment.
             // If so, we won't set the cache here, but go to the "!contains_key" scope.
             // We could lock the whole map but this has a terrible performance impact by creating a bottleneck.
@@ -127,7 +127,7 @@ where
                 let mut expiration_timestamp_write = expiration_timestamp_locker.write().await;
 
                 // Let's do the same for the value
-                let mut value_map_read_guard = self.value_map.read().await;
+                let value_map_read_guard = self.value_map.read().await;
                 if let Some(value_locker) = value_map_read_guard.get(&key) {
                     let mut value_write = value_locker.write().await;
                     *expiration_timestamp_write = expiration_timestamp;
@@ -218,9 +218,7 @@ impl CachingLocal
 
         let keys: Vec<u64> = expiration_map_write_guard
             .keys()
-            .clone()
-            .into_iter()
-            .map(|e| *e)
+            .copied()
             .collect();
 
         for key in keys {
@@ -335,7 +333,6 @@ mod test {
 
     use crate::date::get_current_timestamp::set_mock_time;
     use crate::local::caching_local::CachingLocal;
-    use crate::utils::lock::Locker;
 
     #[tokio::test]
     async fn test_get_cache_key_not_found() -> Result<(), NovaXError> {
