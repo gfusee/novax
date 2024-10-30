@@ -18,7 +18,7 @@ pub type CachingLocked<C: CachingStrategy> = BaseCachingLocked<C, RwLock<()>, Mu
 pub struct BaseCachingLocked<C, L, M>
 where
     C: CachingStrategy,
-    L: Locker,
+    L: Locker<T = ()>,
     M: MutexLike<T = HashMap<u64, Arc<L>>>,
 {
     pub caching: C,
@@ -28,7 +28,7 @@ where
 impl<C, L, M> Clone for BaseCachingLocked<C, L, M>
 where
     C: CachingStrategy,
-    L: Locker,
+    L: Locker<T = ()>,
     M: MutexLike<T = HashMap<u64, Arc<L>>>,
 {
     fn clone(&self) -> Self {
@@ -42,7 +42,7 @@ where
 impl<C, L, M> Debug for BaseCachingLocked<C, L, M>
 where
     C: CachingStrategy,
-    L: Locker,
+    L: Locker<T = ()>,
     M: MutexLike<T = HashMap<u64, Arc<L>>>,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -56,7 +56,7 @@ where
 impl<C, L, M> BaseCachingLocked<C, L, M>
 where
     C: CachingStrategy,
-    L: Locker,
+    L: Locker<T = ()>,
     M: MutexLike<T = HashMap<u64, Arc<L>>>,
 {
     pub fn new(caching: C) -> BaseCachingLocked<C, L, M> {
@@ -70,7 +70,7 @@ where
 impl<C, L, M> BaseCachingLocked<C, L, M>
 where
     C: CachingStrategy,
-    L: Locker,
+    L: Locker<T = ()>,
     M: MutexLike<T = HashMap<u64, Arc<L>>>,
 {
     async fn get_locker(&self, key: u64) -> Result<Arc<L>, NovaXError> {
@@ -78,7 +78,7 @@ where
         let locker = if let Some(locker) = lockers_map.get(&key) {
             locker.clone()
         } else {
-            let locker = Arc::new(L::new());
+            let locker = Arc::new(L::new(()));
             lockers_map.insert(key, locker.clone());
             locker
         };
@@ -91,7 +91,7 @@ where
 impl<C, L, M> CachingStrategy for BaseCachingLocked<C, L, M>
 where
     C: CachingStrategy,
-    L: Locker,
+    L: Locker<T = ()>,
     M: MutexLike<T = HashMap<u64, Arc<L>>>,
 {
     async fn get_cache<T: Serialize + DeserializeOwned + Send + Sync>(&self, key: u64) -> Result<Option<T>, NovaXError> {
