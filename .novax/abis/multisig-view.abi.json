@@ -1,0 +1,611 @@
+{
+    "buildInfo": {
+        "rustc": {
+            "version": "1.82.0",
+            "commitHash": "f6e511eec7342f59a25f7c0534f1dbea00d01b14",
+            "commitDate": "2024-10-15",
+            "channel": "Stable",
+            "short": "rustc 1.82.0 (f6e511eec 2024-10-15)"
+        },
+        "contractCrate": {
+            "name": "multisig",
+            "version": "1.0.0"
+        },
+        "framework": {
+            "name": "multiversx-sc",
+            "version": "0.55.0"
+        }
+    },
+    "docs": [
+        "Multi-signature smart contract implementation.",
+        "Acts like a wallet that needs multiple signers for any action performed.",
+        "See the readme file for more detailed documentation."
+    ],
+    "name": "MultisigView",
+    "constructor": {
+        "docs": [
+            "The external view init prepares a contract that looks in another contract's storage.",
+            "It takes a single argument, the other contract's address",
+            "You won't find this constructors' definition in the contract, it gets injected automatically by the framework. See `multiversx_sc::external_view_contract`."
+        ],
+        "inputs": [
+            {
+                "name": "target_contract_address",
+                "type": "Address"
+            }
+        ],
+        "outputs": []
+    },
+    "endpoints": [
+        {
+            "docs": [
+                "Iterates through all actions and retrieves those that are still pending.",
+                "Serialized full action data:",
+                "- the action id",
+                "- the serialized action data",
+                "- (number of signers followed by) list of signer addresses."
+            ],
+            "name": "getPendingActionFullInfo",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "variadic<ActionFullInfo>",
+                    "multi_result": true
+                }
+            ],
+            "labels": [
+                "multisig-external-view"
+            ]
+        },
+        {
+            "docs": [
+                "Indicates user rights.",
+                "`0` = no rights,",
+                "`1` = can propose, but not sign,",
+                "`2` = can propose and sign."
+            ],
+            "name": "userRole",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "user",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "UserRole"
+                }
+            ],
+            "labels": [
+                "multisig-external-view"
+            ]
+        },
+        {
+            "docs": [
+                "Lists all users that can sign actions."
+            ],
+            "name": "getAllBoardMembers",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "variadic<Address>",
+                    "multi_result": true
+                }
+            ],
+            "labels": [
+                "multisig-external-view"
+            ]
+        },
+        {
+            "docs": [
+                "Lists all proposers that are not board members."
+            ],
+            "name": "getAllProposers",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "variadic<Address>",
+                    "multi_result": true
+                }
+            ],
+            "labels": [
+                "multisig-external-view"
+            ]
+        },
+        {
+            "docs": [
+                "Serialized action data of an action with index."
+            ],
+            "name": "getActionData",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "action_id",
+                    "type": "u32"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "Action"
+                }
+            ],
+            "labels": [
+                "multisig-external-view"
+            ]
+        },
+        {
+            "docs": [
+                "Gets addresses of all users who signed an action.",
+                "Does not check if those users are still board members or not,",
+                "so the result may contain invalid signers."
+            ],
+            "name": "getActionSigners",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "action_id",
+                    "type": "u32"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "List<Address>"
+                }
+            ],
+            "labels": [
+                "multisig-external-view"
+            ]
+        },
+        {
+            "docs": [
+                "Gets addresses of all users who signed an action and are still board members.",
+                "All these signatures are currently valid."
+            ],
+            "name": "getActionSignerCount",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "action_id",
+                    "type": "u32"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u32"
+                }
+            ],
+            "labels": [
+                "multisig-external-view"
+            ]
+        },
+        {
+            "docs": [
+                "It is possible for board members to lose their role.",
+                "They are not automatically removed from all actions when doing so,",
+                "therefore the contract needs to re-check every time when actions are performed.",
+                "This function is used to validate the signers before performing an action.",
+                "It also makes it easy to check before performing an action."
+            ],
+            "name": "getActionValidSignerCount",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "action_id",
+                    "type": "u32"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u32"
+                }
+            ],
+            "labels": [
+                "multisig-external-view"
+            ]
+        }
+    ],
+    "events": [
+        {
+            "identifier": "asyncCallSuccess",
+            "inputs": [
+                {
+                    "name": "results",
+                    "type": "variadic<bytes>",
+                    "indexed": true
+                }
+            ]
+        },
+        {
+            "identifier": "asyncCallError",
+            "inputs": [
+                {
+                    "name": "err_code",
+                    "type": "u32",
+                    "indexed": true
+                },
+                {
+                    "name": "err_message",
+                    "type": "bytes",
+                    "indexed": true
+                }
+            ]
+        },
+        {
+            "identifier": "startPerformAction",
+            "inputs": [
+                {
+                    "name": "data",
+                    "type": "ActionFullInfo"
+                }
+            ]
+        },
+        {
+            "identifier": "performChangeUser",
+            "inputs": [
+                {
+                    "name": "action_id",
+                    "type": "u32",
+                    "indexed": true
+                },
+                {
+                    "name": "changed_user",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "old_role",
+                    "type": "UserRole",
+                    "indexed": true
+                },
+                {
+                    "name": "new_role",
+                    "type": "UserRole",
+                    "indexed": true
+                }
+            ]
+        },
+        {
+            "identifier": "performChangeQuorum",
+            "inputs": [
+                {
+                    "name": "action_id",
+                    "type": "u32",
+                    "indexed": true
+                },
+                {
+                    "name": "new_quorum",
+                    "type": "u32",
+                    "indexed": true
+                }
+            ]
+        },
+        {
+            "identifier": "performAsyncCall",
+            "inputs": [
+                {
+                    "name": "action_id",
+                    "type": "u32",
+                    "indexed": true
+                },
+                {
+                    "name": "to",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "egld_value",
+                    "type": "BigUint",
+                    "indexed": true
+                },
+                {
+                    "name": "gas",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "endpoint",
+                    "type": "bytes",
+                    "indexed": true
+                },
+                {
+                    "name": "arguments",
+                    "type": "variadic<bytes>",
+                    "indexed": true
+                }
+            ]
+        },
+        {
+            "identifier": "performTransferExecute",
+            "inputs": [
+                {
+                    "name": "action_id",
+                    "type": "u32",
+                    "indexed": true
+                },
+                {
+                    "name": "to",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "egld_value",
+                    "type": "BigUint",
+                    "indexed": true
+                },
+                {
+                    "name": "gas",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "endpoint",
+                    "type": "bytes",
+                    "indexed": true
+                },
+                {
+                    "name": "arguments",
+                    "type": "variadic<bytes>",
+                    "indexed": true
+                }
+            ]
+        },
+        {
+            "identifier": "performDeployFromSource",
+            "inputs": [
+                {
+                    "name": "action_id",
+                    "type": "u32",
+                    "indexed": true
+                },
+                {
+                    "name": "egld_value",
+                    "type": "BigUint",
+                    "indexed": true
+                },
+                {
+                    "name": "source_address",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "code_metadata",
+                    "type": "CodeMetadata",
+                    "indexed": true
+                },
+                {
+                    "name": "gas",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "arguments",
+                    "type": "variadic<bytes>",
+                    "indexed": true
+                }
+            ]
+        },
+        {
+            "identifier": "performUpgradeFromSource",
+            "inputs": [
+                {
+                    "name": "action_id",
+                    "type": "u32",
+                    "indexed": true
+                },
+                {
+                    "name": "target_address",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "egld_value",
+                    "type": "BigUint",
+                    "indexed": true
+                },
+                {
+                    "name": "source_address",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "code_metadata",
+                    "type": "CodeMetadata",
+                    "indexed": true
+                },
+                {
+                    "name": "gas",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "arguments",
+                    "type": "variadic<bytes>",
+                    "indexed": true
+                }
+            ]
+        }
+    ],
+    "esdtAttributes": [],
+    "hasCallback": false,
+    "types": {
+        "Action": {
+            "type": "enum",
+            "variants": [
+                {
+                    "name": "Nothing",
+                    "discriminant": 0
+                },
+                {
+                    "name": "AddBoardMember",
+                    "discriminant": 1,
+                    "fields": [
+                        {
+                            "name": "0",
+                            "type": "Address"
+                        }
+                    ]
+                },
+                {
+                    "name": "AddProposer",
+                    "discriminant": 2,
+                    "fields": [
+                        {
+                            "name": "0",
+                            "type": "Address"
+                        }
+                    ]
+                },
+                {
+                    "name": "RemoveUser",
+                    "discriminant": 3,
+                    "fields": [
+                        {
+                            "name": "0",
+                            "type": "Address"
+                        }
+                    ]
+                },
+                {
+                    "name": "ChangeQuorum",
+                    "discriminant": 4,
+                    "fields": [
+                        {
+                            "name": "0",
+                            "type": "u32"
+                        }
+                    ]
+                },
+                {
+                    "name": "SendTransferExecute",
+                    "discriminant": 5,
+                    "fields": [
+                        {
+                            "name": "0",
+                            "type": "CallActionData"
+                        }
+                    ]
+                },
+                {
+                    "name": "SendAsyncCall",
+                    "discriminant": 6,
+                    "fields": [
+                        {
+                            "name": "0",
+                            "type": "CallActionData"
+                        }
+                    ]
+                },
+                {
+                    "name": "SCDeployFromSource",
+                    "discriminant": 7,
+                    "fields": [
+                        {
+                            "name": "amount",
+                            "type": "BigUint"
+                        },
+                        {
+                            "name": "source",
+                            "type": "Address"
+                        },
+                        {
+                            "name": "code_metadata",
+                            "type": "CodeMetadata"
+                        },
+                        {
+                            "name": "arguments",
+                            "type": "List<bytes>"
+                        }
+                    ]
+                },
+                {
+                    "name": "SCUpgradeFromSource",
+                    "discriminant": 8,
+                    "fields": [
+                        {
+                            "name": "sc_address",
+                            "type": "Address"
+                        },
+                        {
+                            "name": "amount",
+                            "type": "BigUint"
+                        },
+                        {
+                            "name": "source",
+                            "type": "Address"
+                        },
+                        {
+                            "name": "code_metadata",
+                            "type": "CodeMetadata"
+                        },
+                        {
+                            "name": "arguments",
+                            "type": "List<bytes>"
+                        }
+                    ]
+                }
+            ]
+        },
+        "ActionFullInfo": {
+            "type": "struct",
+            "docs": [
+                "Not used internally, just to retrieve results via endpoint."
+            ],
+            "fields": [
+                {
+                    "name": "action_id",
+                    "type": "u32"
+                },
+                {
+                    "name": "action_data",
+                    "type": "Action"
+                },
+                {
+                    "name": "signers",
+                    "type": "List<Address>"
+                }
+            ]
+        },
+        "CallActionData": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "to",
+                    "type": "Address"
+                },
+                {
+                    "name": "egld_amount",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "endpoint_name",
+                    "type": "bytes"
+                },
+                {
+                    "name": "arguments",
+                    "type": "List<bytes>"
+                }
+            ]
+        },
+        "UserRole": {
+            "type": "enum",
+            "variants": [
+                {
+                    "name": "None",
+                    "discriminant": 0
+                },
+                {
+                    "name": "Proposer",
+                    "discriminant": 1
+                },
+                {
+                    "name": "BoardMember",
+                    "discriminant": 2
+                }
+            ]
+        }
+    }
+}

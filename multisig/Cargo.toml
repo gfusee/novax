@@ -1,0 +1,16 @@
+[package]
+name = "novax-multisig"
+version = "0.1.20"
+edition = "2021"
+license = "GPL-3.0-only"
+description = "Utils to interact with multisig contracts using NovaX."
+repository = "https://github.com/gfusee/novax"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = "1.32.0"
+novax = { path = "../core", version = "0.1.20" }
+novax-executor = { path = "../executor", version = "0.1.20" }
+async-trait = "0.1.73"
+num-bigint = "0.4.4"
