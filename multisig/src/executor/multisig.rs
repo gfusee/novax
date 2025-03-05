@@ -155,8 +155,8 @@ fn get_nested_multisig_call_result<OutputManaged>(
 where
     OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
 {
-    let async_call_success_event_identifier = "";
-    let async_call_success_topic_identifier = "";
+    let async_call_success_event_identifier = "callBack";
+    let async_call_success_topic_identifier = "asyncCallSuccess";
 
     let async_call_success_event = tx
         .transaction
