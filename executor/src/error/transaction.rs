@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::ExecutorError;
+use crate::{ExecutorError, TransactionOnNetwork};
 
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub enum TransactionError {
@@ -13,7 +13,7 @@ pub enum TransactionError {
     NoSmartContractResult,
     SmartContractExecutionError { status: u64, message: String },
     TimeoutWhenRetrievingTransactionOnNetwork,
-    CannotDecodeSmartContractResult,
+    CannotDecodeSmartContractResult { response: TransactionOnNetwork },
     NoSCDeployLogInTheResponse,
     CannotEncodeString { string: String },
     CannotEncodeU64 { value: u64 },

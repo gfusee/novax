@@ -127,8 +127,7 @@ impl<Interactor: BlockchainInteractor> TransactionExecutor for BaseTransactionNe
             .await?;
 
         let Some(mut sc_result) = find_smart_contract_result(
-            &result.transaction.smart_contract_results,
-            result.transaction.logs.as_ref()
+            &result
         )? else {
             if let Some(logs) = result.transaction.logs.as_ref() {
                 if let Ok(Some(error_log)) = find_sc_error(logs) {
@@ -143,7 +142,7 @@ impl<Interactor: BlockchainInteractor> TransactionExecutor for BaseTransactionNe
         };
 
         let managed_result = OutputManaged::multi_decode(&mut sc_result)
-            .map_err(|_| TransactionError::CannotDecodeSmartContractResult)?;
+            .map_err(|_| TransactionError::CannotDecodeSmartContractResult { response: result.clone() })?;
 
         let native_result = managed_result.to_native();
 

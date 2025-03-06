@@ -1,24 +1,24 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::utils::transaction::results::find_sc_error;
 
 pub(crate) const SUCCESS_TRANSACTION_STATUS: [&str; 2] = ["success", "successful"];
 pub(crate) const FINAL_TRANSACTION_STATUS: [&str; 3] = ["success", "successful", "fail"];
 
-#[derive(Deserialize, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, Default, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct TransactionOnNetworkResponse {
     pub data: Option<TransactionOnNetwork>,
     pub error: String
 }
 
-#[derive(Deserialize, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, Default, PartialEq, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct TransactionOnNetwork {
     pub transaction: TransactionOnNetworkTransaction
 }
 
-#[derive(Deserialize, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, Default, PartialEq, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct TransactionOnNetworkTransaction {
     pub gas_used: u64,
@@ -27,7 +27,7 @@ pub struct TransactionOnNetworkTransaction {
     pub logs: Option<TransactionOnNetworkTransactionLogs>
 }
 
-#[derive(Deserialize, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, Default, PartialEq, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct TransactionOnNetworkTransactionSmartContractResult {
     pub hash: String,
@@ -35,14 +35,14 @@ pub struct TransactionOnNetworkTransactionSmartContractResult {
     pub data: String,
 }
 
-#[derive(Deserialize, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, Default, PartialEq, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct TransactionOnNetworkTransactionLogs {
     pub address: String,
     pub events: Vec<TransactionOnNetworkTransactionLogsEvents>
 }
 
-#[derive(Deserialize, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, Default, PartialEq, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct TransactionOnNetworkTransactionLogsEvents {
     pub address: String,
