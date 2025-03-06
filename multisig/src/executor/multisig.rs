@@ -2,13 +2,13 @@ use async_trait::async_trait;
 use novax::data::NativeConvertible;
 use novax::executor::call_result::CallResult;
 use novax::executor::{ExecutorError, TokenTransfer, TopDecodeMulti, TransactionExecutor};
-use novax::multisig::multisig::MultisigContract;
-use novax::multisigview::multisigview::MultisigViewContract;
 use novax::Address;
 use novax_executor::{NormalizationInOut, QueryExecutor, TransactionOnNetwork};
 use std::time::Duration;
+use crate::generated::multisig::multisig::MultisigContract;
+use crate::generated::multisigview::multisigview::MultisigViewContract;
 
-struct MultisigExecutor<TxExecutor, QExecutor>
+pub struct MultisigExecutor<TxExecutor, QExecutor>
 where
     TxExecutor: TransactionExecutor + Clone,
     QExecutor: QueryExecutor + Clone,
@@ -17,6 +17,26 @@ where
     multisig_view_address: Address,
     transaction_executor: TxExecutor,
     query_executor: QExecutor,
+}
+
+impl<TxExecutor, QExecutor> MultisigExecutor<TxExecutor, QExecutor>
+where
+    TxExecutor: TransactionExecutor + Clone,
+    QExecutor: QueryExecutor + Clone,
+{
+    pub fn new(
+        multisig_address: Address,
+        multisig_view_address: Address,
+        transaction_executor: TxExecutor,
+        query_executor: QExecutor,
+    ) -> Self {
+        Self {
+            multisig_address,
+            multisig_view_address,
+            transaction_executor,
+            query_executor,
+        }
+    }
 }
 
 #[async_trait]
@@ -43,7 +63,7 @@ where
             .await;
 
         let Ok(multisig_quorum) = multisig_quorum else {
-
+            todo!()
         };
 
         let to_bech32_string = to.to_bech32_string()?;
@@ -76,7 +96,7 @@ where
         let propose_call_result = MultisigContract::new(self.multisig_address.clone())
             .call(
                 self.transaction_executor.clone(),
-                gas_limit
+                gas_limit // TODO: set a fixed and reasonable gas limit for proposals
             )
             .propose_async_call(
                 &Address::from_bech32_string(&normalized.receiver)?,
@@ -86,9 +106,11 @@ where
             .await;
 
         let Ok(propose_call_result) = propose_call_result else {
+            todo!()
         };
 
         let Some(proposal_id) = propose_call_result.result else {
+            todo!()
         };
 
         let multisig_address_bech32 = self.multisig_address.to_bech32_string()?;
@@ -104,7 +126,7 @@ where
                 .await;
 
             let Ok(actions_full_info) = actions_full_info else {
-
+                todo!()
             };
 
             let opt_action = actions_full_info
@@ -112,7 +134,7 @@ where
                 .find(|action| action.action_id == proposal_id);
 
             let Some(action) = opt_action else {
-
+                todo!()
             };
 
             let signers_len = action.signers.len();
@@ -123,12 +145,15 @@ where
             }
 
             let perform_call_result = MultisigContract::new(self.multisig_address.clone())
-                .call(self.transaction_executor.clone())
+                .call(
+                    self.transaction_executor.clone(),
+                    gas_limit
+                )
                 .perform_action(&proposal_id)
                 .await;
 
             let Ok(perform_call_result) = perform_call_result else {
-
+                todo!()
             };
 
             let result = get_nested_multisig_call_result::<OutputManaged>(
@@ -142,7 +167,7 @@ where
         Ok(
             CallResult {
                 response: tx,
-                result: Some(result),
+                result,
             }
         )
     }
@@ -151,7 +176,7 @@ where
 fn get_nested_multisig_call_result<OutputManaged>(
     multisig_address: &str,
     tx: TransactionOnNetwork
-) -> Option<OutputManaged>
+) -> Option<OutputManaged::Native>
 where
     OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
 {
@@ -176,13 +201,14 @@ where
     }
 
     let encoded_data = async_call_success_event.topics[1..].to_vec();
-    let encoded_data_bytes: Vec<Vec<u8>> = encoded_data
+    let mut encoded_data_bytes: Vec<Vec<u8>> = encoded_data
+        .into_iter()
         .map(|encoded_arg| hex::decode(encoded_arg).expect("error hex-decoding result"))
         .collect();
 
-    let Ok(decoded) = OutputManaged::multi_decode(encoded_data_bytes) else {
+    let Ok(decoded) = OutputManaged::multi_decode(&mut encoded_data_bytes) else {
         return None;
     };
 
-    decoded
+    Some(decoded.to_native())
 }

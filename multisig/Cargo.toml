@@ -11,7 +11,14 @@ repository = "https://github.com/gfusee/novax"
 [dependencies]
 tokio = "1.32.0"
 novax = { path = "../core", version = "0.1.20" }
+novax-data = { path = "../data", version = "0.1.20" }
 novax-executor = { path = "../executor", version = "0.1.20" }
+multiversx-sc = "0.52.3"
+multiversx-sdk = "0.4.1"
+multiversx-sc-scenario = "0.52.3"
+multiversx-sc-codec = "0.20.1"
+multiversx-sc-snippets = "0.52.3"
 hex = "0.4.3"
 async-trait = "0.1.73"
 num-bigint = "0.4.4"
+serde = { version = "1.0.210", features = ["derive"] }

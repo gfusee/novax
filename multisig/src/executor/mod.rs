@@ -1,1 +1,1 @@
-mod multisig;
+pub(crate) mod multisig;
