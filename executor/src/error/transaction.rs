@@ -21,7 +21,8 @@ pub enum TransactionError {
     CannotSerializeTransactionData,
     CannotDecodeBase64,
     CannotDecodeTopic,
-    WrongTopicsCountForSignalErrorEvent
+    WrongTopicsCountForSignalErrorEvent,
+    Other { id: String, reason: String }, // For use to crates using this one as dependency
 }
 
 impl From<TransactionError> for ExecutorError {

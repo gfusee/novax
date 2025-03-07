@@ -3,13 +3,20 @@ use novax::data::NativeConvertible;
 use novax::executor::call_result::CallResult;
 use novax::executor::{ExecutorError, TokenTransfer, TopDecodeMulti, TransactionExecutor};
 use novax::Address;
-use novax_executor::{NormalizationInOut, QueryExecutor, TransactionError, TransactionOnNetwork};
+use novax_executor::{NetworkQueryError, NormalizationInOut, QueryExecutor, TransactionError, TransactionOnNetwork};
 use std::time::Duration;
 use base64::Engine;
 use novax::errors::NovaXError;
 use novax_executor::results::decode_topic;
 use crate::generated::multisig::multisig::MultisigContract;
 use crate::generated::multisigview::multisigview::MultisigViewContract;
+
+pub const NONE_PROPOSAL_ID_ERROR: &str = "NOVAX_MULTISIG_NONE_PROPOSAL_ID_ERROR";
+pub const NO_ACTION_FOUND_FOR_ID_ERROR: &str = "NOVAX_MULTISIG_NO_ACTION_FOUND_FOR_ID_ERROR";
+pub const ERROR_WHILE_RETRIEVING_QUORUM: &str = "NOVAX_MULTISIG_ERROR_WHILE_PERFORMING_ACTION_TRANSACTION";
+pub const ERROR_WHILE_RETRIEVING_FULL_ACTION_FULL_INFO: &str = "NOVAX_MULTISIG_ERROR_WHILE_RETRIEVING_FULL_ACTION_FULL_INFO";
+pub const ERROR_WHILE_PROPOSING_ACTION_TRANSACTION: &str = "NOVAX_MULTISIG_ERROR_WHILE_PROPOSING_ACTION_TRANSACTION";
+pub const ERROR_WHILE_PERFORMING_ACTION_TRANSACTION: &str = "NOVAX_MULTISIG_ERROR_WHILE_PERFORMING_ACTION_TRANSACTION";
 
 pub struct MultisigExecutor<TxExecutor, QExecutor>
 where
@@ -18,6 +25,7 @@ where
 {
     multisig_address: Address,
     multisig_view_address: Address,
+    gas_for_proposal: u64,
     transaction_executor: TxExecutor,
     query_executor: QExecutor,
 }
@@ -30,12 +38,14 @@ where
     pub fn new(
         multisig_address: Address,
         multisig_view_address: Address,
+        gas_for_proposal: u64,
         transaction_executor: TxExecutor,
         query_executor: QExecutor,
     ) -> Self {
         Self {
             multisig_address,
             multisig_view_address,
+            gas_for_proposal,
             transaction_executor,
             query_executor,
         }
@@ -63,11 +73,14 @@ where
         let multisig_quorum = MultisigContract::new(self.multisig_address.clone())
             .query(self.query_executor.clone())
             .get_quorum()
-            .await;
-
-        let Ok(multisig_quorum) = multisig_quorum else {
-            todo!()
-        };
+            .await
+            .map_err(|error| map_novax_error_to_executor_error(
+                error,
+                |error| NetworkQueryError::Other {
+                    id: ERROR_WHILE_RETRIEVING_QUORUM.to_string(),
+                    reason: format!("An error occurred while retrieving the quorum:\n\n{error:?}")
+                }.into()
+            ))?;
 
         let to_bech32_string = to.to_bech32_string()?;
 
@@ -99,26 +112,34 @@ where
         let propose_call_result = MultisigContract::new(self.multisig_address.clone())
             .call(
                 self.transaction_executor.clone(),
-                gas_limit // TODO: set a fixed and reasonable gas limit for proposals
+                self.gas_for_proposal
             )
             .propose_async_call(
                 &Address::from_bech32_string(&normalized.receiver)?,
                 &normalized.egld_value,
                 &function_call
             )
-            .await;
-
-        let Ok(propose_call_result) = propose_call_result else {
-            todo!()
-        };
+            .await
+            .map_err(|error| map_novax_error_to_executor_error(
+                error,
+                |error| TransactionError::Other {
+                    id: ERROR_WHILE_PROPOSING_ACTION_TRANSACTION.to_string(),
+                    reason: format!("An error occurred while proposing the action:\n\n{error:?}")
+                }.into()
+            ))?;
 
         let Some(proposal_id) = propose_call_result.result else {
-            todo!()
+            return Err(
+                TransactionError::Other {
+                    id: NONE_PROPOSAL_ID_ERROR.to_string(),
+                    reason: "proposal_id is none".to_string()
+                }.into()
+            );
         };
 
         let multisig_address_bech32 = self.multisig_address.to_bech32_string()?;
         let (result, tx) = loop {
-            // TODO: write a more real-time wait mechanism such as done in the caching crate with EachBlock.
+            // TODO: write a more real-time waiting mechanism such as done in the caching crate with EachBlock.
             tokio::time::sleep(Duration::from_secs(6)).await;
 
             println!("Pending action {proposal_id} execution on the multisig contract...");
@@ -126,18 +147,26 @@ where
             let actions_full_info = MultisigViewContract::new(self.multisig_view_address.clone())
                 .query(self.query_executor.clone())
                 .get_pending_action_full_info()
-                .await;
-
-            let Ok(actions_full_info) = actions_full_info else {
-                todo!()
-            };
+                .await
+                .map_err(|error| map_novax_error_to_executor_error(
+                    error,
+                    |error| NetworkQueryError::Other {
+                        id: ERROR_WHILE_RETRIEVING_FULL_ACTION_FULL_INFO.to_string(),
+                        reason: format!("An error occurred while retrieving all the pending actions:\n\n{error:?}")
+                    }.into()
+                ))?;
 
             let opt_action = actions_full_info
                 .into_iter()
                 .find(|action| action.action_id == proposal_id);
 
             let Some(action) = opt_action else {
-                todo!()
+                return Err(
+                    TransactionError::Other {
+                        id: NO_ACTION_FOUND_FOR_ID_ERROR.to_string(),
+                        reason: format!("no action found with id: {proposal_id}")
+                    }.into()
+                );
             };
 
             let signers_len = action.signers.len();
@@ -162,7 +191,17 @@ where
                 Err(NovaXError::Executor(ExecutorError::Transaction(TransactionError::CannotDecodeSmartContractResult{ response }))) => {
                     response // There is an error in the writeLog event that might cause CannotDecodeSmartContractResult when performing an async call action on the multisig
                 }
-                Err(_) => todo!()
+                Err(error) => {
+                    return Err(
+                        map_novax_error_to_executor_error(
+                            error,
+                            |error| TransactionError::Other {
+                                id: ERROR_WHILE_PERFORMING_ACTION_TRANSACTION.to_string(),
+                                reason: format!("Found an error when performing the action:\n\n{error:?}")
+                            }.into()
+                        )
+                    )
+                }
             };
 
             let result = get_nested_multisig_call_result::<OutputManaged>(
@@ -179,6 +218,19 @@ where
                 result,
             }
         )
+    }
+}
+
+fn map_novax_error_to_executor_error<F>(
+    error: NovaXError,
+    or_else: F
+) -> ExecutorError
+where
+    F: FnOnce(NovaXError) -> ExecutorError
+{
+    match error {
+        NovaXError::Executor(error) => error,
+        _ => or_else(error).into()
     }
 }
 
