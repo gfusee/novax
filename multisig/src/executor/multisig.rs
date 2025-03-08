@@ -1,22 +1,20 @@
+use crate::executor::action::{Action, AsyncCallAction, DeploySCFromSourceAction};
+use crate::generated::multisig::multisig::MultisigContract;
+use crate::generated::multisigview::multisigview::MultisigViewContract;
+use crate::utils::map_novax_error_to_executor_error::map_novax_error_to_executor_error;
 use async_trait::async_trait;
+use base64::Engine;
+use multiversx_sc::imports::CodeMetadata;
 use novax::data::NativeConvertible;
+use novax::errors::NovaXError;
 use novax::executor::call_result::CallResult;
 use novax::executor::{ExecutorError, TokenTransfer, TopDecodeMulti, TransactionExecutor};
 use novax::Address;
-use novax_executor::{NetworkQueryError, NormalizationInOut, QueryExecutor, TransactionError, TransactionOnNetwork};
-use std::time::Duration;
-use base64::Engine;
-use novax::errors::NovaXError;
 use novax_executor::results::decode_topic;
-use crate::generated::multisig::multisig::MultisigContract;
-use crate::generated::multisigview::multisigview::MultisigViewContract;
-
-pub const NONE_PROPOSAL_ID_ERROR: &str = "NOVAX_MULTISIG_NONE_PROPOSAL_ID_ERROR";
-pub const NO_ACTION_FOUND_FOR_ID_ERROR: &str = "NOVAX_MULTISIG_NO_ACTION_FOUND_FOR_ID_ERROR";
-pub const ERROR_WHILE_RETRIEVING_QUORUM: &str = "NOVAX_MULTISIG_ERROR_WHILE_PERFORMING_ACTION_TRANSACTION";
-pub const ERROR_WHILE_RETRIEVING_FULL_ACTION_FULL_INFO: &str = "NOVAX_MULTISIG_ERROR_WHILE_RETRIEVING_FULL_ACTION_FULL_INFO";
-pub const ERROR_WHILE_PROPOSING_ACTION_TRANSACTION: &str = "NOVAX_MULTISIG_ERROR_WHILE_PROPOSING_ACTION_TRANSACTION";
-pub const ERROR_WHILE_PERFORMING_ACTION_TRANSACTION: &str = "NOVAX_MULTISIG_ERROR_WHILE_PERFORMING_ACTION_TRANSACTION";
+use novax_executor::{DeployExecutor, NetworkQueryError, QueryExecutor, TransactionError, TransactionOnNetwork};
+use num_bigint::BigUint;
+use std::time::Duration;
+use crate::executor::errors::{DEPLOY_SOURCE_ADDRESS_REQUIRED, ERROR_WHILE_PERFORMING_ACTION_TRANSACTION, ERROR_WHILE_RETRIEVING_FULL_ACTION_FULL_INFO, ERROR_WHILE_RETRIEVING_QUORUM, NO_ACTION_FOUND_FOR_ID_ERROR};
 
 pub struct MultisigExecutor<TxExecutor, QExecutor>
 where
@@ -28,6 +26,7 @@ where
     gas_for_proposal: u64,
     transaction_executor: TxExecutor,
     query_executor: QExecutor,
+    deploy_source_address: Option<Address> // Only needed when deploying a contract
 }
 
 impl<TxExecutor, QExecutor> MultisigExecutor<TxExecutor, QExecutor>
@@ -48,29 +47,30 @@ where
             gas_for_proposal,
             transaction_executor,
             query_executor,
+            deploy_source_address: None
         }
     }
-}
 
-#[async_trait]
-impl<TxExecutor, QExecutor> TransactionExecutor for MultisigExecutor<TxExecutor, QExecutor>
-where
-    TxExecutor: TransactionExecutor + Clone,
-    QExecutor: QueryExecutor + Clone,
-{
-    async fn sc_call<OutputManaged>(
-        &mut self,
-        to: &Address,
-        function: String,
-        arguments: Vec<Vec<u8>>,
-        gas_limit: u64,
-        egld_value: num_bigint::BigUint,
-        esdt_transfers: Vec<TokenTransfer>
-    ) -> Result<CallResult<OutputManaged::Native>, ExecutorError>
-    where
-        OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
-    {
-        let multisig_quorum = MultisigContract::new(self.multisig_address.clone())
+    pub fn new_for_deployment(
+        multisig_address: Address,
+        multisig_view_address: Address,
+        gas_for_proposal: u64,
+        transaction_executor: TxExecutor,
+        query_executor: QExecutor,
+        deploy_source_address: Address
+    ) -> Self {
+        Self {
+            multisig_address,
+            multisig_view_address,
+            gas_for_proposal,
+            transaction_executor,
+            query_executor,
+            deploy_source_address: Some(deploy_source_address),
+        }
+    }
+
+    async fn get_quorum(&self) -> Result<u32, ExecutorError> {
+        MultisigContract::new(self.multisig_address.to_bech32_string()?)
             .query(self.query_executor.clone())
             .get_quorum()
             .await
@@ -80,64 +80,20 @@ where
                     id: ERROR_WHILE_RETRIEVING_QUORUM.to_string(),
                     reason: format!("An error occurred while retrieving the quorum:\n\n{error:?}")
                 }.into()
-            ))?;
+            ))
+    }
 
-        let to_bech32_string = to.to_bech32_string()?;
-
-        let normalized = NormalizationInOut {
-            sender: to_bech32_string.clone(),
-            receiver: to_bech32_string,
-            function_name: Some(function),
-            arguments,
-            egld_value,
-            esdt_transfers,
-        }.normalize()?;
-
-        let mut function_call: Vec<String> = vec![
-            normalized.function_name.unwrap_or_default()
-        ];
-
-        for arg in normalized.arguments {
-            // The only operation done on the unsafe String is .as_bytes in .to_managed.
-            // Therefore, we can accept this unsafe call.
-            let arg_string_unsafe = unsafe {
-                String::from_utf8_unchecked(arg)
-            };
-
-            function_call.push(
-                arg_string_unsafe
-            )
-        }
-
-        let propose_call_result = MultisigContract::new(self.multisig_address.clone())
-            .call(
-                self.transaction_executor.clone(),
-                self.gas_for_proposal
-            )
-            .propose_async_call(
-                &Address::from_bech32_string(&normalized.receiver)?,
-                &normalized.egld_value,
-                &function_call
-            )
-            .await
-            .map_err(|error| map_novax_error_to_executor_error(
-                error,
-                |error| TransactionError::Other {
-                    id: ERROR_WHILE_PROPOSING_ACTION_TRANSACTION.to_string(),
-                    reason: format!("An error occurred while proposing the action:\n\n{error:?}")
-                }.into()
-            ))?;
-
-        let Some(proposal_id) = propose_call_result.result else {
-            return Err(
-                TransactionError::Other {
-                    id: NONE_PROPOSAL_ID_ERROR.to_string(),
-                    reason: "proposal_id is none".to_string()
-                }.into()
-            );
-        };
-
+    async fn wait_for_signers_and_perform_action<OutputManaged>(
+        &self,
+        multisig_quorum: u32,
+        proposal_id: u32,
+        gas_limit: u64
+    ) -> Result<CallResult<OutputManaged::Native>, ExecutorError>
+    where
+        OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
+    {
         let multisig_address_bech32 = self.multisig_address.to_bech32_string()?;
+
         let (result, tx) = loop {
             // TODO: write a more real-time waiting mechanism such as done in the caching crate with EachBlock.
             tokio::time::sleep(Duration::from_secs(6)).await;
@@ -221,16 +177,92 @@ where
     }
 }
 
-fn map_novax_error_to_executor_error<F>(
-    error: NovaXError,
-    or_else: F
-) -> ExecutorError
+#[async_trait]
+impl<TxExecutor, QExecutor> TransactionExecutor for MultisigExecutor<TxExecutor, QExecutor>
 where
-    F: FnOnce(NovaXError) -> ExecutorError
+    TxExecutor: TransactionExecutor + Clone,
+    QExecutor: QueryExecutor + Clone,
 {
-    match error {
-        NovaXError::Executor(error) => error,
-        _ => or_else(error).into()
+    async fn sc_call<OutputManaged>(
+        &mut self,
+        to: &Address,
+        function: String,
+        arguments: Vec<Vec<u8>>,
+        gas_limit: u64,
+        egld_value: num_bigint::BigUint,
+        esdt_transfers: Vec<TokenTransfer>
+    ) -> Result<CallResult<OutputManaged::Native>, ExecutorError>
+    where
+        OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
+    {
+        let multisig_quorum = self.get_quorum().await?;
+
+        let action = Action::AsyncCall(
+            AsyncCallAction {
+                receiver: to.clone(),
+                function_name: Some(function),
+                arguments,
+                egld_value,
+                esdt_transfers,
+            }
+        );
+
+        let proposal_id = action.propose_action(
+            self.transaction_executor.clone(),
+            self.multisig_address.clone(),
+            self.gas_for_proposal
+        )
+            .await?;
+
+        self.wait_for_signers_and_perform_action::<OutputManaged>(
+            multisig_quorum,
+            proposal_id,
+            gas_limit
+        )
+            .await
+    }
+}
+
+#[async_trait]
+impl<TxExecutor, QExecutor> DeployExecutor for MultisigExecutor<TxExecutor, QExecutor>
+where
+    TxExecutor: TransactionExecutor + Clone,
+    QExecutor: QueryExecutor + Clone,
+{
+    async fn sc_deploy<OutputManaged>(&mut self, bytes: Vec<u8>, code_metadata: CodeMetadata, egld_value: BigUint, arguments: Vec<Vec<u8>>, gas_limit: u64) -> Result<(Address, CallResult<OutputManaged::Native>), ExecutorError>
+    where
+        OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
+    {
+        let multisig_quorum = self.get_quorum().await?;
+
+        let Some(deploy_source_address) = self.deploy_source_address.clone() else {
+            return Err(
+                TransactionError::Other {
+                    id: DEPLOY_SOURCE_ADDRESS_REQUIRED.to_string(),
+                    reason: "No deploy source address provided, please contruct the MultisigExecutor using MultisigExecutor::new_for_deployment".to_string()
+                }.into()
+            );
+        };
+
+        let action = Action::DeploySCFromSource(DeploySCFromSourceAction {
+            source_address: deploy_source_address,
+            arguments,
+            code_metadata,
+            egld_value,
+        });
+
+        let proposal_id = action.propose_action(
+            self.transaction_executor.clone(),
+            self.multisig_address.clone(),
+            self.gas_for_proposal
+        )
+            .await?;
+
+        self.wait_for_signers_and_perform_action::<OutputManaged>(
+            multisig_quorum,
+            proposal_id,
+            gas_limit
+        )
     }
 }
 
@@ -281,13 +313,13 @@ where
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
+    use crate::executor::multisig::get_nested_multisig_call_result;
     use multiversx_sc::types::{EsdtTokenPayment, TokenIdentifier};
     use multiversx_sc_scenario::api::StaticApi;
-    use num_bigint::BigUint;
     use novax_data::Payment;
     use novax_executor::TransactionOnNetworkResponse;
-    use crate::executor::multisig::get_nested_multisig_call_result;
+    use num_bigint::BigUint;
+    use std::str::FromStr;
 
     #[tokio::test]
     async fn test_get_nested_multisig_call_result_with_simple_xexchange_view() {
