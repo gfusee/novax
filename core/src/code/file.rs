@@ -2,7 +2,7 @@ use std::fs::read;
 use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
-
+use novax_data::Address;
 use crate::code::bytes::AsBytesValue;
 use crate::errors::{CodeError, NovaXError};
 
@@ -35,6 +35,12 @@ impl AsBytesValue for &str {
     ///
     /// Returns a `CodeError` wrapped in a `NovaXError` if the file cannot be read.
     async fn into_bytes_value(self) -> Result<Vec<u8>, NovaXError> {
+        if self.starts_with("erd") {
+            if let Ok(address) = Address::from_bech32_string(self) {
+                return Ok(address.to_bytes().to_vec());
+            }
+        }
+
         FileCode(Path::new(self).to_path_buf()).into_bytes_value().await
     }
 }

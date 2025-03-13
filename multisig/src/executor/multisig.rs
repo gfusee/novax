@@ -1,21 +1,20 @@
-use crate::executor::action::{Action, AsyncCallAction, DeploySCFromSourceAction};
+use crate::errors::NO_DEPLOYED_ADDRESS;
+use crate::executor::action::{Action, AsyncCallAction, DeploySCFromSourceAction, TransferAndExecuteAction};
+use crate::executor::errors::{DEPLOY_BYTES_SHOULD_BE_AN_ADDRESS, ERROR_WHILE_PERFORMING_ACTION_TRANSACTION, ERROR_WHILE_RETRIEVING_FULL_ACTION_FULL_INFO, ERROR_WHILE_RETRIEVING_QUORUM, NO_ACTION_FOUND_FOR_ID_ERROR};
 use crate::generated::multisig::multisig::MultisigContract;
 use crate::generated::multisigview::multisigview::MultisigViewContract;
 use crate::utils::map_novax_error_to_executor_error::map_novax_error_to_executor_error;
 use async_trait::async_trait;
-use base64::Engine;
-use multiversx_sc::imports::CodeMetadata;
+use multiversx_sc::types::CodeMetadata;
 use novax::data::NativeConvertible;
-use novax::errors::NovaXError;
 use novax::executor::call_result::CallResult;
 use novax::executor::{ExecutorError, TokenTransfer, TopDecodeMulti, TransactionExecutor};
 use novax::Address;
-use novax_executor::results::decode_topic;
-use novax_executor::{DeployExecutor, NetworkQueryError, QueryExecutor, TransactionError, TransactionOnNetwork};
+use novax_executor::{DeployExecutor, NetworkQueryError, QueryExecutor, TransactionError};
 use num_bigint::BigUint;
 use std::time::Duration;
-use crate::executor::errors::{DEPLOY_SOURCE_ADDRESS_REQUIRED, ERROR_WHILE_PERFORMING_ACTION_TRANSACTION, ERROR_WHILE_RETRIEVING_FULL_ACTION_FULL_INFO, ERROR_WHILE_RETRIEVING_QUORUM, NO_ACTION_FOUND_FOR_ID_ERROR};
 
+#[derive(Clone)]
 pub struct MultisigExecutor<TxExecutor, QExecutor>
 where
     TxExecutor: TransactionExecutor + Clone,
@@ -24,9 +23,9 @@ where
     multisig_address: Address,
     multisig_view_address: Address,
     gas_for_proposal: u64,
+    use_async_call_action: bool,
     transaction_executor: TxExecutor,
     query_executor: QExecutor,
-    deploy_source_address: Option<Address> // Only needed when deploying a contract
 }
 
 impl<TxExecutor, QExecutor> MultisigExecutor<TxExecutor, QExecutor>
@@ -38,6 +37,7 @@ where
         multisig_address: Address,
         multisig_view_address: Address,
         gas_for_proposal: u64,
+        use_async_call_action: bool,
         transaction_executor: TxExecutor,
         query_executor: QExecutor,
     ) -> Self {
@@ -45,27 +45,9 @@ where
             multisig_address,
             multisig_view_address,
             gas_for_proposal,
+            use_async_call_action,
             transaction_executor,
-            query_executor,
-            deploy_source_address: None
-        }
-    }
-
-    pub fn new_for_deployment(
-        multisig_address: Address,
-        multisig_view_address: Address,
-        gas_for_proposal: u64,
-        transaction_executor: TxExecutor,
-        query_executor: QExecutor,
-        deploy_source_address: Address
-    ) -> Self {
-        Self {
-            multisig_address,
-            multisig_view_address,
-            gas_for_proposal,
-            transaction_executor,
-            query_executor,
-            deploy_source_address: Some(deploy_source_address),
+            query_executor
         }
     }
 
@@ -83,18 +65,48 @@ where
             ))
     }
 
-    async fn wait_for_signers_and_perform_action<OutputManaged>(
+    fn decode_result_for_action<OutputManaged>(
         &self,
-        multisig_quorum: u32,
-        proposal_id: u32,
-        gas_limit: u64
+        action: Action,
+        perform_call_result: Result<CallResult<Option<Address>>, ExecutorError>,
     ) -> Result<CallResult<OutputManaged::Native>, ExecutorError>
     where
         OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
     {
         let multisig_address_bech32 = self.multisig_address.to_bech32_string()?;
 
-        let (result, tx) = loop {
+        let response = match perform_call_result {
+            Ok(perform_call_result) => {
+                perform_call_result.response
+            }
+            Err(ExecutorError::Transaction(TransactionError::CannotDecodeSmartContractResult{ response })) => {
+                response // There is an error in the writeLog event that might cause CannotDecodeSmartContractResult when performing an async call action on the multisig
+            }
+            Err(error) => {
+                return Err(error);
+            }
+        };
+
+        let result = action.get_nested_multisig_call_result::<OutputManaged>(
+            &multisig_address_bech32,
+            response.clone()
+        )?;
+
+        Ok(
+            CallResult {
+                result,
+                response
+            }
+        )
+    }
+
+    async fn wait_for_signers_and_perform_action(
+        &self,
+        multisig_quorum: u32,
+        proposal_id: u32,
+        gas_limit: u64,
+    ) -> Result<CallResult<Option<Address>>, ExecutorError> {
+        loop {
             // TODO: write a more real-time waiting mechanism such as done in the caching crate with EachBlock.
             tokio::time::sleep(Duration::from_secs(6)).await;
 
@@ -127,53 +139,28 @@ where
 
             let signers_len = action.signers.len();
 
-            if signers_len  < multisig_quorum as usize {
+            if signers_len < multisig_quorum as usize {
                 println!("Pending signatures. {signers_len} have signed, {multisig_quorum} required...");
                 continue;
             }
 
-            let perform_call_result = MultisigContract::new(self.multisig_address.clone())
+            return MultisigContract::new(self.multisig_address.clone())
                 .call(
                     self.transaction_executor.clone(),
                     gas_limit
                 )
                 .perform_action(&proposal_id)
-                .await;
-
-            let response = match perform_call_result {
-                Ok(perform_call_result) => {
-                    perform_call_result.response
-                }
-                Err(NovaXError::Executor(ExecutorError::Transaction(TransactionError::CannotDecodeSmartContractResult{ response }))) => {
-                    response // There is an error in the writeLog event that might cause CannotDecodeSmartContractResult when performing an async call action on the multisig
-                }
-                Err(error) => {
-                    return Err(
-                        map_novax_error_to_executor_error(
-                            error,
-                            |error| TransactionError::Other {
-                                id: ERROR_WHILE_PERFORMING_ACTION_TRANSACTION.to_string(),
-                                reason: format!("Found an error when performing the action:\n\n{error:?}")
-                            }.into()
-                        )
+                .await
+                .map_err(|error| {
+                    map_novax_error_to_executor_error(
+                        error,
+                        |error| TransactionError::Other {
+                            id: ERROR_WHILE_PERFORMING_ACTION_TRANSACTION.to_string(),
+                            reason: format!("Found an error when performing the action:\n\n{error:?}")
+                        }.into()
                     )
-                }
-            };
-
-            let result = get_nested_multisig_call_result::<OutputManaged>(
-                &multisig_address_bech32,
-                response.clone()
-            );
-
-            break (result, response);
-        };
-
-        Ok(
-            CallResult {
-                response: tx,
-                result,
-            }
-        )
+                });
+        }
     }
 }
 
@@ -197,29 +184,48 @@ where
     {
         let multisig_quorum = self.get_quorum().await?;
 
-        let action = Action::AsyncCall(
-            AsyncCallAction {
-                receiver: to.clone(),
-                function_name: Some(function),
-                arguments,
-                egld_value,
-                esdt_transfers,
-            }
-        );
+        let action = if self.use_async_call_action {
+            Action::AsyncCall(
+                AsyncCallAction {
+                    receiver: to.clone(),
+                    function_name: Some(function),
+                    arguments,
+                    egld_value,
+                    esdt_transfers,
+                }
+            )
+        } else {
+            Action::TransferAndExecute(
+                TransferAndExecuteAction {
+                    receiver: to.clone(),
+                    function_name: Some(function),
+                    arguments,
+                    egld_value,
+                    esdt_transfers,
+                }
+            )
+        };
 
-        let proposal_id = action.propose_action(
-            self.transaction_executor.clone(),
-            self.multisig_address.clone(),
-            self.gas_for_proposal
-        )
+        let proposal_id = action
+            .clone()
+            .propose_action(
+                self.transaction_executor.clone(),
+                self.multisig_address.clone(),
+                self.gas_for_proposal
+            )
             .await?;
 
-        self.wait_for_signers_and_perform_action::<OutputManaged>(
+        let perform_call_result = self.wait_for_signers_and_perform_action(
             multisig_quorum,
             proposal_id,
             gas_limit
         )
-            .await
+            .await;
+
+        self.decode_result_for_action::<OutputManaged>(
+            action,
+            perform_call_result
+        )
     }
 }
 
@@ -235,17 +241,21 @@ where
     {
         let multisig_quorum = self.get_quorum().await?;
 
-        let Some(deploy_source_address) = self.deploy_source_address.clone() else {
-            return Err(
+        let source_address_bytes = vec_of_bytes_to_address(
+            bytes,
+            |_| {
                 TransactionError::Other {
-                    id: DEPLOY_SOURCE_ADDRESS_REQUIRED.to_string(),
-                    reason: "No deploy source address provided, please contruct the MultisigExecutor using MultisigExecutor::new_for_deployment".to_string()
+                    id: DEPLOY_BYTES_SHOULD_BE_AN_ADDRESS.to_string(),
+                    reason: r#"
+                    When using MultisigExecutor, contract bytes should be the address of a deployed contract having the wanted code.
+                    Please pass bytes using the to_bech32_string() method on an Address.
+                    "#.to_string()
                 }.into()
-            );
-        };
+            }
+        )?;
 
         let action = Action::DeploySCFromSource(DeploySCFromSourceAction {
-            source_address: deploy_source_address,
+            source_address: source_address_bytes,
             arguments,
             code_metadata,
             egld_value,
@@ -258,542 +268,55 @@ where
         )
             .await?;
 
-        self.wait_for_signers_and_perform_action::<OutputManaged>(
+        let deployed_address_call_result = self.wait_for_signers_and_perform_action(
             multisig_quorum,
             proposal_id,
             gas_limit
         )
+            .await?;
+
+        let Some(Some(deployed_address)) = deployed_address_call_result.result else {
+            return Err(
+                TransactionError::Other {
+                    id: NO_DEPLOYED_ADDRESS.to_string(),
+                    reason: "No deployed found after performing the proposal.".to_string()
+                }.into()
+            )
+        };
+
+        Ok(
+            (
+                deployed_address,
+                CallResult {
+                    response: deployed_address_call_result.response,
+                    result: None,
+                }
+            )
+        )
     }
 }
 
-fn get_nested_multisig_call_result<OutputManaged>(
-    multisig_address: &str,
-    tx: TransactionOnNetwork
-) -> Option<OutputManaged::Native>
+fn vec_of_bytes_to_address<F>(vec: Vec<u8>, error_fn: F) -> Result<Address, ExecutorError>
 where
-    OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
+    F: FnOnce(Vec<u8>) -> ExecutorError,
 {
-    let async_call_success_event_identifier = "callBack";
-    let async_call_success_topic_identifier = "asyncCallSuccess";
-
-    let async_call_success_event = tx
-        .transaction
-        .logs
-        .into_iter()
-        .find(|log| log.address == multisig_address)?
-        .events
-        .into_iter()
-        .find(|event| {
-            let Some(first_topic) = event.topics.get(0) else {
-                return false;
-            };
-
-            return event.address == multisig_address
-                && event.identifier == async_call_success_event_identifier
-                && decode_topic(first_topic) == Ok(async_call_success_topic_identifier.to_string())
-        })?;
-
-    if async_call_success_event.topics.len() < 2 {
-        return None;
+    if vec.len() != 32 {
+        return Err(error_fn(vec));
     }
 
-    let mut encoded_data = async_call_success_event
-        .topics[1..]
-        .to_vec()
-        .into_iter()
-        .map(|topic| base64::engine::general_purpose::STANDARD.decode(topic).expect("Decoding failed"))
-        .collect::<Vec<Vec<u8>>>();
+    let boxed_slice: Box<[u8]> = vec.into_boxed_slice();
 
-    let Ok(decoded) = OutputManaged::multi_decode(&mut encoded_data) else {
-        return None;
+    // Explicitly annotate the type for `try_into`
+    let boxed_array: Box<[u8; 32]> = match boxed_slice.try_into() as Result<Box<[u8; 32]>, Box<[u8]>> {
+        Ok(arr) => arr,
+        Err(boxed_slice) => return Err(error_fn(boxed_slice.into())), // Convert Box<[u8]> back into Vec<u8>
     };
 
-    Some(decoded.to_native())
-}
+    let address = Address::from_bytes(*boxed_array);
 
-#[cfg(test)]
-mod tests {
-    use crate::executor::multisig::get_nested_multisig_call_result;
-    use multiversx_sc::types::{EsdtTokenPayment, TokenIdentifier};
-    use multiversx_sc_scenario::api::StaticApi;
-    use novax_data::Payment;
-    use novax_executor::TransactionOnNetworkResponse;
-    use num_bigint::BigUint;
-    use std::str::FromStr;
-
-    #[tokio::test]
-    async fn test_get_nested_multisig_call_result_with_simple_xexchange_view() {
-        let data = r#"
-        {
-  "data": {
-    "transaction": {
-      "type": "normal",
-      "processingTypeOnSource": "SCInvoking",
-      "processingTypeOnDestination": "SCInvoking",
-      "hash": "2a86b5e18a92495cf05b1c64c88d5de8956d86388c74537af595953bc1a0b909",
-      "nonce": 8,
-      "round": 7879538,
-      "epoch": 3257,
-      "value": "0",
-      "receiver": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
-      "sender": "erd1ceqgv3cj5unwvsednmsxp300kx6rvcgfz297wvdyaztea4yfme2s9ncxue",
-      "gasPrice": 1000000000,
-      "gasLimit": 600000000,
-      "gasUsed": 600000000,
-      "data": "cGVyZm9ybUFjdGlvbkAwMg==",
-      "signature": "fe5c1173c9e86336dae979e20e949403fb737726c9aa7c1527227de280808f00faf209cb838461e2ae4e0add45a13dfb6a80c1b7faa6fb266560530f3b7c670c",
-      "sourceShard": 1,
-      "destinationShard": 1,
-      "blockNonce": 7808964,
-      "blockHash": "067fbd753023a373061f86a30f6fd416aee9d0d8e7390f0ea094bd9ce82f49df",
-      "notarizedAtSourceInMetaNonce": 7812482,
-      "NotarizedAtSourceInMetaHash": "b3704a10532b4aa78ddff79492874161f6b1b562ea61e05e28864a4cf94cec58",
-      "notarizedAtDestinationInMetaNonce": 7812482,
-      "notarizedAtDestinationInMetaHash": "b3704a10532b4aa78ddff79492874161f6b1b562ea61e05e28864a4cf94cec58",
-      "miniblockType": "TxBlock",
-      "miniblockHash": "f99a5ba4a58cda52919dd8ab05d6375c087b14bdba3ae793f9008c012bc0c441",
-      "hyperblockNonce": 7812482,
-      "hyperblockHash": "b3704a10532b4aa78ddff79492874161f6b1b562ea61e05e28864a4cf94cec58",
-      "timestamp": 1741277228,
-      "logs": {
-        "address": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
-        "events": [
-          {
-            "address": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
-            "identifier": "performAction",
-            "topics": [
-              "c3RhcnRQZXJmb3JtQWN0aW9u"
-            ],
-            "data": "AAAAAgYAAAAAAAAAAAUAWBNyFLDhTClIYKFsEQQqpxq8FyB86wAAAAAAAAAPZ2V0Rmlyc3RUb2tlbklkAAAAAAAAAAHGQIZHEqcm5kMtnuBgxe+xtDZhCRKL5zGk6Jee1IneVQ==",
-            "additionalData": [
-              "AAAAAgYAAAAAAAAAAAUAWBNyFLDhTClIYKFsEQQqpxq8FyB86wAAAAAAAAAPZ2V0Rmlyc3RUb2tlbklkAAAAAAAAAAHGQIZHEqcm5kMtnuBgxe+xtDZhCRKL5zGk6Jee1IneVQ=="
-            ]
-          },
-          {
-            "address": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
-            "identifier": "performAction",
-            "topics": [
-              "cGVyZm9ybUFzeW5jQ2FsbA==",
-              "Ag==",
-              "AAAAAAAAAAAFAFgTchSw4UwpSGChbBEEKqcavBcgfOs=",
-              "",
-              "I3t+qw==",
-              "Z2V0Rmlyc3RUb2tlbklk"
-            ],
-            "data": null,
-            "additionalData": [
-              ""
-            ]
-          },
-          {
-            "address": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
-            "identifier": "transferValueOnly",
-            "topics": [
-              "",
-              "AAAAAAAAAAAFAFgTchSw4UwpSGChbBEEKqcavBcgfOs="
-            ],
-            "data": "QXN5bmNDYWxs",
-            "additionalData": [
-              "QXN5bmNDYWxs",
-              "Z2V0Rmlyc3RUb2tlbklk"
-            ]
-          },
-          {
-            "address": "erd1qqqqqqqqqqqqqpgqtqfhy99su9xzjjrq59kpzpp25udtc9eq0n4sr90ax6",
-            "identifier": "transferValueOnly",
-            "topics": [
-              "",
-              "AAAAAAAAAAAFACr0ieZrWRU5IrwFF6xYfI+djGnS3lU="
-            ],
-            "data": "QXN5bmNDYWxsYmFjaw==",
-            "additionalData": [
-              "QXN5bmNDYWxsYmFjaw==",
-              "Y2FsbEJhY2s=",
-              "AA==",
-              "V0VHTEQtYTI4YzU5"
-            ]
-          },
-          {
-            "address": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
-            "identifier": "callBack",
-            "topics": [
-              "YXN5bmNDYWxsU3VjY2Vzcw==",
-              "V0VHTEQtYTI4YzU5"
-            ],
-            "data": null,
-            "additionalData": [
-              ""
-            ]
-          },
-          {
-            "address": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
-            "identifier": "writeLog",
-            "topics": [
-              "xkCGRxKnJuZDLZ7gYMXvsbQ2YQkSi+cxpOiXntSJ3lU=",
-              "QHRvbyBtdWNoIGdhcyBwcm92aWRlZCBmb3IgcHJvY2Vzc2luZzogZ2FzIHByb3ZpZGVkID0gNTk5OTI2MDAwLCBnYXMgdXNlZCA9IDEzMTg0OTgz"
-            ],
-            "data": "QDZmNmJANTc0NTQ3NGM0NDJkNjEzMjM4NjMzNTM5",
-            "additionalData": [
-              "QDZmNmJANTc0NTQ3NGM0NDJkNjEzMjM4NjMzNTM5"
-            ]
-          },
-          {
-            "address": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
-            "identifier": "completedTxEvent",
-            "topics": [
-              "Koa14YqSSVzwWxxkyI1d6JVthjiMdFN69ZWVO8GguQk="
-            ],
-            "data": null,
-            "additionalData": null
-          }
-        ]
-      },
-      "status": "success",
-      "operation": "transfer",
-      "function": "performAction",
-      "initiallyPaidFee": "6073260000000000",
-      "fee": "6073260000000000",
-      "chainID": "D",
-      "version": 1,
-      "options": 0
-    }
-  },
-  "error": "",
-  "code": "successful"
-}
-        "#;
-
-        let tx_on_network = serde_json::from_str::<TransactionOnNetworkResponse>(data)
-            .unwrap()
-            .data
-            .unwrap();
-
-        let result = get_nested_multisig_call_result::<TokenIdentifier<StaticApi>>(
-            "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
-            tx_on_network
-        );
-
-        let expected = Some("WEGLD-a28c59".to_string());
-
-        assert_eq!(result, expected);
+    if address.to_bech32_string().is_err() { // Just to check if the bytes are a valid address.
+        return Err(error_fn(boxed_array.to_vec()));
     }
 
-    #[tokio::test]
-    async fn test_get_nested_multisig_call_result_with_xexchange_swap() {
-        let data = r#"
-        {
-  "data": {
-    "transaction": {
-      "type": "normal",
-      "processingTypeOnSource": "SCInvoking",
-      "processingTypeOnDestination": "SCInvoking",
-      "hash": "1397d0b339019189295e6bd3eb0f42e17d54cbcdf8fb442b045a920183bc733c",
-      "nonce": 19,
-      "round": 7880177,
-      "epoch": 3257,
-      "value": "0",
-      "receiver": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
-      "sender": "erd1ceqgv3cj5unwvsednmsxp300kx6rvcgfz297wvdyaztea4yfme2s9ncxue",
-      "gasPrice": 1000000000,
-      "gasLimit": 600000000,
-      "gasUsed": 600000000,
-      "data": "cGVyZm9ybUFjdGlvbkAwOA==",
-      "signature": "fd7222e4ad44b03b24061eea9321e731925c4efdfc387c718b9ecb415a096e7cd73ec65f9bdde21363eae26eb16eeea385f567432611cf62a6caa389d1c56704",
-      "sourceShard": 1,
-      "destinationShard": 1,
-      "blockNonce": 7809603,
-      "blockHash": "b730422e1c71aca43f888b78ddc28ed141f3589324b3feb5b8d2825d212b9018",
-      "notarizedAtSourceInMetaNonce": 7813121,
-      "NotarizedAtSourceInMetaHash": "6fe407c9f69597d4812518f337d75c079d775639a638ab0f2d09212a7c5b3603",
-      "notarizedAtDestinationInMetaNonce": 7813121,
-      "notarizedAtDestinationInMetaHash": "6fe407c9f69597d4812518f337d75c079d775639a638ab0f2d09212a7c5b3603",
-      "miniblockType": "TxBlock",
-      "miniblockHash": "cd55ee5d166ac1d7bce0271d2d79deea46f8d0738e8549141bedcd81ddf2b90d",
-      "hyperblockNonce": 7813121,
-      "hyperblockHash": "6fe407c9f69597d4812518f337d75c079d775639a638ab0f2d09212a7c5b3603",
-      "timestamp": 1741281062,
-      "smartContractResults": [
-        {
-          "hash": "b40371da314284084a4965e430d04963e257206f817f9afec0d7709156825882",
-          "nonce": 0,
-          "value": 0,
-          "receiver": "erd1qqqqqqqqqqqqqpgqtqfhy99su9xzjjrq59kpzpp25udtc9eq0n4sr90ax6",
-          "sender": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
-          "data": "ESDTTransfer@555344432d333530633465@0186a0@73776170546f6b656e734669786564496e707574@5745474c442d613238633539@01@9b5cbeca2a41fef732f8774f06de4ad8308bbffed04a9b191d07c124137e7dc9@1397d0b339019189295e6bd3eb0f42e17d54cbcdf8fb442b045a920183bc733c",
-          "prevTxHash": "1397d0b339019189295e6bd3eb0f42e17d54cbcdf8fb442b045a920183bc733c",
-          "originalTxHash": "1397d0b339019189295e6bd3eb0f42e17d54cbcdf8fb442b045a920183bc733c",
-          "gasLimit": 0,
-          "gasPrice": 1000000000,
-          "callType": 1,
-          "originalSender": "erd1ceqgv3cj5unwvsednmsxp300kx6rvcgfz297wvdyaztea4yfme2s9ncxue",
-          "tokens": [
-            "USDC-350c4e"
-          ],
-          "esdtValues": [
-            "100000"
-          ],
-          "operation": "ESDTTransfer",
-          "function": "swapTokensFixedInput"
-        },
-        {
-          "hash": "980e369903305b05bf78eb36a6ac0c1fa0487105ba43b13bcebb97562088d323",
-          "nonce": 0,
-          "value": 0,
-          "receiver": "erd1qqqqqqqqqqqqqpgqzw0d0tj25qme9e4ukverjjjqle6xamay0n4s5r0v9g",
-          "sender": "erd1qqqqqqqqqqqqqpgqtqfhy99su9xzjjrq59kpzpp25udtc9eq0n4sr90ax6",
-          "data": "ESDTTransfer@5745474c442d613238633539@03a90ec444e3@737761704e6f466565416e64466f7277617264@4d45582d613635396430@0000000000000000000000000000000000000000000000000000000000000000",
-          "prevTxHash": "1397d0b339019189295e6bd3eb0f42e17d54cbcdf8fb442b045a920183bc733c",
-          "originalTxHash": "1397d0b339019189295e6bd3eb0f42e17d54cbcdf8fb442b045a920183bc733c",
-          "gasLimit": 0,
-          "gasPrice": 1000000000,
-          "callType": 0,
-          "originalSender": "erd1ceqgv3cj5unwvsednmsxp300kx6rvcgfz297wvdyaztea4yfme2s9ncxue",
-          "tokens": [
-            "WEGLD-a28c59"
-          ],
-          "esdtValues": [
-            "4024632100067"
-          ],
-          "operation": "ESDTTransfer",
-          "function": "swapNoFeeAndForward"
-        },
-        {
-          "hash": "2879b3a1708013cad7cbd65fd39f28793aaaf7f54bd15d165f8e2cf0b73ef9b9",
-          "nonce": 0,
-          "value": 0,
-          "receiver": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
-          "sender": "erd1qqqqqqqqqqqqqpgqtqfhy99su9xzjjrq59kpzpp25udtc9eq0n4sr90ax6",
-          "data": "ESDTTransfer@5745474c442d613238633539@0e4166996072be",
-          "prevTxHash": "1397d0b339019189295e6bd3eb0f42e17d54cbcdf8fb442b045a920183bc733c",
-          "originalTxHash": "1397d0b339019189295e6bd3eb0f42e17d54cbcdf8fb442b045a920183bc733c",
-          "gasLimit": 0,
-          "gasPrice": 1000000000,
-          "callType": 0,
-          "originalSender": "erd1ceqgv3cj5unwvsednmsxp300kx6rvcgfz297wvdyaztea4yfme2s9ncxue",
-          "tokens": [
-            "WEGLD-a28c59"
-          ],
-          "esdtValues": [
-            "4012558589653694"
-          ],
-          "operation": "ESDTTransfer"
-        }
-      ],
-      "logs": {
-        "address": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
-        "events": [
-          {
-            "address": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
-            "identifier": "performAction",
-            "topics": [
-              "c3RhcnRQZXJmb3JtQWN0aW9u"
-            ],
-            "data": "AAAACAYAAAAAAAAAAAUAWBNyFLDhTClIYKFsEQQqpxq8FyB86wAAAAAAAAAMRVNEVFRyYW5zZmVyAAAABQAAAAtVU0RDLTM1MGM0ZQAAAAMBhqAAAAAUc3dhcFRva2Vuc0ZpeGVkSW5wdXQAAAAMV0VHTEQtYTI4YzU5AAAAAQEAAAABxkCGRxKnJuZDLZ7gYMXvsbQ2YQkSi+cxpOiXntSJ3lU=",
-            "additionalData": [
-              "AAAACAYAAAAAAAAAAAUAWBNyFLDhTClIYKFsEQQqpxq8FyB86wAAAAAAAAAMRVNEVFRyYW5zZmVyAAAABQAAAAtVU0RDLTM1MGM0ZQAAAAMBhqAAAAAUc3dhcFRva2Vuc0ZpeGVkSW5wdXQAAAAMV0VHTEQtYTI4YzU5AAAAAQEAAAABxkCGRxKnJuZDLZ7gYMXvsbQ2YQkSi+cxpOiXntSJ3lU="
-            ]
-          },
-          {
-            "address": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
-            "identifier": "performAction",
-            "topics": [
-              "cGVyZm9ybUFzeW5jQ2FsbA==",
-              "CA==",
-              "AAAAAAAAAAAFAFgTchSw4UwpSGChbBEEKqcavBcgfOs=",
-              "",
-              "I3f2aQ==",
-              "RVNEVFRyYW5zZmVy",
-              "VVNEQy0zNTBjNGU=",
-              "AYag",
-              "c3dhcFRva2Vuc0ZpeGVkSW5wdXQ=",
-              "V0VHTEQtYTI4YzU5",
-              "AQ=="
-            ],
-            "data": null,
-            "additionalData": [
-              ""
-            ]
-          },
-          {
-            "address": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
-            "identifier": "ESDTTransfer",
-            "topics": [
-              "VVNEQy0zNTBjNGU=",
-              "",
-              "AYag",
-              "AAAAAAAAAAAFAFgTchSw4UwpSGChbBEEKqcavBcgfOs="
-            ],
-            "data": "QXN5bmNDYWxs",
-            "additionalData": [
-              "QXN5bmNDYWxs",
-              "RVNEVFRyYW5zZmVy",
-              "VVNEQy0zNTBjNGU=",
-              "AYag",
-              "c3dhcFRva2Vuc0ZpeGVkSW5wdXQ=",
-              "V0VHTEQtYTI4YzU5",
-              "AQ=="
-            ]
-          },
-          {
-            "address": "erd1qqqqqqqqqqqqqpgqtqfhy99su9xzjjrq59kpzpp25udtc9eq0n4sr90ax6",
-            "identifier": "ESDTTransfer",
-            "topics": [
-              "V0VHTEQtYTI4YzU5",
-              "",
-              "A6kOxETj",
-              "AAAAAAAAAAAFABOe165KoDeS5ryzMjlKQP50bu+kfOs="
-            ],
-            "data": "RXhlY3V0ZU9uRGVzdENvbnRleHQ=",
-            "additionalData": [
-              "RXhlY3V0ZU9uRGVzdENvbnRleHQ=",
-              "RVNEVFRyYW5zZmVy",
-              "V0VHTEQtYTI4YzU5",
-              "A6kOxETj",
-              "c3dhcE5vRmVlQW5kRm9yd2FyZA==",
-              "TUVYLWE2NTlkMA==",
-              "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
-            ]
-          },
-          {
-            "address": "erd1qqqqqqqqqqqqqpgqzw0d0tj25qme9e4ukverjjjqle6xamay0n4s5r0v9g",
-            "identifier": "ESDTLocalBurn",
-            "topics": [
-              "TUVYLWE2NTlkMA==",
-              "",
-              "O4GGs5oYGqc="
-            ],
-            "data": null,
-            "additionalData": null
-          },
-          {
-            "address": "erd1qqqqqqqqqqqqqpgqzw0d0tj25qme9e4ukverjjjqle6xamay0n4s5r0v9g",
-            "identifier": "swapNoFeeAndForward",
-            "topics": [
-              "c3dhcF9ub19mZWVfYW5kX2ZvcndhcmQ=",
-              "TUVYLWE2NTlkMA==",
-              "AAAAAAAAAAAFAFgTchSw4UwpSGChbBEEKqcavBcgfOs=",
-              "DLk="
-            ],
-            "data": "AAAAAAAAAAAFAFgTchSw4UwpSGChbBEEKqcavBcgfOsAAAAMV0VHTEQtYTI4YzU5AAAABgOpDsRE4wAAAApNRVgtYTY1OWQwAAAACDuBhrOaGBqnAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHcqQwAAAAAAAAy5AAAAAGfJ1yY=",
-            "additionalData": [
-              "AAAAAAAAAAAFAFgTchSw4UwpSGChbBEEKqcavBcgfOsAAAAMV0VHTEQtYTI4YzU5AAAABgOpDsRE4wAAAApNRVgtYTY1OWQwAAAACDuBhrOaGBqnAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHcqQwAAAAAAAAy5AAAAAGfJ1yY="
-            ]
-          },
-          {
-            "address": "erd1qqqqqqqqqqqqqpgqtqfhy99su9xzjjrq59kpzpp25udtc9eq0n4sr90ax6",
-            "identifier": "ESDTTransfer",
-            "topics": [
-              "V0VHTEQtYTI4YzU5",
-              "",
-              "DkFmmWByvg==",
-              "AAAAAAAAAAAFACr0ieZrWRU5IrwFF6xYfI+djGnS3lU="
-            ],
-            "data": "QmFja1RyYW5zZmVy",
-            "additionalData": [
-              "QmFja1RyYW5zZmVy",
-              "RVNEVFRyYW5zZmVy",
-              "V0VHTEQtYTI4YzU5",
-              "DkFmmWByvg=="
-            ]
-          },
-          {
-            "address": "erd1qqqqqqqqqqqqqpgqtqfhy99su9xzjjrq59kpzpp25udtc9eq0n4sr90ax6",
-            "identifier": "swapTokensFixedInput",
-            "topics": [
-              "c3dhcA==",
-              "VVNEQy0zNTBjNGU=",
-              "V0VHTEQtYTI4YzU5",
-              "AAAAAAAAAAAFACr0ieZrWRU5IrwFF6xYfI+djGnS3lU=",
-              "DLk="
-            ],
-            "data": "AAAAAAAAAAAFACr0ieZrWRU5IrwFF6xYfI+djGnS3lUAAAALVVNEQy0zNTBjNGUAAAADAYagAAAADFdFR0xELWEyOGM1OQAAAAcOQWaZYHK+AAAAAWQAAAAF8hqqobsAAAAKCNyn2yd+OFFf8QAAAAAAdypDAAAAAAAADLkAAAAAZ8nXJg==",
-            "additionalData": [
-              "AAAAAAAAAAAFACr0ieZrWRU5IrwFF6xYfI+djGnS3lUAAAALVVNEQy0zNTBjNGUAAAADAYagAAAADFdFR0xELWEyOGM1OQAAAAcOQWaZYHK+AAAAAWQAAAAF8hqqobsAAAAKCNyn2yd+OFFf8QAAAAAAdypDAAAAAAAADLkAAAAAZ8nXJg=="
-            ]
-          },
-          {
-            "address": "erd1qqqqqqqqqqqqqpgqtqfhy99su9xzjjrq59kpzpp25udtc9eq0n4sr90ax6",
-            "identifier": "transferValueOnly",
-            "topics": [
-              "",
-              "AAAAAAAAAAAFACr0ieZrWRU5IrwFF6xYfI+djGnS3lU="
-            ],
-            "data": "QXN5bmNDYWxsYmFjaw==",
-            "additionalData": [
-              "QXN5bmNDYWxsYmFjaw==",
-              "Y2FsbEJhY2s=",
-              "AA==",
-              "AAAADFdFR0xELWEyOGM1OQAAAAAAAAAAAAAABw5BZplgcr4="
-            ]
-          },
-          {
-            "address": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
-            "identifier": "callBack",
-            "topics": [
-              "YXN5bmNDYWxsU3VjY2Vzcw==",
-              "AAAADFdFR0xELWEyOGM1OQAAAAAAAAAAAAAABw5BZplgcr4="
-            ],
-            "data": null,
-            "additionalData": [
-              ""
-            ]
-          },
-          {
-            "address": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
-            "identifier": "writeLog",
-            "topics": [
-              "xkCGRxKnJuZDLZ7gYMXvsbQ2YQkSi+cxpOiXntSJ3lU=",
-              "QHRvbyBtdWNoIGdhcyBwcm92aWRlZCBmb3IgcHJvY2Vzc2luZzogZ2FzIHByb3ZpZGVkID0gNTk5OTI2MDAwLCBnYXMgdXNlZCA9IDI4MTU5NDEw"
-            ],
-            "data": "QDZmNmJAMDAwMDAwMGM1NzQ1NDc0YzQ0MmQ2MTMyMzg2MzM1MzkwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDcwZTQxNjY5OTYwNzJiZQ==",
-            "additionalData": [
-              "QDZmNmJAMDAwMDAwMGM1NzQ1NDc0YzQ0MmQ2MTMyMzg2MzM1MzkwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDcwZTQxNjY5OTYwNzJiZQ=="
-            ]
-          },
-          {
-            "address": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
-            "identifier": "completedTxEvent",
-            "topics": [
-              "E5fQszkBkYkpXmvT6w9C4X1Uy834+0QrBFqSAYO8czw="
-            ],
-            "data": null,
-            "additionalData": null
-          }
-        ]
-      },
-      "status": "success",
-      "operation": "transfer",
-      "function": "performAction",
-      "initiallyPaidFee": "6073260000000000",
-      "fee": "6073260000000000",
-      "chainID": "D",
-      "version": 1,
-      "options": 0
-    }
-  },
-  "error": "",
-  "code": "successful"
-}
-        "#;
-
-        let tx_on_network = serde_json::from_str::<TransactionOnNetworkResponse>(data)
-            .unwrap()
-            .data
-            .unwrap();
-
-        let result = get_nested_multisig_call_result::<EsdtTokenPayment<StaticApi>>(
-            "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
-            tx_on_network
-        );
-
-        let expected = Some(
-            Payment {
-                token_identifier: "WEGLD-a28c59".to_string(),
-                token_nonce: 0,
-                amount: BigUint::from_str("4012558589653694").unwrap(),
-            }
-        );
-
-        assert_eq!(result, expected);
-    }
+    Ok(address)
 }
