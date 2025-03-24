@@ -8,7 +8,7 @@ use crate::utils::map_novax_error_to_executor_error::map_novax_error_to_executor
 use novax_data::{Address, NativeConvertible};
 use novax_executor::{ExecutorError, NormalizationInOut, TokenTransfer, TransactionError, TransactionExecutor, TransactionOnNetwork};
 use num_bigint::BigUint;
-use novax_executor::results::decode_topic;
+use novax_executor::results::{decode_topic, find_smart_contract_result_from_logs};
 use crate::executor::errors::{ERROR_WHILE_PROPOSING_ACTION_TRANSACTION, NONE_PROPOSAL_ID_ERROR};
 
 #[derive(Clone)]
@@ -100,7 +100,10 @@ impl Action {
                 )
             }
             Action::TransferAndExecute(_) => {
-                todo!()
+                get_nested_multisig_call_result_for_transfer_and_execute_action::<OutputManaged>(
+                    multisig_address,
+                    tx
+                )
             }
             Action::DeploySCFromSource(_) => {
                 panic!("Can't get nested multisig call result for deploy from source action.")
@@ -359,6 +362,34 @@ where
     }
 }
 
+fn get_nested_multisig_call_result_for_transfer_and_execute_action<OutputManaged>(
+    multisig_address: &str,
+    tx: TransactionOnNetwork
+) -> Result<Option<OutputManaged::Native>, ExecutorError>
+where
+    OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
+{
+    let Some(log_of_interest) = tx
+        .transaction
+        .logs
+        .clone()
+        .into_iter()
+        .find(|log| log.address == multisig_address)
+    else {
+        return Ok(None);
+    };
+
+    let Some(mut results) = find_smart_contract_result_from_logs(&log_of_interest)? else {
+        return Ok(None);
+    };
+
+    let Ok(decoded) = OutputManaged::multi_decode(&mut results) else {
+        return Ok(None);
+    };
+
+    Ok(Some(decoded.to_native()))
+}
+
 fn convert_bytes_args_to_strings(
     arguments: Vec<Vec<u8>>
 ) -> Vec<String> {
@@ -385,7 +416,7 @@ mod tests {
     use novax_executor::{ExecutorError, TransactionError, TransactionOnNetworkResponse};
     use num_bigint::BigUint;
     use std::str::FromStr;
-    use crate::executor::action::get_nested_multisig_call_result_for_async_call_action;
+    use crate::executor::action::{get_nested_multisig_call_result_for_async_call_action, get_nested_multisig_call_result_for_transfer_and_execute_action};
 
     #[tokio::test]
     async fn test_get_nested_multisig_call_result_async_call_action_with_simple_xexchange_view() {
@@ -535,6 +566,136 @@ mod tests {
             .unwrap();
 
         let result = get_nested_multisig_call_result_for_async_call_action::<TokenIdentifier<StaticApi>>(
+            "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
+            tx_on_network
+        );
+
+        let expected = Ok(Some("WEGLD-a28c59".to_string()));
+
+        assert_eq!(result, expected);
+    }
+
+    #[tokio::test]
+    async fn test_get_nested_multisig_call_result_transfer_and_execute_with_simple_xexchange_view() {
+        let data = r#"
+        {
+  "data": {
+    "transaction": {
+      "type": "normal",
+      "processingTypeOnSource": "SCInvoking",
+      "processingTypeOnDestination": "SCInvoking",
+      "hash": "fb8cfc79d29dab074ede5d9584b3b213e844f7d2b96873b4160e0a81c975e979",
+      "nonce": 67,
+      "round": 7980260,
+      "epoch": 3299,
+      "value": "0",
+      "receiver": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
+      "sender": "erd1ceqgv3cj5unwvsednmsxp300kx6rvcgfz297wvdyaztea4yfme2s9ncxue",
+      "gasPrice": 1000000000,
+      "gasLimit": 600000000,
+      "gasUsed": 600000000,
+      "data": "cGVyZm9ybUFjdGlvbkAyMA==",
+      "signature": "d5665e87d0e6382ba0edda28ded1ae31c13d0ba455f2f26efffb1ffd2553a6c3fe923ebacfa2ea2afbf3bb0728ecfa77a3c1541a48a901975800033b459fb203",
+      "sourceShard": 1,
+      "destinationShard": 1,
+      "blockNonce": 7909670,
+      "blockHash": "caf223e00345cd7f9ee461c8e95b8be46311b605133f71b34608210b885732f7",
+      "notarizedAtSourceInMetaNonce": 7913159,
+      "NotarizedAtSourceInMetaHash": "e8631857e4b4cf95686a550318f01fa5980a16179c55ab75b63cba3f2c39a6da",
+      "notarizedAtDestinationInMetaNonce": 7913159,
+      "notarizedAtDestinationInMetaHash": "e8631857e4b4cf95686a550318f01fa5980a16179c55ab75b63cba3f2c39a6da",
+      "miniblockType": "TxBlock",
+      "miniblockHash": "10e3d6f83bea233d3b294a877743e465c6e635ff518b07a56b47379869671ab1",
+      "hyperblockNonce": 7913159,
+      "hyperblockHash": "e8631857e4b4cf95686a550318f01fa5980a16179c55ab75b63cba3f2c39a6da",
+      "timestamp": 1741881560,
+      "logs": {
+        "address": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
+        "events": [
+          {
+            "address": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
+            "identifier": "performAction",
+            "topics": [
+              "c3RhcnRQZXJmb3JtQWN0aW9u"
+            ],
+            "data": "AAAAIAUAAAAAAAAAAAUAWBNyFLDhTClIYKFsEQQqpxq8FyB86wAAAAAAAAAPZ2V0Rmlyc3RUb2tlbklkAAAAAAAAAAHGQIZHEqcm5kMtnuBgxe+xtDZhCRKL5zGk6Jee1IneVQ==",
+            "additionalData": [
+              "AAAAIAUAAAAAAAAAAAUAWBNyFLDhTClIYKFsEQQqpxq8FyB86wAAAAAAAAAPZ2V0Rmlyc3RUb2tlbklkAAAAAAAAAAHGQIZHEqcm5kMtnuBgxe+xtDZhCRKL5zGk6Jee1IneVQ=="
+            ]
+          },
+          {
+            "address": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
+            "identifier": "performAction",
+            "topics": [
+              "cGVyZm9ybVRyYW5zZmVyRXhlY3V0ZQ==",
+              "IA==",
+              "AAAAAAAAAAAFAFgTchSw4UwpSGChbBEEKqcavBcgfOs=",
+              "",
+              "I3Zw+g==",
+              "Z2V0Rmlyc3RUb2tlbklk"
+            ],
+            "data": null,
+            "additionalData": [
+              ""
+            ]
+          },
+          {
+            "address": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
+            "identifier": "transferValueOnly",
+            "topics": [
+              "",
+              "AAAAAAAAAAAFAFgTchSw4UwpSGChbBEEKqcavBcgfOs="
+            ],
+            "data": "VHJhbnNmZXJBbmRFeGVjdXRl",
+            "additionalData": [
+              "VHJhbnNmZXJBbmRFeGVjdXRl",
+              "Z2V0Rmlyc3RUb2tlbklk"
+            ]
+          },
+          {
+            "address": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
+            "identifier": "writeLog",
+            "topics": [
+              "xkCGRxKnJuZDLZ7gYMXvsbQ2YQkSi+cxpOiXntSJ3lU=",
+              "QHRvbyBtdWNoIGdhcyBwcm92aWRlZCBmb3IgcHJvY2Vzc2luZzogZ2FzIHByb3ZpZGVkID0gNTk5OTI2MDAwLCBnYXMgdXNlZCA9IDkxMDkwMDY="
+            ],
+            "data": "QDZmNmJANTc0NTQ3NGM0NDJkNjEzMjM4NjMzNTM5",
+            "additionalData": [
+              "QDZmNmJANTc0NTQ3NGM0NDJkNjEzMjM4NjMzNTM5"
+            ]
+          },
+          {
+            "address": "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
+            "identifier": "completedTxEvent",
+            "topics": [
+              "+4z8edKdqwdO3l2VhLOyE+hE99K5aHO0Fg4Kgcl16Xk="
+            ],
+            "data": null,
+            "additionalData": null
+          }
+        ]
+      },
+      "status": "success",
+      "operation": "transfer",
+      "function": "performAction",
+      "initiallyPaidFee": "6073260000000000",
+      "fee": "6073260000000000",
+      "chainID": "D",
+      "version": 1,
+      "options": 0
+    }
+  },
+  "error": "",
+  "code": "successful"
+}
+        "#;
+
+        let tx_on_network = serde_json::from_str::<TransactionOnNetworkResponse>(data)
+            .unwrap()
+            .data
+            .unwrap();
+
+        let result = get_nested_multisig_call_result_for_transfer_and_execute_action::<TokenIdentifier<StaticApi>>(
             "erd1qqqqqqqqqqqqqpgq9t6gnentty2njg4uq5t6ckru37wcc6wjme2shfz4k7",
             tx_on_network
         );

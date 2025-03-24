@@ -103,7 +103,7 @@ fn find_smart_contract_result_from_regular_sc_results(
     Ok(data)
 }
 
-fn find_smart_contract_result_from_logs(
+pub fn find_smart_contract_result_from_logs(
     logs: &TransactionOnNetworkTransactionLogs
 ) -> Result<Option<Vec<Vec<u8>>>, ExecutorError> {
     let find_result = logs.events
