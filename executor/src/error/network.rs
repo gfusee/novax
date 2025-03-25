@@ -17,7 +17,8 @@ pub enum NetworkQueryError {
     },
     ErrorInResponse {
         message: String
-    }
+    },
+    Other { id: String, reason: String }, // For use to crates using this one as dependency
 }
 
 /// An implementation of the `From` trait to allow for easy conversions from `NetworkQueryError` to `ExecutorError`.

@@ -9,7 +9,7 @@ use tokio::join;
 use novax_data::{Address, NativeConvertible};
 use novax_request::gateway::client::GatewayClient;
 
-use crate::{ExecutorError, GatewayError, SimulationError, SimulationGatewayRequest, SimulationGatewayResponse, TransactionExecutor, TransactionOnNetwork, TransactionOnNetworkTransactionSmartContractResult};
+use crate::{ExecutorError, GatewayError, SimulationError, SimulationGatewayRequest, SimulationGatewayResponse, TransactionExecutor, TransactionOnNetwork, TransactionOnNetworkTransaction, TransactionOnNetworkTransactionSmartContractResult};
 use crate::call_result::CallResult;
 use crate::network::models::simulate::request::SimulationGatewayRequestBody;
 use crate::network::utils::address::get_address_info;
@@ -183,7 +183,17 @@ impl<Client: GatewayClient> TransactionExecutor for BaseSimulationNetworkExecuto
             })
             .collect();
 
-        let opt_smart_contract_results = find_smart_contract_result(&Some(scrs), data.logs.as_ref())?;
+        let fake_tx_on_network = TransactionOnNetwork {
+            transaction: TransactionOnNetworkTransaction {
+                smart_contract_results: Some(scrs),
+                logs: data.logs.clone(),
+                ..Default::default()
+            }
+        };
+
+        let opt_smart_contract_results = find_smart_contract_result(
+            &fake_tx_on_network
+        )?;
 
         let mut raw_result = match opt_smart_contract_results {
             None => {

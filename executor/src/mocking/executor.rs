@@ -116,7 +116,7 @@ impl<A> TransactionExecutor for MockExecutor<A>
             .collect();
 
         let Ok(output_managed) = OutputManaged::multi_decode(&mut raw_result) else {
-            return Err(TransactionError::CannotDecodeSmartContractResult.into())
+            return Err(TransactionError::CannotDecodeSmartContractResult { response: Default::default() }.into())
         };
 
         let mut response = TransactionOnNetwork::default();
@@ -190,7 +190,7 @@ impl<A> DeployExecutor for MockExecutor<A>
             .collect();
 
         let Ok(output_managed) = OutputManaged::multi_decode(&mut raw_result) else {
-            return Err(TransactionError::CannotDecodeSmartContractResult.into())
+            return Err(TransactionError::CannotDecodeSmartContractResult { response: Default::default() }.into())
         };
 
         let call_result = CallResult {
@@ -249,7 +249,7 @@ impl<A> QueryExecutor for MockExecutor<A>
             .collect();
 
         let Ok(output_managed) = OutputManaged::multi_decode(&mut raw_result) else {
-            return Err(TransactionError::CannotDecodeSmartContractResult.into())
+            return Err(TransactionError::CannotDecodeSmartContractResult { response: Default::default() }.into())
         };
 
         Ok(output_managed.to_native())
