@@ -60,6 +60,7 @@ pub use error::transaction::TransactionError;
 pub use error::simulation::SimulationError;
 
 pub use base::query::QueryExecutor;
+pub use base::query_events::QueryEventsExecutor;
 pub use base::transaction::TransactionExecutor;
 pub use base::deploy::DeployExecutor;
 

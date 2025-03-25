@@ -35,6 +35,10 @@ impl Abi {
         self.get_contract_name() + "Query"
     }
 
+    pub(crate) fn get_query_events_name(&self) -> String {
+        self.get_contract_name() + "QueryEvents"
+    }
+
     pub(crate) fn get_call_name(&self) -> String {
         self.get_contract_name() + "Call"
     }

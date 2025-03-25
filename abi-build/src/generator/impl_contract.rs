@@ -22,6 +22,7 @@ pub(crate) fn impl_contract(mod_name: &str, abi: &Abi) -> Result<TokenStream, Bu
     let contract_info_ident = format_ident!("{}", contract_info_name);
     let call_name = format_ident!("{}", abi.get_call_name());
     let query_name = format_ident!("{}", abi.get_query_name());
+    let query_events_name = format_ident!("{}", abi.get_query_events_name());
     let (calls_impls, queries_impls) = impl_abi_endpoints(
         &contract_info_name,
         &abi.endpoints,
@@ -132,6 +133,19 @@ pub(crate) fn impl_contract(mod_name: &str, abi: &Abi) -> Result<TokenStream, Bu
                 caching: Caching
             }
 
+            #[derive(Clone, Debug)]
+            pub struct #query_events_name<Executor, Caching, A>
+            where
+                Executor: QueryEventsExecutor,
+                Caching: CachingStrategy,
+                A: Deref + Send + Sync,
+                Address: for<'a> From<&'a A::Target>
+            {
+                contract_address: A,
+                executor: Executor,
+                caching: Caching
+            }
+
             /// The main struct representing the smart contract.
             /// This struct provides methods to create instances for contract call and query.
             /// It also provides a method for deploying a new instance of the smart contract.
@@ -167,6 +181,15 @@ pub(crate) fn impl_contract(mod_name: &str, abi: &Abi) -> Result<TokenStream, Bu
                     #query_name {
                         contract_address: self.address,
                         egld_value: num_bigint::BigUint::from(0u8),
+                        executor,
+                        caching: CachingNone
+                    }
+                }
+
+                /// Returns a new instance of `#query_name` struct to perform queries on the smart contract.
+                pub fn query_events<Executor: QueryEventsExecutor>(self, executor: Executor) -> #query_events_name<Executor, CachingNone, A> {
+                    #query_events_name {
+                        contract_address: self.address,
                         executor,
                         caching: CachingNone
                     }

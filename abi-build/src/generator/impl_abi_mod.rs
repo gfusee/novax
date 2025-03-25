@@ -106,6 +106,7 @@ fn get_mod_imports() -> TokenStream {
         use multiversx_sc_scenario::scenario_model::ScQueryStep;
         use novax_executor::TransactionExecutor;
         use novax_executor::QueryExecutor;
+        use novax_executor::QueryEventsExecutor;
         use novax_executor::TokenTransfer;
         use novax_executor::call_result::CallResult;
         use novax_data::ManagedConvertible;
