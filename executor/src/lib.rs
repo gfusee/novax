@@ -56,6 +56,7 @@ pub use error::network::NetworkQueryError;
 pub use error::mock_deploy::MockDeployError;
 pub use error::mock_transaction::MockTransactionError;
 pub use error::gateway::GatewayError;
+pub use error::transaction::TransactionError;
 pub use error::simulation::SimulationError;
 
 pub use base::query::QueryExecutor;
@@ -95,6 +96,8 @@ pub use utils::transaction::data::SendableTransaction;
 pub use utils::transaction::data::SendableTransactionConvertible;
 pub use utils::transaction::token_transfer::TokenTransfer;
 pub use utils::transaction::call_result;
+pub use utils::transaction::results;
+pub use utils::transaction::normalization::NormalizationInOut;
 
 pub use multiversx_sc_scenario::ScenarioWorld;
 pub use multiversx_sc_scenario::scenario_model::{ScCallStep, ScDeployStep, ScQueryStep, SetStateStep, Account, TxQuery, TxResponse, TypedScDeploy, TypedScQuery, TypedResponse};

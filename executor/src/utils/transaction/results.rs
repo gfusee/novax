@@ -2,7 +2,7 @@ use base64::Engine;
 use multiversx_sc_snippets::network_response::decode_scr_data_or_panic;
 use multiversx_sdk::utils::base64_decode;
 
-use crate::{ExecutorError, TransactionOnNetworkTransactionLogs, TransactionOnNetworkTransactionLogsEvents, TransactionOnNetworkTransactionSmartContractResult};
+use crate::{ExecutorError, TransactionOnNetwork, TransactionOnNetworkTransactionLogs, TransactionOnNetworkTransactionLogsEvents, TransactionOnNetworkTransactionSmartContractResult};
 use crate::error::transaction::TransactionError;
 
 const ERROR_SIGNALLED_BY_SMART_CONTRACT: &str = "error signalled by smartcontract";
@@ -20,17 +20,19 @@ pub(crate) fn find_sc_deploy_event(logs: &[TransactionOnNetworkTransactionLogsEv
 }
 
 pub(crate) fn find_smart_contract_result(
-    opt_sc_results: &Option<Vec<TransactionOnNetworkTransactionSmartContractResult>>,
-    opt_logs: Option<&TransactionOnNetworkTransactionLogs>
+    tx_on_network: &TransactionOnNetwork
 ) -> Result<Option<Vec<Vec<u8>>>, ExecutorError> {
-    let mut result = if let Some(sc_results) = opt_sc_results {
-        find_smart_contract_result_from_regular_sc_results(sc_results)?
+    let mut result = if let Some(sc_results) = tx_on_network.transaction.smart_contract_results.as_ref() {
+        find_smart_contract_result_from_regular_sc_results(
+            tx_on_network,
+            &sc_results
+        )?
     } else {
         None
     };
 
     if result.is_none() {
-        if let Some(logs) = opt_logs {
+        if let Some(logs) = tx_on_network.transaction.logs.as_ref() {
             result = find_smart_contract_result_from_logs(logs)?;
         }
     }
@@ -68,6 +70,7 @@ pub(crate) fn find_sc_error(logs: &TransactionOnNetworkTransactionLogs) -> Resul
 }
 
 fn find_smart_contract_result_from_regular_sc_results(
+    tx_on_network: &TransactionOnNetwork,
     sc_results: &[TransactionOnNetworkTransactionSmartContractResult]
 ) -> Result<Option<Vec<Vec<u8>>>, ExecutorError> {
     let scr_found_result = sc_results.iter()
@@ -77,15 +80,15 @@ fn find_smart_contract_result_from_regular_sc_results(
     let data = if let Some(scr) = scr_found_result {
         let mut split = scr.data.split('@');
         if split.next().is_none() {
-            return Err(TransactionError::CannotDecodeSmartContractResult.into())
+            return Err(TransactionError::CannotDecodeSmartContractResult { response: tx_on_network.clone() }.into())
         }
 
         let Some(result_code) = split.next() else {
-            return Err(TransactionError::CannotDecodeSmartContractResult.into())
+            return Err(TransactionError::CannotDecodeSmartContractResult { response: tx_on_network.clone() }.into())
         };
 
         if result_code != "6f6b" {
-            return Err(TransactionError::CannotDecodeSmartContractResult.into())
+            return Err(TransactionError::CannotDecodeSmartContractResult { response: tx_on_network.clone() }.into())
         }
 
         let data = split
@@ -100,7 +103,7 @@ fn find_smart_contract_result_from_regular_sc_results(
     Ok(data)
 }
 
-fn find_smart_contract_result_from_logs(
+pub fn find_smart_contract_result_from_logs(
     logs: &TransactionOnNetworkTransactionLogs
 ) -> Result<Option<Vec<Vec<u8>>>, ExecutorError> {
     let find_result = logs.events
@@ -124,7 +127,7 @@ fn find_smart_contract_result_from_logs(
     Ok(find_result)
 }
 
-fn decode_topic(topic: &str) -> Result<String, ExecutorError> {
+pub fn decode_topic(topic: &str) -> Result<String, ExecutorError> {
     let decoded = base64::engine::general_purpose::STANDARD.decode(topic)
         .map_err(|_| TransactionError::CannotDecodeTopic)?;
 
@@ -213,12 +216,10 @@ mod tests {
         let tx_on_network = serde_json::from_str::<TransactionOnNetworkResponse>(data)
             .unwrap()
             .data
-            .unwrap()
-            .transaction;
+            .unwrap();
 
         let results = find_smart_contract_result(
-            &tx_on_network.smart_contract_results,
-            tx_on_network.logs.as_ref()
+            &tx_on_network
         )
             .unwrap()
             .unwrap();
@@ -351,12 +352,10 @@ mod tests {
         let tx_on_network = serde_json::from_str::<TransactionOnNetworkResponse>(data)
             .unwrap()
             .data
-            .unwrap()
-            .transaction;
+            .unwrap();
 
         let results = find_smart_contract_result(
-            &tx_on_network.smart_contract_results,
-            tx_on_network.logs.as_ref()
+            &tx_on_network
         )
             .unwrap()
             .unwrap();
@@ -486,12 +485,10 @@ mod tests {
         let tx_on_network = serde_json::from_str::<TransactionOnNetworkResponse>(data)
             .unwrap()
             .data
-            .unwrap()
-            .transaction;
+            .unwrap();
 
         let results = find_smart_contract_result(
-            &tx_on_network.smart_contract_results,
-            tx_on_network.logs.as_ref()
+            &tx_on_network
         )
             .unwrap()
             .unwrap();
@@ -621,12 +618,10 @@ mod tests {
         let tx_on_network = serde_json::from_str::<TransactionOnNetworkResponse>(data)
             .unwrap()
             .data
-            .unwrap()
-            .transaction;
+            .unwrap();
 
         let results = find_smart_contract_result(
-            &tx_on_network.smart_contract_results,
-            tx_on_network.logs.as_ref()
+            &tx_on_network
         )
             .unwrap()
             .unwrap();
@@ -914,12 +909,10 @@ mod tests {
         let tx_on_network = serde_json::from_str::<TransactionOnNetworkResponse>(data)
             .unwrap()
             .data
-            .unwrap()
-            .transaction;
+            .unwrap();
 
         let results = find_smart_contract_result(
-            &tx_on_network.smart_contract_results,
-            tx_on_network.logs.as_ref()
+            &tx_on_network
         )
             .unwrap()
             .unwrap();
@@ -1179,12 +1172,10 @@ mod tests {
         let tx_on_network = serde_json::from_str::<TransactionOnNetworkResponse>(data)
             .unwrap()
             .data
-            .unwrap()
-            .transaction;
+            .unwrap();
 
         let results = find_smart_contract_result(
-            &tx_on_network.smart_contract_results,
-            tx_on_network.logs.as_ref()
+            &tx_on_network
         )
             .unwrap()
             .unwrap();
@@ -1273,12 +1264,10 @@ mod tests {
         let tx_on_network = serde_json::from_str::<TransactionOnNetworkResponse>(data)
             .unwrap()
             .data
-            .unwrap()
-            .transaction;
+            .unwrap();
 
         let results = find_smart_contract_result(
-            &tx_on_network.smart_contract_results,
-            tx_on_network.logs.as_ref()
+            &tx_on_network
         )
             .unwrap()
             .unwrap();
