@@ -215,7 +215,6 @@ pub(crate) fn impl_contract(mod_name: &str, abi: &Abi) -> Result<TokenStream, Bu
                 #deploy_impl
             }
 
-
             impl<Executor, Caching, A> #query_name<Executor, Caching, A>
             where
                 Executor: QueryExecutor,
@@ -262,12 +261,12 @@ pub(crate) fn impl_contract(mod_name: &str, abi: &Abi) -> Result<TokenStream, Bu
 
             impl<Executor, Caching, A> #query_events_name<Executor, Caching, A>
             where
-                Executor: QueryExecutor,
+                Executor: QueryEventsExecutor,
                 Caching: CachingStrategy,
                 A: Deref + Send + Sync,
                 Address: for<'a> From<&'a A::Target>
             {
-                /// Modifies the caching strategy used for the query.
+                /// Modifies the caching strategy used for the event query.
                 /// This method allows changing the caching strategy to a different type,
                 /// useful in cases where varying levels of caching are desired.
                 ///
@@ -276,11 +275,10 @@ pub(crate) fn impl_contract(mod_name: &str, abi: &Abi) -> Result<TokenStream, Bu
                 ///
                 /// # Returns
                 /// A new instance of `#query_name` with the updated caching strategy.
-                pub fn with_caching_strategy<C2: CachingStrategy + Clone>(self, strategy: &C2) -> #query_name<Executor, C2, A> {
-                    #query_name {
+                pub fn with_caching_strategy<C2: CachingStrategy + Clone>(self, strategy: &C2) -> #query_events_name<Executor, C2, A> {
+                    #query_events_name {
                         contract_address: self.contract_address,
                         executor: self.executor,
-                        egld_value: self.egld_value,
                         caching: strategy.clone(),
                     }
                 }
@@ -593,7 +591,7 @@ fn impl_abi_event_query(
     let endpoint_query_key = impl_endpoint_key_for_query(event_identifier, &vec![]); // TODO
 
     let event_query_token = quote! {
-        pub async fn #event_identifier_ident(&self) -> Result<#event_native_inputs, NovaXError> {
+        pub async fn #event_identifier_ident(&self) -> Result<Vec<#event_native_inputs>, NovaXError> {
             let _novax_request_arc = crate::utils::static_request_arc::get_static_request_arc_clone();
 
             let _novax_contract_address = Address::from(&self.contract_address);
@@ -607,10 +605,7 @@ fn impl_abi_event_query(
                     let result = self.executor
                         .execute::<#event_managed_inputs>(
                             &_novax_contract_address,
-                            #event_identifier.to_string(),
-                            _novax_bytes_args,
-                            self.egld_value.clone(),
-                            vec![],
+                            #event_identifier,
                         ).await;
 
                     if let Result::Ok(result) = result {
