@@ -85,6 +85,9 @@ pub use network::transaction::models::transaction_on_network::TransactionOnNetwo
 pub use network::transaction::models::transaction_on_network::TransactionOnNetworkTransactionSmartContractResult;
 pub use network::transaction::models::transaction_on_network::TransactionOnNetworkTransactionLogs;
 pub use network::transaction::models::transaction_on_network::TransactionOnNetworkTransactionLogsEvents;
+pub use network::events::proxy::ElasticSearchProxy;
+pub use network::events::proxy::ElasticSearchNodeProxy;
+pub use network::events::executor::ElasticSearchNodeQueryExecutor;
 
 pub use mocking::executor::StandardMockExecutor;
 pub use mocking::executor::MockExecutor;
@@ -99,6 +102,8 @@ pub use utils::transaction::token_transfer::TokenTransfer;
 pub use utils::transaction::call_result;
 pub use utils::transaction::results;
 pub use utils::transaction::normalization::NormalizationInOut;
+
+pub use utils::events::query_result::EventQueryResult;
 
 pub use multiversx_sc_scenario::ScenarioWorld;
 pub use multiversx_sc_scenario::scenario_model::{ScCallStep, ScDeployStep, ScQueryStep, SetStateStep, Account, TxQuery, TxResponse, TypedScDeploy, TypedScQuery, TypedResponse};

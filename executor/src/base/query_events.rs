@@ -1,7 +1,10 @@
 use crate::error::executor::ExecutorError;
+use crate::utils::events::query_result::EventQueryResult;
 use async_trait::async_trait;
 use multiversx_sc_scenario::multiversx_sc::codec::TopDecodeMulti;
 use novax_data::{Address, NativeConvertible};
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -11,9 +14,10 @@ pub trait QueryEventsExecutor: Send + Sync {
         &self,
         contract_address: &Address,
         event_identifier: &str,
-    ) -> Result<Vec<OutputManaged::Native>, ExecutorError>
-        where
-            OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync;
+    ) -> Result<Vec<EventQueryResult<OutputManaged::Native>>, ExecutorError>
+    where
+        OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync,
+        OutputManaged::Native: Serialize + DeserializeOwned + Send + Sync;
 }
 
 #[async_trait]
@@ -22,9 +26,10 @@ impl<T: QueryEventsExecutor> QueryEventsExecutor for Arc<T> {
         &self,
         contract_address: &Address,
         event_identifier: &str,
-    ) -> Result<Vec<OutputManaged::Native>, ExecutorError>
+    ) -> Result<Vec<EventQueryResult<OutputManaged::Native>>, ExecutorError>
     where
-        OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
+        OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync,
+        OutputManaged::Native: Serialize + DeserializeOwned + Send + Sync
     {
         T::execute::<OutputManaged>(
             self,
@@ -40,9 +45,10 @@ impl<T: QueryEventsExecutor> QueryEventsExecutor for Arc<Mutex<T>> {
         &self,
         contract_address: &Address,
         event_identifier: &str,
-    ) -> Result<Vec<OutputManaged::Native>, ExecutorError>
+    ) -> Result<Vec<EventQueryResult<OutputManaged::Native>>, ExecutorError>
     where
-        OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync
+        OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync,
+        OutputManaged::Native: Serialize + DeserializeOwned + Send + Sync
     {
         {
             let executor = self.lock().await;

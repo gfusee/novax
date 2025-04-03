@@ -9,6 +9,8 @@ use crate::generator::impl_contract::impl_contract;
 pub fn generate_from_abi(abi: &Abi) -> Result<GeneratedFile, BuildError> {
     let content = impl_mod(abi)?.to_string();
 
+    println!("{content}");
+
     #[cfg(not(feature = "no-fmt-output"))]
     let content = if let Ok(content_file) = syn::parse_file(&content) {
         prettyplease::unparse(&content_file)
@@ -107,6 +109,7 @@ fn get_mod_imports() -> TokenStream {
         use novax_executor::TransactionExecutor;
         use novax_executor::QueryExecutor;
         use novax_executor::QueryEventsExecutor;
+        use novax_executor::EventQueryResult;
         use novax_executor::TokenTransfer;
         use novax_executor::call_result::CallResult;
         use novax_data::ManagedConvertible;

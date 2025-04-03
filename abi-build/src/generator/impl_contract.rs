@@ -9,6 +9,7 @@ use crate::abi::event::{AbiEvent, AbiEventInputs};
 use crate::abi::event_input::AbiEventInput;
 use crate::abi::output::AbiOutput;
 use crate::errors::build_error::BuildError;
+use crate::generator::impl_abi_types::impl_abi_event_struct_type;
 use crate::utils::get_api_generic_ident::get_api_generic_ident;
 use crate::utils::get_native_struct_managed_name::get_native_struct_managed_name;
 use crate::utils::parse_abi_type_name_to_managed_ident::parse_abi_type_name_to_managed_ident;
@@ -31,16 +32,16 @@ pub(crate) fn impl_contract(mod_name: &str, abi: &Abi) -> Result<TokenStream, Bu
         &abi.types
     )?;
 
-    let query_events_impls = if let Some(abi_events) = &abi.events {
-        Some(
-            impl_abi_events(
-                &contract_info_name,
-                abi_events,
-                &abi.types
-            )?
-        )
+    let (events_structs_impls, query_events_impls) = if let Some(abi_events) = &abi.events {
+        let (struct_impls, query_impls) = impl_abi_events(
+            &contract_info_name,
+            abi_events,
+            &abi.types
+        )?;
+
+        (Some(struct_impls), Some(query_impls))
     } else {
-        None
+        (None, None)
     };
 
     let deploy_impl = impl_abi_constructor(&contract_info_name, &abi.constructor, &abi.types)?;
@@ -259,6 +260,8 @@ pub(crate) fn impl_contract(mod_name: &str, abi: &Abi) -> Result<TokenStream, Bu
                 #queries_impls
             }
 
+            #events_structs_impls
+
             impl<Executor, Caching, A> #query_events_name<Executor, Caching, A>
             where
                 Executor: QueryEventsExecutor,
@@ -286,7 +289,6 @@ pub(crate) fn impl_contract(mod_name: &str, abi: &Abi) -> Result<TokenStream, Bu
                 // Other query implementations generated from the ABI
                 #query_events_impls
             }
-
 
             impl<Executor, A> #call_name<Executor, A>
             where
@@ -433,12 +435,16 @@ fn impl_abi_endpoints(
         )
     )
 }
+
+// (TokenStream, TokenStream) = (event structs impls, query functions impls)
 fn impl_abi_events(
     contract_info_name: &str,
     abi_events: &AbiEvents,
     abi_types: &AbiTypes,
-) -> Result<TokenStream, BuildError> {
+) -> Result<(TokenStream, TokenStream), BuildError> {
     let mut events_queries_impls: Vec<TokenStream> = vec![];
+    let mut events_structs_impls: Vec<TokenStream> = vec![];
+
     for abi_event in abi_events {
         let event_impl = impl_abi_event_query(
             contract_info_name,
@@ -446,13 +452,19 @@ fn impl_abi_events(
             abi_types
         )?;
 
-        events_queries_impls.push(event_impl);
+        events_structs_impls.push(event_impl.0);
+        events_queries_impls.push(event_impl.1);
     }
 
     Ok(
-        quote! {
-            #(#events_queries_impls)*
-        }
+        (
+            quote! {
+                #(#events_structs_impls)*
+            },
+            quote! {
+                #(#events_queries_impls)*
+            }
+        )
     )
 }
 
@@ -565,17 +577,18 @@ fn impl_abi_endpoint_call_query(
     Ok((call_token, query_token))
 }
 
+// (TokenStream, TokenStream) = (event struct impls, function impl)
 fn impl_abi_event_query(
     contract_info_name: &str,
     abi_event: &AbiEvent,
     abi_types: &AbiTypes
-) -> Result<TokenStream, BuildError> {
+) -> Result<(TokenStream, TokenStream), BuildError> {
     let debug_api = get_api_generic_ident();
     let contract_info_ident = format_ident!("{}", contract_info_name);
     let event_identifier = abi_event.identifier.as_str();
 
     if event_identifier.is_empty() {
-        return Ok(quote! {})
+        return Ok((quote! {}, quote! {}))
     }
 
     let event_identifier_ident = format_ident!("{}", event_identifier.to_case(Case::Snake));
@@ -586,12 +599,23 @@ fn impl_abi_event_query(
         managed_inputs_idents.push(managed_input);
         native_inputs_idents.push(native_input);
     }
-    let (event_managed_inputs, event_native_inputs) = impl_event_inputs(&abi_event.inputs, abi_types, &debug_api)?;
+    let (event_managed_inputs, event_native_inputs, event_native_inputs_types) = impl_event_inputs(&abi_event.inputs, abi_types, &debug_api)?;
+    let abi_event_field_names = abi_event.inputs
+        .clone()
+        .into_iter()
+        .map(|input| input.name)
+        .collect::<Vec<_>>();
 
+    let event_field_names_and_types = abi_event_field_names
+        .into_iter()
+        .zip(event_native_inputs_types)
+        .collect::<Vec<_>>();
+
+    let (event_return_struct_type, event_return_struct_type_impls) = impl_abi_event_struct_type(event_identifier, event_field_names_and_types)?;
     let endpoint_query_key = impl_endpoint_key_for_query(event_identifier, &vec![]); // TODO
 
     let event_query_token = quote! {
-        pub async fn #event_identifier_ident(&self) -> Result<Vec<#event_native_inputs>, NovaXError> {
+        pub async fn #event_identifier_ident(&self) -> Result<std::vec::Vec<EventQueryResult<#event_return_struct_type>>, NovaXError> {
             let _novax_request_arc = crate::utils::static_request_arc::get_static_request_arc_clone();
 
             let _novax_contract_address = Address::from(&self.contract_address);
@@ -602,16 +626,26 @@ fn impl_abi_event_query(
             self.caching.get_or_set_cache(
                 _novax_key,
                 async {
-                    let result = self.executor
+                    let result_native_tuple: Result<std::vec::Vec<EventQueryResult<_>>, _> = self.executor
                         .execute::<#event_managed_inputs>(
                             &_novax_contract_address,
                             #event_identifier,
                         ).await;
 
-                    if let Result::Ok(result) = result {
-                        Result::Ok::<_, NovaXError>(result)
+                    if let Result::Ok(result_native_tuple) = result_native_tuple {
+                        Result::Ok::<std::vec::Vec<EventQueryResult<#event_return_struct_type>>, NovaXError>(
+                            result_native_tuple
+                                .into_iter()
+                                .map(|event_query_result| {
+                                    EventQueryResult {
+                                        timestamp: event_query_result.timestamp,
+                                        event: event_query_result.event.into(),
+                                    }
+                                })
+                                .collect()
+                        )
                     } else {
-                        let error: NovaXError = result.unwrap_err().into();
+                        let error: NovaXError = result_native_tuple.unwrap_err().into();
                         Result::Err(error)
                     }
                 }
@@ -619,7 +653,7 @@ fn impl_abi_event_query(
         }
     };
 
-    Ok(event_query_token)
+    Ok((event_return_struct_type_impls, event_query_token))
 }
 
 fn impl_abi_constructor(contract_info_name: &str, abi_constructor: &AbiConstructor, abi_types: &AbiTypes) -> Result<TokenStream, BuildError> {
@@ -682,7 +716,7 @@ fn impl_endpoint_outputs(outputs: &AbiOutputs, abi_types: &AbiTypes, api_generic
     Ok((function_managed_outputs, function_native_outputs))
 }
 
-fn impl_event_inputs(inputs: &AbiEventInputs, abi_types: &AbiTypes, api_generic: &TokenStream) -> Result<(TokenStream, TokenStream), BuildError> {
+fn impl_event_inputs(inputs: &AbiEventInputs, abi_types: &AbiTypes, api_generic: &TokenStream) -> Result<(TokenStream, TokenStream, Vec<(TokenStream)>), BuildError> {
     let mut managed_outputs_idents: Vec<TokenStream> = vec![];
     let mut native_outputs_idents: Vec<TokenStream> = vec![];
     for input in inputs {
@@ -692,16 +726,12 @@ fn impl_event_inputs(inputs: &AbiEventInputs, abi_types: &AbiTypes, api_generic:
     }
     let (function_managed_outputs, function_native_outputs) = if inputs.is_empty() {
         (quote! {()}, quote!{()})
-    } else if inputs.len() == 1 {
-        let managed_output_ident = managed_outputs_idents.first().unwrap();
-        let native_output_ident = native_outputs_idents.first().unwrap();
-        (quote! {#managed_output_ident}, quote!{#native_output_ident})
     } else {
         let length = format_ident!("MultiValue{}", inputs.len());
         (quote! {#length<#(#managed_outputs_idents), *>}, quote! {(#(#native_outputs_idents), *)})
     };
 
-    Ok((function_managed_outputs, function_native_outputs))
+    Ok((function_managed_outputs, function_native_outputs, native_outputs_idents))
 }
 
 fn impl_endpoint_inputs(should_include_self: bool, abi_inputs: &AbiInputs, abi_types: &AbiTypes) -> Result<TokenStream, BuildError> {

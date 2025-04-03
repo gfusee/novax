@@ -7,6 +7,8 @@ use crate::errors::build_error::BuildError;
 use crate::utils::get_api_generic_ident::get_api_generic_ident;
 use crate::utils::get_native_struct_managed_name::get_native_struct_managed_name;
 use convert_case::Casing;
+use syn::Index;
+use crate::utils::capitalize_first_letter::capitalize_first_letter;
 
 pub(crate) fn impl_abi_types_mod(abi_types: &AbiTypes) -> Result<TokenStream, BuildError> {
     let mut abi_types_impl: Vec<TokenStream> = vec![];
@@ -401,6 +403,61 @@ fn impl_abi_struct_type(name: &str, abi_type: &AbiType, all_abi_types: &AbiTypes
                 }
             }
         }
+    )
+}
+
+// (TokenStream, TokenStream) = (event struct name, event struct impls)
+pub(crate) fn impl_abi_event_struct_type(event_name: &str, managed_field_names_and_types: Vec<(String, TokenStream)>) -> Result<(TokenStream, TokenStream), BuildError> {
+    let event_name = capitalize_first_letter(&event_name.to_case(Case::Camel));
+    let name_ident = format_ident!("{}EventQueryResult", event_name);
+
+    let mut fields_impls = vec![];
+    let mut from_tuple_types = vec![];
+    let mut from_tuple_impls = vec![];
+
+    for (index, (field_name, field_type_ident)) in managed_field_names_and_types.iter().enumerate() {
+        let index_ident = Index::from(index);
+        let field_name_ident = format_ident!("{field_name}");
+
+        let field_token = quote! {
+            #field_name_ident: #field_type_ident
+        };
+
+        let from_tuple_token = quote! {
+            #field_name_ident: value.#index_ident
+        };
+
+        let tuple_type_token = quote! {
+            #field_type_ident
+        };
+
+        fields_impls.push(field_token);
+        from_tuple_impls.push(from_tuple_token);
+        from_tuple_types.push(tuple_type_token);
+    }
+
+    let from_tuple_type_ident = quote! {
+        (#(#from_tuple_types),*)
+    };
+
+    Ok(
+        (
+            quote! { #name_ident },
+            quote! {
+                #[derive(Serialize, Deserialize, PartialEq, Hash, Clone, Debug)]
+                pub struct #name_ident {
+                    #(#fields_impls),*,
+                }
+
+                impl From<#from_tuple_type_ident> for #name_ident {
+                    fn from(value: #from_tuple_type_ident) -> Self {
+                        Self {
+                            #(#from_tuple_impls),*,
+                        }
+                    }
+                }
+            }
+        )
     )
 }
 
