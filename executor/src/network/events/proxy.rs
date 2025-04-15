@@ -13,6 +13,7 @@ pub trait ElasticSearchProxy: Send + Sync {
         &self,
         contract_address: String,
         event_identifier: &str,
+        filter_terms_bytes: Vec<(Vec<u8>, u32)>
     ) -> Result<Vec<ElasticSearchEvent>, ExecutorError>;
 }
 
@@ -32,11 +33,40 @@ impl ElasticSearchProxy for ElasticSearchNodeProxy {
         &self,
         contract_address: String,
         event_identifier: &str,
+        filter_terms_bytes: Vec<(Vec<u8>, u32)>
     ) -> Result<Vec<ElasticSearchEvent>, ExecutorError> {
         let transport = Transport::single_node(&self.gateway_url).unwrap();
         let client = Elasticsearch::new(transport);
 
         let event_identifier_hex = hex::encode(event_identifier);
+
+        let mut filters = vec![
+            json!({
+                "match": {
+                    "address": contract_address
+                }
+            }),
+            json!({
+                "term": {
+                    "topics": event_identifier_hex
+                }
+            })
+        ];
+
+        let mut filter_terms = filter_terms_bytes
+            .iter()
+            .map(|(term, _)| {
+                let term_hex = hex::encode(term);
+
+                json!({
+                    "term": {
+                        "topics": term_hex
+                    }
+                })
+            })
+            .collect();
+
+        filters.append(&mut filter_terms);
 
         let query_body = json!({
             "from": 0,
@@ -47,18 +77,7 @@ impl ElasticSearchProxy for ElasticSearchNodeProxy {
             ],
             "query": {
                 "bool": {
-                    "filter": [
-                        {
-                            "match": {
-                                "address": contract_address
-                            }
-                        },
-                        {
-                            "term": {
-                                "topics": event_identifier_hex
-                            }
-                        }
-                    ]
+                    "filter": filters
                 }
             }
         });

@@ -104,6 +104,7 @@ pub use utils::transaction::results;
 pub use utils::transaction::normalization::NormalizationInOut;
 
 pub use utils::events::query_result::EventQueryResult;
+pub use utils::events::into_filter_terms::IntoFilterTerms;
 
 pub use multiversx_sc_scenario::ScenarioWorld;
 pub use multiversx_sc_scenario::scenario_model::{ScCallStep, ScDeployStep, ScQueryStep, SetStateStep, Account, TxQuery, TxResponse, TypedScDeploy, TypedScQuery, TypedResponse};

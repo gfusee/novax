@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use base64::Engine;
 use novax_data::{Address, NativeConvertible};
 use crate::network::events::proxy::ElasticSearchProxy;
-use crate::{ElasticSearchNodeProxy, ExecutorError, QueryEventsExecutor, TopDecodeMulti};
+use crate::{ElasticSearchNodeProxy, ExecutorError, IntoFilterTerms, QueryEventsExecutor, TopDecodeMulti};
 use crate::results::decode_topic;
 use crate::utils::events::query_result::EventQueryResult;
 
@@ -28,26 +28,35 @@ impl<Proxy: ElasticSearchProxy> BaseElasticSearchNodeQueryExecutor<Proxy> {
 
 #[async_trait]
 impl<Proxy: ElasticSearchProxy> QueryEventsExecutor for BaseElasticSearchNodeQueryExecutor<Proxy> {
-    async fn execute<OutputManaged>(
+    async fn execute<OutputManaged, FilterOptions>(
         &self,
         contract_address: &Address,
-        event_identifier: &str
+        event_identifier: &str,
+        filter_options: Option<FilterOptions>,
     ) -> Result<Vec<EventQueryResult<OutputManaged::Native>>, ExecutorError>
     where
         OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync,
-        OutputManaged::Native: Send + Sync
+        OutputManaged::Native: Send + Sync,
+        FilterOptions: IntoFilterTerms + Send + Sync,
     {
         let proxy = Proxy::new(self.elastic_search_url.clone());
+
+        let filter_terms = if let Some(filter_options) = filter_options {
+            filter_options.into_filter_terms()
+        } else {
+            vec![]
+        };
 
         let events = proxy
             .execute(
                 contract_address.to_bech32_string()?,
                 event_identifier,
+                filter_terms.clone(),
             )
             .await?;
 
         let mut event_results: Vec<EventQueryResult<OutputManaged::Native>> = vec![];
-        for event in events {
+        'outer: for event in events {
             let Some(event_identifier_raw) = event.topics.get(0) else {
                 continue;
             };
@@ -59,6 +68,20 @@ impl<Proxy: ElasticSearchProxy> QueryEventsExecutor for BaseElasticSearchNodeQue
             let Ok(event_identifier_utf8) = String::from_utf8(event_identifier_bytes) else {
                 todo!()
             };
+
+            for (term, position) in filter_terms.iter() {
+                let Some(topic_raw) = event.topics.get(*position as usize) else {
+                    continue 'outer;
+                };
+
+                let Ok(topic_bytes) = hex::decode(topic_raw) else {
+                    continue 'outer;
+                };
+
+                if &topic_bytes != term {
+                    continue 'outer;
+                }
+            }
 
             if event_identifier_utf8 != event_identifier {
                 continue;
