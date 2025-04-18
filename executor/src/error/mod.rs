@@ -8,3 +8,4 @@ pub mod dummy;
 pub mod wallet;
 pub mod mock_transaction;
 pub mod date;
+pub mod network_query_events;

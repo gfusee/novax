@@ -420,7 +420,7 @@ pub(crate) fn impl_abi_event_struct_type(event_name: &str, native_field_names_an
         let field_name_ident = format_ident!("{field_name}");
 
         let field_token = quote! {
-            #field_name_ident: #field_type_ident
+            pub #field_name_ident: #field_type_ident
         };
 
         let from_tuple_token = quote! {
@@ -440,19 +440,25 @@ pub(crate) fn impl_abi_event_struct_type(event_name: &str, native_field_names_an
         (#(#from_tuple_types),*)
     };
 
+    let from_value_param_ident = if from_tuple_types.is_empty() {
+        format_ident!("_value")
+    } else {
+        format_ident!("value")
+    };
+
     Ok(
         (
             quote! { #name_ident },
             quote! {
                 #[derive(Serialize, Deserialize, PartialEq, Hash, Clone, Debug)]
                 pub struct #name_ident {
-                    #(#fields_impls),*,
+                    #(#fields_impls),*
                 }
 
                 impl From<#from_tuple_type_ident> for #name_ident {
-                    fn from(value: #from_tuple_type_ident) -> Self {
+                    fn from(#from_value_param_ident: #from_tuple_type_ident) -> Self {
                         Self {
-                            #(#from_tuple_impls),*,
+                            #(#from_tuple_impls),*
                         }
                     }
                 }
@@ -486,7 +492,7 @@ pub(crate) fn impl_abi_event_filter_struct_type(event_name: &str, managed_field_
             if let Some(#self_field_name_ident) = self.#field_name_ident {
                 let #managed_filter_variable_ident: #field_type_ident = #self_field_name_ident.to_managed();
                 let mut #managed_encoded_buffer_filter_variable_ident = ManagedBuffer::<StaticApi>::new();
-                #managed_filter_variable_ident.top_encode(&mut #managed_encoded_buffer_filter_variable_ident);
+                let _ = #managed_filter_variable_ident.top_encode(&mut #managed_encoded_buffer_filter_variable_ident);
                 let #managed_encoded_bytes_filter_variable_ident = #managed_encoded_buffer_filter_variable_ident.to_boxed_bytes().into_vec();
                 __novax_filter_bytes_terms.push((#managed_encoded_bytes_filter_variable_ident, #position_ident));
             }
@@ -502,7 +508,7 @@ pub(crate) fn impl_abi_event_filter_struct_type(event_name: &str, managed_field_
             quote! {
                 #[derive(Serialize, Deserialize, PartialEq, Hash, Clone, Default, Debug)]
                 pub struct #name_ident {
-                    #(#fields_impls),*,
+                    #(#fields_impls),*
                 }
 
                 impl IntoFilterTerms for #name_ident {

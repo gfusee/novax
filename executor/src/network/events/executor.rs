@@ -1,13 +1,14 @@
-use std::marker::PhantomData;
-use async_trait::async_trait;
-use base64::Engine;
-use novax_data::{Address, NativeConvertible};
 use crate::network::events::proxy::ElasticSearchProxy;
-use crate::{ElasticSearchNodeProxy, ExecutorError, IntoFilterTerms, QueryEventsExecutor, TopDecodeMulti};
-use crate::results::decode_topic;
+use crate::utils::events::query_events_options::EventQueryOptions;
 use crate::utils::events::query_result::EventQueryResult;
+use crate::{ElasticSearchNodeProxy, ExecutorError, IntoFilterTerms, QueryEventsExecutor, TopDecodeMulti};
+use async_trait::async_trait;
+use novax_data::{Address, NativeConvertible};
+use std::marker::PhantomData;
+use elasticsearch::Elasticsearch;
+use crate::error::network_query_events::NetworkQueryEventsError;
 
-pub type ElasticSearchNodeQueryExecutor = BaseElasticSearchNodeQueryExecutor<ElasticSearchNodeProxy>;
+pub type ElasticSearchNodeQueryExecutor = BaseElasticSearchNodeQueryExecutor<ElasticSearchNodeProxy<Elasticsearch>>;
 
 #[derive(Clone, Debug)]
 pub struct BaseElasticSearchNodeQueryExecutor<Proxy: ElasticSearchProxy> {
@@ -32,7 +33,8 @@ impl<Proxy: ElasticSearchProxy> QueryEventsExecutor for BaseElasticSearchNodeQue
         &self,
         contract_address: &Address,
         event_identifier: &str,
-        filter_options: Option<FilterOptions>,
+        options: Option<EventQueryOptions>,
+        filters: Option<FilterOptions>,
     ) -> Result<Vec<EventQueryResult<OutputManaged::Native>>, ExecutorError>
     where
         OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync,
@@ -41,7 +43,7 @@ impl<Proxy: ElasticSearchProxy> QueryEventsExecutor for BaseElasticSearchNodeQue
     {
         let proxy = Proxy::new(self.elastic_search_url.clone());
 
-        let filter_terms = if let Some(filter_options) = filter_options {
+        let filter_terms = if let Some(filter_options) = filters {
             filter_options.into_filter_terms()
         } else {
             vec![]
@@ -51,6 +53,7 @@ impl<Proxy: ElasticSearchProxy> QueryEventsExecutor for BaseElasticSearchNodeQue
             .execute(
                 contract_address.to_bech32_string()?,
                 event_identifier,
+                options,
                 filter_terms.clone(),
             )
             .await?;
@@ -61,12 +64,18 @@ impl<Proxy: ElasticSearchProxy> QueryEventsExecutor for BaseElasticSearchNodeQue
                 continue;
             };
 
-            let Ok(event_identifier_bytes) = hex::decode(event_identifier_raw) else {
-                todo!()
+            let event_identifier_bytes = match hex::decode(event_identifier_raw) {
+                Ok(bytes) => bytes,
+                Err(error) => {
+                    return Err(NetworkQueryEventsError::CannotDecodeHexEventIdentifier { event_identifier: event_identifier_raw.to_string(), reason: error.to_string() }.into())
+                }
             };
 
-            let Ok(event_identifier_utf8) = String::from_utf8(event_identifier_bytes) else {
-                todo!()
+            let event_identifier_utf8 = match String::from_utf8(event_identifier_bytes.clone()) {
+                Ok(string) => string,
+                Err(error) => {
+                    return Err(NetworkQueryEventsError::CannotGetUtf8EventIdentifierFromBytes { event_identifier_bytes, reason: error.to_string() }.into())
+                }
             };
 
             for (term, position) in filter_terms.iter() {
@@ -93,16 +102,19 @@ impl<Proxy: ElasticSearchProxy> QueryEventsExecutor for BaseElasticSearchNodeQue
             data_to_decode.push(event.data);
 
             let mut decoded_data_bytes = vec![];
-            for data in data_to_decode {
-                let Ok(bytes) = hex::decode(data) else {
-                    todo!()
+            for data in &data_to_decode {
+                let bytes = match hex::decode(&data) {
+                    Ok(bytes) => bytes,
+                    Err(error) => {
+                        return Err(NetworkQueryEventsError::CannotDecodeHexTopic { topic: data.to_string(), reason: error.to_string() }.into())
+                    }
                 };
 
                 decoded_data_bytes.push(bytes);
             }
 
             let Ok(decoded_event) = OutputManaged::multi_decode(&mut decoded_data_bytes) else {
-                todo!()
+                return Err(NetworkQueryEventsError::CannotDeserializeTopicToContractType { topics: data_to_decode }.into())
             };
 
             event_results.push(

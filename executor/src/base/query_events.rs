@@ -8,6 +8,7 @@ use serde::Serialize;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use crate::IntoFilterTerms;
+use crate::utils::events::query_events_options::EventQueryOptions;
 
 #[async_trait]
 pub trait QueryEventsExecutor: Send + Sync {
@@ -15,7 +16,8 @@ pub trait QueryEventsExecutor: Send + Sync {
         &self,
         contract_address: &Address,
         event_identifier: &str,
-        filter_options: Option<FilterOptions>
+        options: Option<EventQueryOptions>,
+        filters: Option<FilterOptions>
     ) -> Result<Vec<EventQueryResult<OutputManaged::Native>>, ExecutorError>
     where
         OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync,
@@ -29,7 +31,8 @@ impl<T: QueryEventsExecutor> QueryEventsExecutor for Arc<T> {
         &self,
         contract_address: &Address,
         event_identifier: &str,
-        filter_options: Option<FilterOptions>
+        options: Option<EventQueryOptions>,
+        filters: Option<FilterOptions>
     ) -> Result<Vec<EventQueryResult<OutputManaged::Native>>, ExecutorError>
     where
         OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync,
@@ -40,7 +43,8 @@ impl<T: QueryEventsExecutor> QueryEventsExecutor for Arc<T> {
             self,
             contract_address,
             event_identifier,
-            filter_options
+            options,
+            filters
         ).await
     }
 }
@@ -51,7 +55,8 @@ impl<T: QueryEventsExecutor> QueryEventsExecutor for Arc<Mutex<T>> {
         &self,
         contract_address: &Address,
         event_identifier: &str,
-        filter_options: Option<FilterOptions>
+        options: Option<EventQueryOptions>,
+        filters: Option<FilterOptions>
     ) -> Result<Vec<EventQueryResult<OutputManaged::Native>>, ExecutorError>
     where
         OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync,
@@ -63,7 +68,8 @@ impl<T: QueryEventsExecutor> QueryEventsExecutor for Arc<Mutex<T>> {
             executor.execute::<OutputManaged, FilterOptions>(
                 contract_address,
                 event_identifier,
-                filter_options
+                options,
+                filters
             ).await
         }
     }

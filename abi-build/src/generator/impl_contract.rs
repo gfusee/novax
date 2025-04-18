@@ -609,27 +609,31 @@ fn impl_abi_event_query(
     let abi_event_field_names = abi_event.inputs
         .clone()
         .into_iter()
-        .map(|input| input.name)
+        .map(|input| (input.name, input.indexed.unwrap_or_default()))
         .collect::<Vec<_>>();
 
-    let event_field_managed_names_and_types = abi_event_field_names
+    let event_indexed_field_managed_names_and_types = abi_event_field_names
         .clone()
         .into_iter()
         .zip(event_managed_inputs_types)
+        .filter(|item| item.0.1)
+        .map(|item| (item.0.0, item.1))
         .collect::<Vec<_>>();
 
     let event_field_native_names_and_types = abi_event_field_names
         .into_iter()
         .zip(event_native_inputs_types)
+        .map(|item| (item.0.0, item.1))
         .collect::<Vec<_>>();
 
     let (event_return_struct_type, event_return_struct_type_impls) = impl_abi_event_struct_type(event_identifier, event_field_native_names_and_types)?;
-    let (event_filters_struct_type, event_filters_struct_type_impls) = impl_abi_event_filter_struct_type(event_identifier, event_field_managed_names_and_types)?;
+    let (event_filters_struct_type, event_filters_struct_type_impls) = impl_abi_event_filter_struct_type(event_identifier, event_indexed_field_managed_names_and_types)?;
     let endpoint_query_key = impl_endpoint_key_for_query(event_identifier, &vec![]); // TODO
 
     let event_query_token = quote! {
         pub async fn #event_identifier_ident(
             &self,
+            options: Option<EventQueryOptions>,
             event_filters: Option<#event_filters_struct_type>,
         ) -> Result<std::vec::Vec<EventQueryResult<#event_return_struct_type>>, NovaXError> {
             let _novax_request_arc = crate::utils::static_request_arc::get_static_request_arc_clone();
@@ -646,6 +650,7 @@ fn impl_abi_event_query(
                         .execute::<#event_managed_inputs, #event_filters_struct_type>(
                             &_novax_contract_address,
                             #event_identifier,
+                            options,
                             event_filters,
                         ).await;
 
@@ -741,11 +746,11 @@ fn impl_event_inputs(inputs: &AbiEventInputs, abi_types: &AbiTypes, api_generic:
         managed_outputs_idents.push(managed_output);
         native_outputs_idents.push(native_output);
     }
-    let (function_managed_outputs, function_native_outputs) = if inputs.is_empty() {
-        (quote! {()}, quote!{()})
+    let function_managed_outputs = if inputs.is_empty() {
+        quote! {()}
     } else {
         let length = format_ident!("MultiValue{}", inputs.len());
-        (quote! {#length<#(#managed_outputs_idents), *>}, quote! {(#(#native_outputs_idents), *)})
+        quote! {#length<#(#managed_outputs_idents), *>}
     };
 
     Ok((function_managed_outputs, managed_outputs_idents, native_outputs_idents))

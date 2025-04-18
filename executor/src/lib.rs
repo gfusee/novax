@@ -88,6 +88,8 @@ pub use network::transaction::models::transaction_on_network::TransactionOnNetwo
 pub use network::events::proxy::ElasticSearchProxy;
 pub use network::events::proxy::ElasticSearchNodeProxy;
 pub use network::events::executor::ElasticSearchNodeQueryExecutor;
+pub use network::events::executor::BaseElasticSearchNodeQueryExecutor;
+pub use network::events::proxy::ElasticSearchClient;
 
 pub use mocking::executor::StandardMockExecutor;
 pub use mocking::executor::MockExecutor;
@@ -104,6 +106,7 @@ pub use utils::transaction::results;
 pub use utils::transaction::normalization::NormalizationInOut;
 
 pub use utils::events::query_result::EventQueryResult;
+pub use utils::events::query_events_options::*;
 pub use utils::events::into_filter_terms::IntoFilterTerms;
 
 pub use multiversx_sc_scenario::ScenarioWorld;
