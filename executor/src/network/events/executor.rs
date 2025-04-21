@@ -99,7 +99,7 @@ impl<Proxy: ElasticSearchProxy> QueryEventsExecutor for BaseElasticSearchNodeQue
             let mut data_to_decode = event.topics
                 .get(1..)
                 .map_or_else(Vec::new, |s| s.to_vec());
-            data_to_decode.push(event.data);
+            data_to_decode.push(event.data.unwrap_or_default());
 
             let mut decoded_data_bytes = vec![];
             for data in &data_to_decode {

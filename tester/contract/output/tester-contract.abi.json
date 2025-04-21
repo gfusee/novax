@@ -9,8 +9,8 @@
         },
         "contractCrate": {
             "name": "tester-contract",
-            "version": "0.1.22",
-            "gitVersion": "0.1.7-beta.1-90-ge5d8e38"
+            "version": "0.2.0",
+            "gitVersion": "0.1.7-beta.1-93-g5d38859"
         },
         "framework": {
             "name": "multiversx-sc",
@@ -658,12 +658,38 @@
                 }
             ],
             "outputs": []
+        },
+        {
+            "name": "emitEmptyEvent",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "emitEventWithOnlyData",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "data",
+                    "type": "EventWithOnlyData"
+                }
+            ],
+            "outputs": []
         }
     ],
     "events": [
         {
             "identifier": "emptyEvent",
             "inputs": []
+        },
+        {
+            "identifier": "eventWithOnlyData",
+            "inputs": [
+                {
+                    "name": "data",
+                    "type": "EventWithOnlyData"
+                }
+            ]
         }
     ],
     "esdtAttributes": [],
@@ -808,6 +834,19 @@
                 {
                     "name": "tuple",
                     "type": "tuple<BigUint,bytes>"
+                }
+            ]
+        },
+        "EventWithOnlyData": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
                 }
             ]
         },
