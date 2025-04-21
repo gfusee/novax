@@ -746,11 +746,21 @@ fn impl_event_inputs(inputs: &AbiEventInputs, abi_types: &AbiTypes, api_generic:
         managed_outputs_idents.push(managed_output);
         native_outputs_idents.push(native_output);
     }
+
+    let inputs_len = inputs.len();
+
     let function_managed_outputs = if inputs.is_empty() {
         quote! {()}
+    } else if inputs_len == 1 {
+        let multi_value_two_ident = format_ident!("MultiValue2");
+        let ignore_value_ident = format_ident!("IgnoreValue");
+        let managed_output_ident = managed_outputs_idents.first().unwrap();
+
+        quote! {#multi_value_two_ident<#managed_output_ident, #ignore_value_ident>}
     } else {
-        let length = format_ident!("MultiValue{}", inputs.len());
-        quote! {#length<#(#managed_outputs_idents), *>}
+        let multi_value_length = format_ident!("MultiValue{}", inputs_len);
+
+        quote! {#multi_value_length<#(#managed_outputs_idents), *>}
     };
 
     Ok((function_managed_outputs, managed_outputs_idents, native_outputs_idents))

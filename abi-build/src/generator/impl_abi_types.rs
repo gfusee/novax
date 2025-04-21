@@ -436,8 +436,17 @@ pub(crate) fn impl_abi_event_struct_type(event_name: &str, native_field_names_an
         from_tuple_types.push(tuple_type_token);
     }
 
-    let from_tuple_type_ident = quote! {
-        (#(#from_tuple_types),*)
+    let from_tuple_type_ident = if from_tuple_types.len() == 1 {
+        let tuple_type_ident = from_tuple_types.get(0).unwrap();
+        let empty_tuple_type_ident = quote! { () };
+
+        quote! {
+            (#tuple_type_ident, #empty_tuple_type_ident)
+        }
+    } else {
+        quote! {
+            (#(#from_tuple_types),*)
+        }
     };
 
     let from_value_param_ident = if from_tuple_types.is_empty() {

@@ -36,6 +36,7 @@
   "managedGetOriginalTxHash",
   "managedSCAddress",
   "managedSignalError",
+  "managedWriteLog",
   "signalError",
   "smallIntFinishSigned",
   "smallIntFinishUnsigned",
