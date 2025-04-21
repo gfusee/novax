@@ -2,15 +2,18 @@ use std::collections::HashMap;
 use serde::{Deserialize};
 use crate::abi::constructor::AbiConstructor;
 use crate::abi::endpoint::AbiEndpoint;
+use crate::abi::event::AbiEvent;
 use crate::abi::r#type::AbiType;
 
 pub type AbiTypes = HashMap<String, AbiType>;
 pub type AbiEndpoints = Vec<AbiEndpoint>;
+pub type AbiEvents = Vec<AbiEvent>;
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct Abi {
     pub name: String,
     pub types: AbiTypes,
+    pub events: Option<AbiEvents>,
     pub endpoints: AbiEndpoints,
     pub constructor: AbiConstructor
 }
@@ -33,6 +36,10 @@ impl Abi {
 
     pub(crate) fn get_query_name(&self) -> String {
         self.get_contract_name() + "Query"
+    }
+
+    pub(crate) fn get_query_events_name(&self) -> String {
+        self.get_contract_name() + "QueryEvents"
     }
 
     pub(crate) fn get_call_name(&self) -> String {

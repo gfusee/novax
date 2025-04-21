@@ -60,6 +60,7 @@ pub use error::transaction::TransactionError;
 pub use error::simulation::SimulationError;
 
 pub use base::query::QueryExecutor;
+pub use base::query_events::QueryEventsExecutor;
 pub use base::transaction::TransactionExecutor;
 pub use base::deploy::DeployExecutor;
 
@@ -84,6 +85,11 @@ pub use network::transaction::models::transaction_on_network::TransactionOnNetwo
 pub use network::transaction::models::transaction_on_network::TransactionOnNetworkTransactionSmartContractResult;
 pub use network::transaction::models::transaction_on_network::TransactionOnNetworkTransactionLogs;
 pub use network::transaction::models::transaction_on_network::TransactionOnNetworkTransactionLogsEvents;
+pub use network::events::proxy::ElasticSearchProxy;
+pub use network::events::proxy::ElasticSearchNodeProxy;
+pub use network::events::executor::ElasticSearchNodeQueryExecutor;
+pub use network::events::executor::BaseElasticSearchNodeQueryExecutor;
+pub use network::events::proxy::ElasticSearchClient;
 
 pub use mocking::executor::StandardMockExecutor;
 pub use mocking::executor::MockExecutor;
@@ -98,6 +104,10 @@ pub use utils::transaction::token_transfer::TokenTransfer;
 pub use utils::transaction::call_result;
 pub use utils::transaction::results;
 pub use utils::transaction::normalization::NormalizationInOut;
+
+pub use utils::events::query_result::EventQueryResult;
+pub use utils::events::query_events_options::*;
+pub use utils::events::into_filter_terms::IntoFilterTerms;
 
 pub use multiversx_sc_scenario::ScenarioWorld;
 pub use multiversx_sc_scenario::scenario_model::{ScCallStep, ScDeployStep, ScQueryStep, SetStateStep, Account, TxQuery, TxResponse, TypedScDeploy, TypedScQuery, TypedResponse};

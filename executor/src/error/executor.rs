@@ -6,6 +6,7 @@ use crate::error::dummy::DummyExecutorError;
 use crate::error::gateway::GatewayError;
 use crate::error::mock_deploy::MockDeployError;
 use crate::error::mock_transaction::MockTransactionError;
+use crate::error::network_query_events::NetworkQueryEventsError;
 use crate::error::transaction::TransactionError;
 use crate::error::wallet::WalletError;
 use crate::SimulationError;
@@ -17,6 +18,7 @@ pub enum ExecutorError {
     /// failures or malformed requests. The wrapped `NetworkQueryError` provides more detailed information about
     /// the nature of the network-related error that occurred.
     NetworkQuery(NetworkQueryError),
+    NetworkQueryEvents(NetworkQueryEventsError),
 
     Dummy(DummyExecutorError),
     Date(DateError),

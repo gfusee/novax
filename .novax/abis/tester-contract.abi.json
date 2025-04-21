@@ -1,20 +1,20 @@
 {
     "buildInfo": {
         "rustc": {
-            "version": "1.79.0",
-            "commitHash": "129f3b9964af4d4a709d1383930ade12dfe7c081",
-            "commitDate": "2024-06-10",
+            "version": "1.86.0",
+            "commitHash": "05f9846f893b09a1be1fc8560e33fc3c815cfecb",
+            "commitDate": "2025-03-31",
             "channel": "Stable",
-            "short": "rustc 1.79.0 (129f3b996 2024-06-10)"
+            "short": "rustc 1.86.0 (05f9846f8 2025-03-31)"
         },
         "contractCrate": {
             "name": "tester-contract",
-            "version": "0.1.7-beta.1",
-            "gitVersion": "0.1.7-beta.1-1-g8eb6db8"
+            "version": "0.1.22",
+            "gitVersion": "0.1.7-beta.1-90-ge5d8e38"
         },
         "framework": {
             "name": "multiversx-sc",
-            "version": "0.50.3"
+            "version": "0.52.3"
         }
     },
     "name": "Tester",
@@ -658,6 +658,12 @@
                 }
             ],
             "outputs": []
+        }
+    ],
+    "events": [
+        {
+            "identifier": "emptyEvent",
+            "inputs": []
         }
     ],
     "esdtAttributes": [],
