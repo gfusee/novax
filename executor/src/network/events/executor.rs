@@ -10,12 +10,24 @@ use crate::error::network_query_events::NetworkQueryEventsError;
 
 pub type ElasticSearchNodeQueryExecutor = BaseElasticSearchNodeQueryExecutor<ElasticSearchNodeProxy<Elasticsearch>>;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct BaseElasticSearchNodeQueryExecutor<Proxy: ElasticSearchProxy> {
     /// The URL of the elastic search node.
     pub elastic_search_url: String,
     /// A phantom data field to keep the generic `Proxy` type.
     _data: PhantomData<Proxy>
+}
+
+impl<Proxy> Clone for BaseElasticSearchNodeQueryExecutor<Proxy>
+where
+    Proxy: ElasticSearchProxy,
+{
+    fn clone(&self) -> Self {
+        Self {
+            elastic_search_url: self.elastic_search_url.clone(),
+            _data: PhantomData
+        }
+    }
 }
 
 impl<Proxy: ElasticSearchProxy> BaseElasticSearchNodeQueryExecutor<Proxy> {
