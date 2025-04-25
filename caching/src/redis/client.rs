@@ -24,6 +24,10 @@ impl RedisClient for redis::Client {
     }
 
     async fn set<K: ToRedisArgs + Send + Sync, V: ToRedisArgs + Send + Sync>(&self, key: K, value: V, duration: u64) -> Result<(), CachingRedisError> {
+        if duration == 0 {
+            return Ok(());
+        }
+
         let mut connection = match self.get_multiplexed_async_connection_with_config(&AsyncConnectionConfig::new()).await {
             Ok(connection) => connection,
             Err(error) => return Err(CachingRedisError::CannotGetConnection { description: format!("{}", error) })
