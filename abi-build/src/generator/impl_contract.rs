@@ -493,7 +493,7 @@ fn impl_abi_endpoint_call_query(
     }
     let (function_managed_outputs, function_native_outputs) = impl_endpoint_outputs(&abi_endpoint.outputs, abi_types, &debug_api)?;
 
-    let endpoint_query_key = impl_endpoint_key_for_query(&abi_endpoint.name, &abi_endpoint.inputs);
+    let endpoint_query_key = impl_endpoint_key_for_query(&abi_endpoint.name, "query", &abi_endpoint.inputs);
 
     let (endpoint_args_let_statements, endpoint_args_inputs) = impl_endpoint_args_for_call(&abi_endpoint.inputs, abi_types)?;
 
@@ -628,7 +628,7 @@ fn impl_abi_event_query(
 
     let (event_return_struct_type, event_return_struct_type_impls) = impl_abi_event_struct_type(event_identifier, event_field_native_names_and_types)?;
     let (event_filters_struct_type, event_filters_struct_type_impls) = impl_abi_event_filter_struct_type(event_identifier, event_indexed_field_managed_names_and_types)?;
-    let endpoint_query_key = impl_endpoint_key_for_query(event_identifier, &vec![]); // TODO
+    let endpoint_query_key = impl_endpoint_key_for_query(event_identifier, "query_events", &vec![]); // TODO
 
     let event_query_token = quote! {
         pub async fn #event_identifier_ident(
@@ -785,17 +785,24 @@ fn impl_endpoint_inputs(should_include_self: bool, abi_inputs: &AbiInputs, abi_t
     )
 }
 
-fn impl_endpoint_key_for_query(endpoint_name: &str, abi_inputs: &AbiInputs) -> TokenStream {
+fn impl_endpoint_key_for_query(
+    endpoint_name: &str,
+    key_suffix: &str,
+    abi_inputs: &AbiInputs,
+) -> TokenStream {
     let mut inputs_hash_idents: Vec<TokenStream> = vec![];
     for input in abi_inputs {
         let input_name_ident = format_ident!("{}", input.name);
 
         inputs_hash_idents.push(quote!{#input_name_ident.hash(&mut _novax_hasher);})
     }
+
+    let endpoint_name_key = format!("{endpoint_name}{key_suffix}");
+
     quote! {
         let mut _novax_hasher = DefaultHasher::new();
         _novax_contract_address_value.value.hash(&mut _novax_hasher);
-        #endpoint_name.hash(&mut _novax_hasher);
+        #endpoint_name_key.hash(&mut _novax_hasher);
         #(#inputs_hash_idents)*
         let _novax_key = _novax_hasher.finish();
     }
