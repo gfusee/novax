@@ -485,25 +485,32 @@ pub(crate) fn impl_abi_event_filter_struct_type(event_name: &str, managed_field_
     let mut into_filter_values = vec![];
 
     for (index, (field_name, field_type_ident)) in managed_field_names_and_types.into_iter().enumerate() {
-        let position_ident = Index::from(index + 1); // +1 because the first topic is the event's identifier.
+        let position_ident = Index::from(index + 1); // First topic is the event's identifier
 
         let field_name_ident = format_ident!("{field_name}");
         let self_field_name_ident = format_ident!("self_{field_name_ident}");
         let managed_filter_variable_ident = format_ident!("managed_{field_name_ident}");
-        let managed_encoded_buffer_filter_variable_ident = format_ident!("managed_encoded_buffer_{field_name_ident}");
-        let managed_encoded_bytes_filter_variable_ident = format_ident!("managed_encoded_bytes_{field_name_ident}");
+        let managed_vec_encoded_filter_variable_ident = format_ident!("managed_vec_encoded_{field_name_ident}");
 
         let field_token = quote! {
             pub #field_name_ident: Option<<#field_type_ident as NativeConvertible>::Native>
         };
 
         let into_filter_value_token = quote! {
+            let mut __current_position = #position_ident;
+            while __used_indexes.contains(&__current_position) {
+                __current_position += 1;
+            }
+
             if let Some(#self_field_name_ident) = self.#field_name_ident {
                 let #managed_filter_variable_ident: #field_type_ident = #self_field_name_ident.to_managed();
-                let mut #managed_encoded_buffer_filter_variable_ident = ManagedBuffer::<StaticApi>::new();
-                let _ = #managed_filter_variable_ident.top_encode(&mut #managed_encoded_buffer_filter_variable_ident);
-                let #managed_encoded_bytes_filter_variable_ident = #managed_encoded_buffer_filter_variable_ident.to_boxed_bytes().into_vec();
-                __novax_filter_bytes_terms.push((#managed_encoded_bytes_filter_variable_ident, #position_ident));
+                let mut #managed_vec_encoded_filter_variable_ident = ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::new();
+                let _ = #managed_filter_variable_ident.multi_encode(&mut #managed_vec_encoded_filter_variable_ident);
+                for __buffer in #managed_vec_encoded_filter_variable_ident.into_iter() {
+                    __novax_filter_bytes_terms.push((__buffer.to_boxed_bytes().into_vec(), __current_position));
+                    __used_indexes.push(__current_position);
+                    __current_position += 1;
+                }
             }
         };
 
@@ -523,6 +530,7 @@ pub(crate) fn impl_abi_event_filter_struct_type(event_name: &str, managed_field_
                 impl IntoFilterTerms for #name_ident {
                     fn into_filter_terms(self) -> Vec<(Vec<u8>, u32)> {
                         let mut __novax_filter_bytes_terms = vec![];
+                        let mut __used_indexes = vec![0]; // The first topic is the event's identifier
 
                         #(#into_filter_values)*
 

@@ -9,8 +9,8 @@
         },
         "contractCrate": {
             "name": "tester-contract",
-            "version": "0.2.0",
-            "gitVersion": "0.1.7-beta.1-93-g5d38859"
+            "version": "0.2.4",
+            "gitVersion": "0.1.7-beta.1-107-g175920e"
         },
         "framework": {
             "name": "multiversx-sc",
@@ -658,6 +658,39 @@
                 }
             ],
             "outputs": []
+        },
+        {
+            "name": "emitEmptyEvent",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "emitEventWithOnlyData",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "data",
+                    "type": "EventWithOnlyData"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "emitEventWithMultiValueEncoded",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "data",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "values",
+                    "type": "variadic<BigUint>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": []
         }
     ],
     "events": [
@@ -671,6 +704,20 @@
                 {
                     "name": "data",
                     "type": "EventWithOnlyData"
+                }
+            ]
+        },
+        {
+            "identifier": "eventWithMultiValueEncoded",
+            "inputs": [
+                {
+                    "name": "values",
+                    "type": "variadic<BigUint>",
+                    "indexed": true
+                },
+                {
+                    "name": "data",
+                    "type": "BigUint"
                 }
             ]
         }
