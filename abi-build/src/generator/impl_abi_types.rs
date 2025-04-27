@@ -526,6 +526,8 @@ pub(crate) fn impl_abi_event_filter_struct_type(event_name: &str, managed_field_
                     __used_indexes.push(__current_position);
                     __current_position += 1;
                 }
+            } else {
+                __used_indexes.push(__current_position);
             }
         };
 
