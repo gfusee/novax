@@ -412,8 +412,6 @@ pub(crate) fn impl_abi_event_struct_type(event_name: &str, field_names_and_types
     let name_ident = format_ident!("{}EventQueryResult", event_name);
 
     let mut fields_impls = vec![];
-    let mut from_tuple_types = vec![];
-    let mut from_tuple_impls = vec![];
     let mut decodable_event_topics_impls = vec![];
     let mut decodable_event_data_impls = vec![];
     let mut decodable_event_self_fields_impls = vec![];
@@ -426,21 +424,12 @@ pub(crate) fn impl_abi_event_struct_type(event_name: &str, field_names_and_types
     };
 
     for (index, (field_name, field_type_ident)) in field_names_and_types.iter().enumerate() {
-        let index_ident = Index::from(index);
         let field_name_ident = format_ident!("{field_name}");
         let native_field_type_ident = quote! { <#field_type_ident as NativeConvertible>::Native };
         let decodable_event_field_name_ident = format_ident!("__novax_{field_name}");
 
         let field_token = quote! {
             pub #field_name_ident: #native_field_type_ident
-        };
-
-        let from_tuple_token = quote! {
-            #field_name_ident: value.#index_ident
-        };
-
-        let tuple_type_token = quote! {
-            #native_field_type_ident
         };
 
         if has_data && index == last_index {
@@ -464,27 +453,16 @@ pub(crate) fn impl_abi_event_struct_type(event_name: &str, field_names_and_types
         decodable_event_self_fields_impls.push(decodable_event_self_fields_token);
 
         fields_impls.push(field_token);
-        from_tuple_impls.push(from_tuple_token);
-        from_tuple_types.push(tuple_type_token);
     }
 
-    let from_tuple_type_ident = if from_tuple_types.len() == 1 {
-        let tuple_type_ident = from_tuple_types.get(0).unwrap();
-        let empty_tuple_type_ident = quote! { () };
-
-        quote! {
-            (#tuple_type_ident, #empty_tuple_type_ident)
-        }
-    } else {
-        quote! {
-            (#(#from_tuple_types),*)
-        }
+    let topics_param_decl = match decodable_event_topics_impls.len() {
+        0 => quote! { _topics: Vec<Vec<u8>> },
+        _ => quote! { mut topics: Vec<Vec<u8>> },
     };
 
-    let from_value_param_ident = if from_tuple_types.is_empty() {
-        format_ident!("_value")
-    } else {
-        format_ident!("value")
+    let data_param_decl = match decodable_event_data_impls.len() {
+        0 => quote! { _data: Vec<u8> },
+         _ => quote! { data: Vec<u8> },
     };
 
     Ok(
@@ -496,16 +474,8 @@ pub(crate) fn impl_abi_event_struct_type(event_name: &str, field_names_and_types
                     #(#fields_impls),*
                 }
 
-                impl From<#from_tuple_type_ident> for #name_ident {
-                    fn from(#from_value_param_ident: #from_tuple_type_ident) -> Self {
-                        Self {
-                            #(#from_tuple_impls),*
-                        }
-                    }
-                }
-
                 impl DecodableEvent for #name_ident {
-                    fn decode_event(mut topics: Vec<Vec<u8>>, mut data: Vec<u8>) -> Result<Self, DecodeError> {
+                    fn decode_event(#topics_param_decl, #data_param_decl) -> Result<Self, DecodeError> {
                         #(#decodable_event_topics_impls)*
                         #(#decodable_event_data_impls)*
 

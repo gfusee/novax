@@ -605,7 +605,7 @@ fn impl_abi_event_query(
         managed_inputs_idents.push(managed_input);
         native_inputs_idents.push(native_input);
     }
-    let (event_managed_inputs, event_managed_inputs_types, event_native_inputs_types) = impl_event_inputs(&abi_event.inputs, abi_types, &debug_api)?;
+    let event_managed_inputs_types = impl_event_inputs(&abi_event.inputs, abi_types, &debug_api)?;
     let abi_event_field_names = abi_event.inputs
         .clone()
         .into_iter()
@@ -744,32 +744,17 @@ fn impl_endpoint_outputs(outputs: &AbiOutputs, abi_types: &AbiTypes, api_generic
     Ok((function_managed_outputs, function_native_outputs))
 }
 
-fn impl_event_inputs(inputs: &AbiEventInputs, abi_types: &AbiTypes, api_generic: &TokenStream) -> Result<(TokenStream, Vec<TokenStream>, Vec<TokenStream>), BuildError> {
+fn impl_event_inputs(inputs: &AbiEventInputs, abi_types: &AbiTypes, api_generic: &TokenStream) -> Result<Vec<TokenStream>, BuildError> {
     let mut managed_outputs_idents: Vec<TokenStream> = vec![];
     let mut native_outputs_idents: Vec<TokenStream> = vec![];
+
     for input in inputs {
         let (managed_output, native_output) = impl_event_input_for_query(input, abi_types, api_generic)?;
         managed_outputs_idents.push(managed_output);
         native_outputs_idents.push(native_output);
     }
 
-    let inputs_len = inputs.len();
-
-    let function_managed_outputs = if inputs.is_empty() {
-        quote! {()}
-    } else if inputs_len == 1 {
-        let multi_value_two_ident = format_ident!("MultiValue2");
-        let ignore_value_ident = format_ident!("IgnoreValue");
-        let managed_output_ident = managed_outputs_idents.first().unwrap();
-
-        quote! {#multi_value_two_ident<#managed_output_ident, #ignore_value_ident>}
-    } else {
-        let multi_value_length = format_ident!("MultiValue{}", inputs_len);
-
-        quote! {#multi_value_length<#(#managed_outputs_idents), *>}
-    };
-
-    Ok((function_managed_outputs, managed_outputs_idents, native_outputs_idents))
+    Ok(managed_outputs_idents)
 }
 
 fn impl_endpoint_inputs(should_include_self: bool, abi_inputs: &AbiInputs, abi_types: &AbiTypes) -> Result<TokenStream, BuildError> {

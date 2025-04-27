@@ -1,13 +1,13 @@
+use crate::error::network_query_events::NetworkQueryEventsError;
 use crate::network::events::proxy::ElasticSearchProxy;
+use crate::utils::events::decodable_event::DecodableEvent;
 use crate::utils::events::query_events_options::EventQueryOptions;
 use crate::utils::events::query_result::EventQueryResult;
-use crate::{ElasticSearchNodeProxy, ExecutorError, IntoFilterTerms, QueryEventsExecutor, TopDecodeMulti};
+use crate::{ElasticSearchNodeProxy, ExecutorError, IntoFilterTerms, QueryEventsExecutor};
 use async_trait::async_trait;
-use novax_data::{Address, NativeConvertible};
-use std::marker::PhantomData;
 use elasticsearch::Elasticsearch;
-use crate::error::network_query_events::NetworkQueryEventsError;
-use crate::utils::events::decodable_event::DecodableEvent;
+use novax_data::Address;
+use std::marker::PhantomData;
 
 pub type ElasticSearchNodeQueryExecutor = BaseElasticSearchNodeQueryExecutor<ElasticSearchNodeProxy<Elasticsearch>>;
 

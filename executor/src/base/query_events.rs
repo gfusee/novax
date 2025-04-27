@@ -1,15 +1,12 @@
 use crate::error::executor::ExecutorError;
-use crate::utils::events::query_result::EventQueryResult;
-use async_trait::async_trait;
-use multiversx_sc_scenario::multiversx_sc::codec::TopDecodeMulti;
-use novax_data::{Address, NativeConvertible};
-use serde::de::DeserializeOwned;
-use serde::Serialize;
-use std::sync::Arc;
-use tokio::sync::Mutex;
-use crate::IntoFilterTerms;
 use crate::utils::events::decodable_event::DecodableEvent;
 use crate::utils::events::query_events_options::EventQueryOptions;
+use crate::utils::events::query_result::EventQueryResult;
+use crate::IntoFilterTerms;
+use async_trait::async_trait;
+use novax_data::Address;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 #[async_trait]
 pub trait QueryEventsExecutor: Send + Sync {
