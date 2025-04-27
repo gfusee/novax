@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           54
+// Endpoints:                           55
 // Async Callback:                       1
-// Total number of exported functions:  57
+// Total number of exported functions:  58
 
 #![no_std]
 
@@ -74,6 +74,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         emitEmptyEvent => emit_empty_event
         emitEventWithOnlyData => emit_event_with_only_data
         emitEventWithMultiValueEncoded => emit_event_with_multi_value_encoded
+        emitEventWithMultiValue => emit_event_with_multi_value
     )
 }
 

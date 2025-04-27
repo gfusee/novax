@@ -407,20 +407,32 @@ fn impl_abi_struct_type(name: &str, abi_type: &AbiType, all_abi_types: &AbiTypes
 }
 
 // (TokenStream, TokenStream) = (event struct name, event struct impls)
-pub(crate) fn impl_abi_event_struct_type(event_name: &str, native_field_names_and_types: Vec<(String, TokenStream)>) -> Result<(TokenStream, TokenStream), BuildError> {
+pub(crate) fn impl_abi_event_struct_type(event_name: &str, field_names_and_types: Vec<(String, TokenStream)>, has_data: bool) -> Result<(TokenStream, TokenStream), BuildError> {
     let event_name = capitalize_first_letter(&event_name.to_case(Case::Camel));
     let name_ident = format_ident!("{}EventQueryResult", event_name);
 
     let mut fields_impls = vec![];
     let mut from_tuple_types = vec![];
     let mut from_tuple_impls = vec![];
+    let mut decodable_event_topics_impls = vec![];
+    let mut decodable_event_data_impls = vec![];
+    let mut decodable_event_self_fields_impls = vec![];
 
-    for (index, (field_name, field_type_ident)) in native_field_names_and_types.iter().enumerate() {
+    let native_field_names_and_types_len =  field_names_and_types.len();
+    let last_index = if native_field_names_and_types_len > 0 {
+        native_field_names_and_types_len - 1
+    } else {
+        0 // Not important: the for loop won't be executed
+    };
+
+    for (index, (field_name, field_type_ident)) in field_names_and_types.iter().enumerate() {
         let index_ident = Index::from(index);
         let field_name_ident = format_ident!("{field_name}");
+        let native_field_type_ident = quote! { <#field_type_ident as NativeConvertible>::Native };
+        let decodable_event_field_name_ident = format_ident!("__novax_{field_name}");
 
         let field_token = quote! {
-            pub #field_name_ident: #field_type_ident
+            pub #field_name_ident: #native_field_type_ident
         };
 
         let from_tuple_token = quote! {
@@ -428,8 +440,28 @@ pub(crate) fn impl_abi_event_struct_type(event_name: &str, native_field_names_an
         };
 
         let tuple_type_token = quote! {
-            #field_type_ident
+            #native_field_type_ident
         };
+
+        if has_data && index == last_index {
+            let decodable_event_data_token = quote! {
+                let #decodable_event_field_name_ident = <#field_type_ident>::multi_decode(&mut vec![data])?;
+            };
+
+            decodable_event_data_impls.push(decodable_event_data_token);
+        } else {
+            let decodable_event_topic_token = quote! {
+                let #decodable_event_field_name_ident = <#field_type_ident>::multi_decode(&mut topics)?;
+            };
+
+            decodable_event_topics_impls.push(decodable_event_topic_token);
+        }
+
+        let decodable_event_self_fields_token = quote! {
+            #field_name_ident: #decodable_event_field_name_ident.to_native()
+        };
+
+        decodable_event_self_fields_impls.push(decodable_event_self_fields_token);
 
         fields_impls.push(field_token);
         from_tuple_impls.push(from_tuple_token);
@@ -469,6 +501,19 @@ pub(crate) fn impl_abi_event_struct_type(event_name: &str, native_field_names_an
                         Self {
                             #(#from_tuple_impls),*
                         }
+                    }
+                }
+
+                impl DecodableEvent for #name_ident {
+                    fn decode_event(mut topics: Vec<Vec<u8>>, mut data: Vec<u8>) -> Result<Self, DecodeError> {
+                        #(#decodable_event_topics_impls)*
+                        #(#decodable_event_data_impls)*
+
+                        Ok(
+                            Self {
+                                #(#decodable_event_self_fields_impls),*
+                            }
+                        )
                     }
                 }
             }

@@ -612,21 +612,27 @@ fn impl_abi_event_query(
         .map(|input| (input.name, input.indexed.unwrap_or_default()))
         .collect::<Vec<_>>();
 
-    let event_indexed_field_managed_names_and_types = abi_event_field_names
+    let event_field_managed_names_and_types_zipped = abi_event_field_names
         .clone()
         .into_iter()
         .zip(event_managed_inputs_types)
+        .collect::<Vec<_>>();
+
+    let event_field_managed_names_and_types = event_field_managed_names_and_types_zipped
+        .clone()
+        .into_iter()
+        .map(|item| (item.0.0, item.1))
+        .collect::<Vec<_>>();
+
+    let event_indexed_field_managed_names_and_types = event_field_managed_names_and_types_zipped
+        .into_iter()
         .filter(|item| item.0.1)
         .map(|item| (item.0.0, item.1))
         .collect::<Vec<_>>();
 
-    let event_field_native_names_and_types = abi_event_field_names
-        .into_iter()
-        .zip(event_native_inputs_types)
-        .map(|item| (item.0.0, item.1))
-        .collect::<Vec<_>>();
+    let has_data = event_indexed_field_managed_names_and_types.len() != event_field_managed_names_and_types.len();
 
-    let (event_return_struct_type, event_return_struct_type_impls) = impl_abi_event_struct_type(event_identifier, event_field_native_names_and_types)?;
+    let (event_return_struct_type, event_return_struct_type_impls) = impl_abi_event_struct_type(event_identifier, event_field_managed_names_and_types.clone(), has_data)?;
     let (event_filters_struct_type, event_filters_struct_type_impls) = impl_abi_event_filter_struct_type(event_identifier, event_indexed_field_managed_names_and_types)?;
     let endpoint_query_key = impl_endpoint_key_for_query(event_identifier, "query_events", &vec![]); // TODO
 
@@ -647,7 +653,7 @@ fn impl_abi_event_query(
                 _novax_key,
                 async {
                     let result_native_tuple: Result<std::vec::Vec<EventQueryResult<_>>, _> = self.executor
-                        .execute::<#event_managed_inputs, #event_filters_struct_type>(
+                        .execute::<#event_return_struct_type, #event_filters_struct_type>(
                             &_novax_contract_address,
                             #event_identifier,
                             options,
@@ -870,9 +876,6 @@ fn get_managed_type_for_abi_type(abi_type_name: &str, abi_types: &AbiTypes, api_
             quote! {#managed_type_ident}
         )
     } else {
-        if abi_type_name.starts_with("multi") {
-            panic!("bouhhh");
-        }
         Ok(
             parse_abi_type_name_to_managed_ident(
                 abi_type_name,

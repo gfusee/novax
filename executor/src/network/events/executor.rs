@@ -7,6 +7,7 @@ use novax_data::{Address, NativeConvertible};
 use std::marker::PhantomData;
 use elasticsearch::Elasticsearch;
 use crate::error::network_query_events::NetworkQueryEventsError;
+use crate::utils::events::decodable_event::DecodableEvent;
 
 pub type ElasticSearchNodeQueryExecutor = BaseElasticSearchNodeQueryExecutor<ElasticSearchNodeProxy<Elasticsearch>>;
 
@@ -41,16 +42,15 @@ impl<Proxy: ElasticSearchProxy> BaseElasticSearchNodeQueryExecutor<Proxy> {
 
 #[async_trait]
 impl<Proxy: ElasticSearchProxy> QueryEventsExecutor for BaseElasticSearchNodeQueryExecutor<Proxy> {
-    async fn execute<OutputManaged, FilterOptions>(
+    async fn execute<EventReturn, FilterOptions>(
         &self,
         contract_address: &Address,
         event_identifier: &str,
         options: Option<EventQueryOptions>,
         filters: Option<FilterOptions>,
-    ) -> Result<Vec<EventQueryResult<OutputManaged::Native>>, ExecutorError>
+    ) -> Result<Vec<EventQueryResult<EventReturn>>, ExecutorError>
     where
-        OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync,
-        OutputManaged::Native: Send + Sync,
+        EventReturn: DecodableEvent + Send + Sync,
         FilterOptions: IntoFilterTerms + Send + Sync,
     {
         let proxy = Proxy::new(self.elastic_search_url.clone());
@@ -70,7 +70,7 @@ impl<Proxy: ElasticSearchProxy> QueryEventsExecutor for BaseElasticSearchNodeQue
             )
             .await?;
 
-        let mut event_results: Vec<EventQueryResult<OutputManaged::Native>> = vec![];
+        let mut event_results: Vec<EventQueryResult<EventReturn>> = vec![];
         'outer: for event in events {
             let Some(event_identifier_raw) = event.topics.get(0) else {
                 continue;
@@ -125,14 +125,23 @@ impl<Proxy: ElasticSearchProxy> QueryEventsExecutor for BaseElasticSearchNodeQue
                 decoded_data_bytes.push(bytes);
             }
 
-            let Ok(decoded_event) = OutputManaged::multi_decode(&mut decoded_data_bytes) else {
+            let (topics_bytes, event_data_bytes) = if decoded_data_bytes.len() == 1 {
+                (Vec::new(), decoded_data_bytes.into_iter().next().unwrap())
+            } else {
+                let mut iter = decoded_data_bytes.into_iter();
+                let event_data_bytes = iter.next_back().unwrap(); // Last element
+                let topics_bytes = iter.collect(); // All but last
+                (topics_bytes, event_data_bytes)
+            };
+
+            let Ok(decoded_event) = EventReturn::decode_event(topics_bytes, event_data_bytes) else {
                 return Err(NetworkQueryEventsError::CannotDeserializeTopicToContractType { topics: data_to_decode }.into())
             };
 
             event_results.push(
                 EventQueryResult {
                     timestamp: event.timestamp,
-                    event: decoded_event.to_native()
+                    event: decoded_event
                 }
             )
         }

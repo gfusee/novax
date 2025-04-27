@@ -108,7 +108,9 @@ pub use utils::transaction::normalization::NormalizationInOut;
 pub use utils::events::query_result::EventQueryResult;
 pub use utils::events::query_events_options::*;
 pub use utils::events::into_filter_terms::IntoFilterTerms;
+pub use utils::events::decodable_event::DecodableEvent;
 
 pub use multiversx_sc_scenario::ScenarioWorld;
 pub use multiversx_sc_scenario::scenario_model::{ScCallStep, ScDeployStep, ScQueryStep, SetStateStep, Account, TxQuery, TxResponse, TypedScDeploy, TypedScQuery, TypedResponse};
 pub use multiversx_sc::codec::TopDecodeMulti;
+pub use multiversx_sc::imports::DecodeError;

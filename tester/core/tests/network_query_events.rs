@@ -1,4 +1,4 @@
-use novax::tester::tester::EventWithOnlyData;
+use novax::tester::tester::{EventWithMultiValueEncodedEventQueryResult, EventWithOnlyData};
 use novax::tester::tester::EventWithOnlyDataEventQueryResult;
 use async_trait::async_trait;
 use novax::errors::NovaXError;
@@ -12,7 +12,7 @@ use std::sync::Arc;
 use novax::tester::tester::{EmptyEventEventQueryResult, TesterContract};
 
 const TESTER_POOL_CONTRACT_ADDRESS: &str = "erd1qqqqqqqqqqqqqpgqtqfhy99su9xzjjrq59kpzpp25udtc9eq0n4sr90ax6"; // This is an xExchange LP contract on mainnet.
-const TESTER_CONTRACT_ADDRESS: &str = "erd1qqqqqqqqqqqqqpgq6qamu3fk4qtz8fqd8pnw8s5sgzvt4mspg3yskwxvu3"; // This is the tester contrat on devnet.
+const TESTER_CONTRACT_ADDRESS: &str = "erd1qqqqqqqqqqqqqpgqd8jlfyz7sr7unxlagc0e8u2t96pyt5g6g3ysjwje0c"; // This is the tester contrat on devnet.
 
 #[derive(Clone)]
 struct MockElasticSearchClient;
@@ -28,6 +28,8 @@ impl ElasticSearchClient for MockElasticSearchClient {
             panic!("Unexpected index: {}", index);
         };
 
+        println!("{}", query_body.to_string());
+
         let known_requests = [
             Self::query_swaps_no_filter_no_options(),
             Self::query_swaps_no_filter_with_size_option(),
@@ -41,7 +43,8 @@ impl ElasticSearchClient for MockElasticSearchClient {
             Self::query_swaps_with_two_fields_filter_no_options(),
             Self::query_swaps_with_all_fields_filter_and_all_options(),
             Self::query_empty_events_no_filter_no_options(),
-            Self::query_events_with_only_data_no_filter_no_options()
+            Self::query_events_with_only_data_no_filter_no_options(),
+            Self::query_events_with_multi_value_encoded_and_data_no_filter_no_options()
         ];
 
         for (body, response) in known_requests.iter() {
@@ -177,7 +180,7 @@ impl MockElasticSearchClient {
     }
 
     fn query_empty_events_no_filter_no_options() -> (Value, Value) {
-        let query_body = r#"{"query":{"bool":{"filter":[{"match":{"address":"erd1qqqqqqqqqqqqqpgq6qamu3fk4qtz8fqd8pnw8s5sgzvt4mspg3yskwxvu3"}},{"term":{"topics":"656d7074794576656e74"}}]}}}"#;
+        let query_body = r#"{"query":{"bool":{"filter":[{"match":{"address":"erd1qqqqqqqqqqqqqpgqd8jlfyz7sr7unxlagc0e8u2t96pyt5g6g3ysjwje0c"}},{"term":{"topics":"656d7074794576656e74"}}]}}}"#;
 
         let response = r#"{"took":28,"timed_out":false,"_shards":{"total":5,"successful":5,"skipped":0,"failed":0},"hits":{"total":{"value":2,"relation":"eq"},"max_score":0.0,"hits":[{"_index":"events-000001","_id":"529f68b2e497d1b01872a98efd4469d1b429989056fc205cdd010011a2e7a5bd-1-0","_score":0.0,"_source":{"logAddress":"erd1qqqqqqqqqqqqqpgq6qamu3fk4qtz8fqd8pnw8s5sgzvt4mspg3yskwxvu3","identifier":"emitEmptyEvent","address":"erd1qqqqqqqqqqqqqpgq6qamu3fk4qtz8fqd8pnw8s5sgzvt4mspg3yskwxvu3","topics":["656d7074794576656e74"],"shardID":1,"additionalData":[""],"txOrder":0,"uuid":"rGjCHkh5QFWW2K1VTTkiMA==","txHash":"529f68b2e497d1b01872a98efd4469d1b429989056fc205cdd010011a2e7a5bd","order":0,"timestamp":1745249390}},{"_index":"events-000001","_id":"4c206aa3bdda5bbd2eb35650550577fd954cffc64b391fd53085c3baaacdfb46-1-0","_score":0.0,"_source":{"logAddress":"erd1qqqqqqqqqqqqqpgq6qamu3fk4qtz8fqd8pnw8s5sgzvt4mspg3yskwxvu3","identifier":"emitEmptyEvent","address":"erd1qqqqqqqqqqqqqpgq6qamu3fk4qtz8fqd8pnw8s5sgzvt4mspg3yskwxvu3","topics":["656d7074794576656e74"],"shardID":1,"additionalData":[""],"txOrder":0,"uuid":"77f1yI7WSqugNEO_dziobw==","txHash":"4c206aa3bdda5bbd2eb35650550577fd954cffc64b391fd53085c3baaacdfb46","order":0,"timestamp":1745250830}}]}}"#;
 
@@ -188,9 +191,20 @@ impl MockElasticSearchClient {
     }
 
     fn query_events_with_only_data_no_filter_no_options() -> (Value, Value) {
-        let query_body = r#"{"query":{"bool":{"filter":[{"match":{"address":"erd1qqqqqqqqqqqqqpgq6qamu3fk4qtz8fqd8pnw8s5sgzvt4mspg3yskwxvu3"}},{"term":{"topics":"6576656e74576974684f6e6c7944617461"}}]}}}"#;
+        let query_body = r#"{"query":{"bool":{"filter":[{"match":{"address":"erd1qqqqqqqqqqqqqpgqd8jlfyz7sr7unxlagc0e8u2t96pyt5g6g3ysjwje0c"}},{"term":{"topics":"6576656e74576974684f6e6c7944617461"}}]}}}"#;
 
         let response = r#"{"took":6,"timed_out":false,"_shards":{"total":5,"successful":5,"skipped":0,"failed":0},"hits":{"total":{"value":2,"relation":"eq"},"max_score":0.0,"hits":[{"_index":"events-000001","_id":"3b34262f0217745affa0bd4815f9bd7cde1d29e4998494291d4d142b60d8ef11-1-0","_score":0.0,"_source":{"logAddress":"erd1qqqqqqqqqqqqqpgq6qamu3fk4qtz8fqd8pnw8s5sgzvt4mspg3yskwxvu3","identifier":"emitEventWithOnlyData","address":"erd1qqqqqqqqqqqqqpgq6qamu3fk4qtz8fqd8pnw8s5sgzvt4mspg3yskwxvu3","data":"bb6fa113c74ac30ee767aea8d2fa29fdbae24e8e731f3e2930e91ba993a54449000000020230","topics":["6576656e74576974684f6e6c7944617461"],"shardID":1,"txOrder":0,"uuid":"Ws_-RRa5SROwwnpPR64lyw==","additionalData":["bb6fa113c74ac30ee767aea8d2fa29fdbae24e8e731f3e2930e91ba993a54449000000020230"],"txHash":"3b34262f0217745affa0bd4815f9bd7cde1d29e4998494291d4d142b60d8ef11","order":0,"timestamp":1745249372}},{"_index":"events-000001","_id":"5826b45a340fc68f2e39ece57f0d08c71f09220ef3894d65a66b6f6f77ad7137-1-0","_score":0.0,"_source":{"logAddress":"erd1qqqqqqqqqqqqqpgq6qamu3fk4qtz8fqd8pnw8s5sgzvt4mspg3yskwxvu3","identifier":"emitEventWithOnlyData","address":"erd1qqqqqqqqqqqqqpgq6qamu3fk4qtz8fqd8pnw8s5sgzvt4mspg3yskwxvu3","data":"bb6fa113c74ac30ee767aea8d2fa29fdbae24e8e731f3e2930e91ba993a54449000000020235","topics":["6576656e74576974684f6e6c7944617461"],"shardID":1,"additionalData":["bb6fa113c74ac30ee767aea8d2fa29fdbae24e8e731f3e2930e91ba993a54449000000020235"],"txOrder":0,"uuid":"6r-X7ywvQi2XLaW3phKYPQ==","txHash":"5826b45a340fc68f2e39ece57f0d08c71f09220ef3894d65a66b6f6f77ad7137","order":0,"timestamp":1745250848}}]}}"#;
+
+        (
+            Value::from_str(query_body).unwrap(),
+            Value::from_str(response).unwrap(),
+        )
+    }
+
+    fn query_events_with_multi_value_encoded_and_data_no_filter_no_options() -> (Value, Value) {
+        let query_body = r#"{"query":{"bool":{"filter":[{"match":{"address":"erd1qqqqqqqqqqqqqpgqd8jlfyz7sr7unxlagc0e8u2t96pyt5g6g3ysjwje0c"}},{"term":{"topics":"6576656e74576974684d756c746956616c7565456e636f646564"}}]}}}"#;
+
+        let response = r#"{"took":6,"timed_out":false,"_shards":{"total":5,"successful":5,"skipped":0,"failed":0},"hits":{"total":{"value":2,"relation":"eq"},"max_score":0.0,"hits":[{"_index":"events-000001","_id":"4bb80f37b2d2d6fc90217f4c359f40041f8c936eb5fe37f9d0bba6d8d70fc0f9-1-0","_score":0.0,"_source":{"logAddress":"erd1qqqqqqqqqqqqqpgqd8jlfyz7sr7unxlagc0e8u2t96pyt5g6g3ysjwje0c","identifier":"emitEventWithMultiValueEncoded","address":"erd1qqqqqqqqqqqqqpgqd8jlfyz7sr7unxlagc0e8u2t96pyt5g6g3ysjwje0c","data":"05","topics":["6576656e74576974684d756c746956616c7565456e636f646564","01","02","03","04"],"shardID":1,"additionalData":["05"],"txOrder":0,"uuid":"1U_trs0pRKydQelkUBplOA==","txHash":"4bb80f37b2d2d6fc90217f4c359f40041f8c936eb5fe37f9d0bba6d8d70fc0f9","order":0,"timestamp":1745764742}},{"_index":"events-000001","_id":"201be66b1f9e3ab7486fe1d3e090a7ee7cc25669587d7fad102688ced97dddda-1-0","_score":0.0,"_source":{"logAddress":"erd1qqqqqqqqqqqqqpgqd8jlfyz7sr7unxlagc0e8u2t96pyt5g6g3ysjwje0c","identifier":"emitEventWithMultiValueEncoded","address":"erd1qqqqqqqqqqqqqpgqd8jlfyz7sr7unxlagc0e8u2t96pyt5g6g3ysjwje0c","data":"20","topics":["6576656e74576974684d756c746956616c7565456e636f646564","02","04","08","10"],"shardID":1,"additionalData":["20"],"txOrder":0,"uuid":"7GzlQjdbSkWchhoNqDu1IQ==","txHash":"201be66b1f9e3ab7486fe1d3e090a7ee7cc25669587d7fad102688ced97dddda","order":0,"timestamp":1745764766}}]}}"#;
 
         (
             Value::from_str(query_body).unwrap(),
@@ -649,6 +663,46 @@ async fn test_query_events_with_only_data_no_filter_no_options_result() -> Resul
                         address: Address::from_bech32_string("erd1hdh6zy78ftpsaem8465d973flkawyn5wwv0nu2fsayd6nya9g3ysg9k779")?,
                         amount: BigUint::from_str("565").unwrap(),
                     }
+                },
+            }
+        ]
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_query_events_with_multi_value_encoded_and_data_no_filter_no_options_result() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .query_events(executor)
+        .event_with_multi_value_encoded(
+            None,
+            None
+        )
+        .await?;
+
+    let expected_len = 2;
+    assert_eq!(result.len(), expected_len);
+
+    assert_eq!(
+        result,
+        vec![
+            EventQueryResult {
+                timestamp: 1745249372,
+                event: EventWithMultiValueEncodedEventQueryResult {
+                    values: vec![],
+                    data: BigUint::from(0u8)
+                },
+            },
+            EventQueryResult {
+                timestamp: 1745250848,
+                event: EventWithMultiValueEncodedEventQueryResult {
+                    values: vec![],
+                    data: BigUint::from(0u8)
                 },
             }
         ]
