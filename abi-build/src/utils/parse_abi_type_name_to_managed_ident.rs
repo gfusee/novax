@@ -23,6 +23,20 @@ pub(crate) fn parse_abi_type_name_to_managed_ident(abi_type: &str, all_abi_types
         );
     };
 
+    if let Some(sub_types) = parse_multi_type("^multi<(.+)>$", abi_type) {
+        let mut sub_types_idents: Vec<TokenStream> = vec![];
+        for sub_type in &sub_types {
+            let sub_type_ident_to_push = parse_abi_type_name_to_managed_ident(sub_type, all_abi_types, api_generic)?;
+            sub_types_idents.push(sub_type_ident_to_push);
+        }
+
+        let multi_value_ident = format_ident!("MultiValue{}", sub_types.len());
+
+        return Ok(
+            quote! { #multi_value_ident<#(#sub_types_idents), *> }
+        );
+    };
+
     if let Some(sub_types) = parse_multi_type("^variadic<multi<(.+)>>$", abi_type) {
         let variadic_regex = Regex::new(r"^variadic<(.+)>$").unwrap();
         if variadic_regex.is_match(abi_type) {

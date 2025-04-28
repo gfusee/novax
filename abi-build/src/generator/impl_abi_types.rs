@@ -407,52 +407,62 @@ fn impl_abi_struct_type(name: &str, abi_type: &AbiType, all_abi_types: &AbiTypes
 }
 
 // (TokenStream, TokenStream) = (event struct name, event struct impls)
-pub(crate) fn impl_abi_event_struct_type(event_name: &str, native_field_names_and_types: Vec<(String, TokenStream)>) -> Result<(TokenStream, TokenStream), BuildError> {
+pub(crate) fn impl_abi_event_struct_type(event_name: &str, field_names_and_types: Vec<(String, TokenStream)>, has_data: bool) -> Result<(TokenStream, TokenStream), BuildError> {
     let event_name = capitalize_first_letter(&event_name.to_case(Case::Camel));
     let name_ident = format_ident!("{}EventQueryResult", event_name);
 
     let mut fields_impls = vec![];
-    let mut from_tuple_types = vec![];
-    let mut from_tuple_impls = vec![];
+    let mut decodable_event_topics_impls = vec![];
+    let mut decodable_event_data_impls = vec![];
+    let mut decodable_event_self_fields_impls = vec![];
 
-    for (index, (field_name, field_type_ident)) in native_field_names_and_types.iter().enumerate() {
-        let index_ident = Index::from(index);
-        let field_name_ident = format_ident!("{field_name}");
-
-        let field_token = quote! {
-            pub #field_name_ident: #field_type_ident
-        };
-
-        let from_tuple_token = quote! {
-            #field_name_ident: value.#index_ident
-        };
-
-        let tuple_type_token = quote! {
-            #field_type_ident
-        };
-
-        fields_impls.push(field_token);
-        from_tuple_impls.push(from_tuple_token);
-        from_tuple_types.push(tuple_type_token);
-    }
-
-    let from_tuple_type_ident = if from_tuple_types.len() == 1 {
-        let tuple_type_ident = from_tuple_types.get(0).unwrap();
-        let empty_tuple_type_ident = quote! { () };
-
-        quote! {
-            (#tuple_type_ident, #empty_tuple_type_ident)
-        }
+    let native_field_names_and_types_len =  field_names_and_types.len();
+    let last_index = if native_field_names_and_types_len > 0 {
+        native_field_names_and_types_len - 1
     } else {
-        quote! {
-            (#(#from_tuple_types),*)
-        }
+        0 // Not important: the for loop won't be executed
     };
 
-    let from_value_param_ident = if from_tuple_types.is_empty() {
-        format_ident!("_value")
-    } else {
-        format_ident!("value")
+    for (index, (field_name, field_type_ident)) in field_names_and_types.iter().enumerate() {
+        let field_name_ident = format_ident!("{field_name}");
+        let native_field_type_ident = quote! { <#field_type_ident as NativeConvertible>::Native };
+        let decodable_event_field_name_ident = format_ident!("__novax_{field_name}");
+
+        let field_token = quote! {
+            pub #field_name_ident: #native_field_type_ident
+        };
+
+        if has_data && index == last_index {
+            let decodable_event_data_token = quote! {
+                let #decodable_event_field_name_ident = <#field_type_ident>::multi_decode(&mut vec![data])?;
+            };
+
+            decodable_event_data_impls.push(decodable_event_data_token);
+        } else {
+            let decodable_event_topic_token = quote! {
+                let #decodable_event_field_name_ident = <#field_type_ident>::multi_decode(&mut topics)?;
+            };
+
+            decodable_event_topics_impls.push(decodable_event_topic_token);
+        }
+
+        let decodable_event_self_fields_token = quote! {
+            #field_name_ident: #decodable_event_field_name_ident.to_native()
+        };
+
+        decodable_event_self_fields_impls.push(decodable_event_self_fields_token);
+
+        fields_impls.push(field_token);
+    }
+
+    let topics_param_decl = match decodable_event_topics_impls.len() {
+        0 => quote! { _topics: Vec<Vec<u8>> },
+        _ => quote! { mut topics: Vec<Vec<u8>> },
+    };
+
+    let data_param_decl = match decodable_event_data_impls.len() {
+        0 => quote! { _data: Vec<u8> },
+         _ => quote! { data: Vec<u8> },
     };
 
     Ok(
@@ -464,11 +474,16 @@ pub(crate) fn impl_abi_event_struct_type(event_name: &str, native_field_names_an
                     #(#fields_impls),*
                 }
 
-                impl From<#from_tuple_type_ident> for #name_ident {
-                    fn from(#from_value_param_ident: #from_tuple_type_ident) -> Self {
-                        Self {
-                            #(#from_tuple_impls),*
-                        }
+                impl DecodableEvent for #name_ident {
+                    fn decode_event(#topics_param_decl, #data_param_decl) -> Result<Self, DecodeError> {
+                        #(#decodable_event_topics_impls)*
+                        #(#decodable_event_data_impls)*
+
+                        Ok(
+                            Self {
+                                #(#decodable_event_self_fields_impls),*
+                            }
+                        )
                     }
                 }
             }
@@ -485,25 +500,34 @@ pub(crate) fn impl_abi_event_filter_struct_type(event_name: &str, managed_field_
     let mut into_filter_values = vec![];
 
     for (index, (field_name, field_type_ident)) in managed_field_names_and_types.into_iter().enumerate() {
-        let position_ident = Index::from(index + 1); // +1 because the first topic is the event's identifier.
+        let position_ident = Index::from(index + 1); // First topic is the event's identifier
 
         let field_name_ident = format_ident!("{field_name}");
         let self_field_name_ident = format_ident!("self_{field_name_ident}");
         let managed_filter_variable_ident = format_ident!("managed_{field_name_ident}");
-        let managed_encoded_buffer_filter_variable_ident = format_ident!("managed_encoded_buffer_{field_name_ident}");
-        let managed_encoded_bytes_filter_variable_ident = format_ident!("managed_encoded_bytes_{field_name_ident}");
+        let managed_vec_encoded_filter_variable_ident = format_ident!("managed_vec_encoded_{field_name_ident}");
 
         let field_token = quote! {
             pub #field_name_ident: Option<<#field_type_ident as NativeConvertible>::Native>
         };
 
         let into_filter_value_token = quote! {
+            let mut __current_position = #position_ident;
+            while __used_indexes.contains(&__current_position) {
+                __current_position += 1;
+            }
+
             if let Some(#self_field_name_ident) = self.#field_name_ident {
                 let #managed_filter_variable_ident: #field_type_ident = #self_field_name_ident.to_managed();
-                let mut #managed_encoded_buffer_filter_variable_ident = ManagedBuffer::<StaticApi>::new();
-                let _ = #managed_filter_variable_ident.top_encode(&mut #managed_encoded_buffer_filter_variable_ident);
-                let #managed_encoded_bytes_filter_variable_ident = #managed_encoded_buffer_filter_variable_ident.to_boxed_bytes().into_vec();
-                __novax_filter_bytes_terms.push((#managed_encoded_bytes_filter_variable_ident, #position_ident));
+                let mut #managed_vec_encoded_filter_variable_ident = ManagedVec::<StaticApi, ManagedBuffer<StaticApi>>::new();
+                let _ = #managed_filter_variable_ident.multi_encode(&mut #managed_vec_encoded_filter_variable_ident);
+                for __buffer in #managed_vec_encoded_filter_variable_ident.into_iter() {
+                    __novax_filter_bytes_terms.push((__buffer.to_boxed_bytes().into_vec(), __current_position));
+                    __used_indexes.push(__current_position);
+                    __current_position += 1;
+                }
+            } else {
+                __used_indexes.push(__current_position);
             }
         };
 
@@ -523,6 +547,7 @@ pub(crate) fn impl_abi_event_filter_struct_type(event_name: &str, managed_field_
                 impl IntoFilterTerms for #name_ident {
                     fn into_filter_terms(self) -> Vec<(Vec<u8>, u32)> {
                         let mut __novax_filter_bytes_terms = vec![];
+                        let mut __used_indexes = vec![0]; // The first topic is the event's identifier
 
                         #(#into_filter_values)*
 

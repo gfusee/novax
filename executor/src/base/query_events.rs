@@ -1,45 +1,41 @@
 use crate::error::executor::ExecutorError;
+use crate::utils::events::decodable_event::DecodableEvent;
+use crate::utils::events::query_events_options::EventQueryOptions;
 use crate::utils::events::query_result::EventQueryResult;
+use crate::IntoFilterTerms;
 use async_trait::async_trait;
-use multiversx_sc_scenario::multiversx_sc::codec::TopDecodeMulti;
-use novax_data::{Address, NativeConvertible};
-use serde::de::DeserializeOwned;
-use serde::Serialize;
+use novax_data::Address;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use crate::IntoFilterTerms;
-use crate::utils::events::query_events_options::EventQueryOptions;
 
 #[async_trait]
 pub trait QueryEventsExecutor: Send + Sync {
-    async fn execute<OutputManaged, FilterOptions>(
+    async fn execute<EventReturn, FilterOptions>(
         &self,
         contract_address: &Address,
         event_identifier: &str,
         options: Option<EventQueryOptions>,
         filters: Option<FilterOptions>
-    ) -> Result<Vec<EventQueryResult<OutputManaged::Native>>, ExecutorError>
+    ) -> Result<Vec<EventQueryResult<EventReturn>>, ExecutorError>
     where
-        OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync,
-        OutputManaged::Native: Serialize + DeserializeOwned + Send + Sync,
+        EventReturn: DecodableEvent + Send + Sync,
         FilterOptions: IntoFilterTerms + Send + Sync;
 }
 
 #[async_trait]
 impl<T: QueryEventsExecutor> QueryEventsExecutor for Arc<T> {
-    async fn execute<OutputManaged, FilterOptions>(
+    async fn execute<EventReturn, FilterOptions>(
         &self,
         contract_address: &Address,
         event_identifier: &str,
         options: Option<EventQueryOptions>,
         filters: Option<FilterOptions>
-    ) -> Result<Vec<EventQueryResult<OutputManaged::Native>>, ExecutorError>
+    ) -> Result<Vec<EventQueryResult<EventReturn>>, ExecutorError>
     where
-        OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync,
-        OutputManaged::Native: Serialize + DeserializeOwned + Send + Sync,
+        EventReturn: DecodableEvent + Send + Sync,
         FilterOptions: IntoFilterTerms + Send + Sync,
     {
-        T::execute::<OutputManaged, FilterOptions>(
+        T::execute::<EventReturn, FilterOptions>(
             self,
             contract_address,
             event_identifier,
@@ -51,21 +47,20 @@ impl<T: QueryEventsExecutor> QueryEventsExecutor for Arc<T> {
 
 #[async_trait]
 impl<T: QueryEventsExecutor> QueryEventsExecutor for Arc<Mutex<T>> {
-    async fn execute<OutputManaged, FilterOptions>(
+    async fn execute<EventReturn, FilterOptions>(
         &self,
         contract_address: &Address,
         event_identifier: &str,
         options: Option<EventQueryOptions>,
         filters: Option<FilterOptions>
-    ) -> Result<Vec<EventQueryResult<OutputManaged::Native>>, ExecutorError>
+    ) -> Result<Vec<EventQueryResult<EventReturn>>, ExecutorError>
     where
-        OutputManaged: TopDecodeMulti + NativeConvertible + Send + Sync,
-        OutputManaged::Native: Serialize + DeserializeOwned + Send + Sync,
+        EventReturn: DecodableEvent + Send + Sync,
         FilterOptions: IntoFilterTerms + Send + Sync,
     {
         {
             let executor = self.lock().await;
-            executor.execute::<OutputManaged, FilterOptions>(
+            executor.execute::<EventReturn, FilterOptions>(
                 contract_address,
                 event_identifier,
                 options,

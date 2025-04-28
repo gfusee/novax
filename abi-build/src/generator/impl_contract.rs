@@ -605,28 +605,34 @@ fn impl_abi_event_query(
         managed_inputs_idents.push(managed_input);
         native_inputs_idents.push(native_input);
     }
-    let (event_managed_inputs, event_managed_inputs_types, event_native_inputs_types) = impl_event_inputs(&abi_event.inputs, abi_types, &debug_api)?;
+    let event_managed_inputs_types = impl_event_inputs(&abi_event.inputs, abi_types, &debug_api)?;
     let abi_event_field_names = abi_event.inputs
         .clone()
         .into_iter()
         .map(|input| (input.name, input.indexed.unwrap_or_default()))
         .collect::<Vec<_>>();
 
-    let event_indexed_field_managed_names_and_types = abi_event_field_names
+    let event_field_managed_names_and_types_zipped = abi_event_field_names
         .clone()
         .into_iter()
         .zip(event_managed_inputs_types)
+        .collect::<Vec<_>>();
+
+    let event_field_managed_names_and_types = event_field_managed_names_and_types_zipped
+        .clone()
+        .into_iter()
+        .map(|item| (item.0.0, item.1))
+        .collect::<Vec<_>>();
+
+    let event_indexed_field_managed_names_and_types = event_field_managed_names_and_types_zipped
+        .into_iter()
         .filter(|item| item.0.1)
         .map(|item| (item.0.0, item.1))
         .collect::<Vec<_>>();
 
-    let event_field_native_names_and_types = abi_event_field_names
-        .into_iter()
-        .zip(event_native_inputs_types)
-        .map(|item| (item.0.0, item.1))
-        .collect::<Vec<_>>();
+    let has_data = event_indexed_field_managed_names_and_types.len() != event_field_managed_names_and_types.len();
 
-    let (event_return_struct_type, event_return_struct_type_impls) = impl_abi_event_struct_type(event_identifier, event_field_native_names_and_types)?;
+    let (event_return_struct_type, event_return_struct_type_impls) = impl_abi_event_struct_type(event_identifier, event_field_managed_names_and_types.clone(), has_data)?;
     let (event_filters_struct_type, event_filters_struct_type_impls) = impl_abi_event_filter_struct_type(event_identifier, event_indexed_field_managed_names_and_types)?;
     let endpoint_query_key = impl_endpoint_key_for_query(event_identifier, "query_events", &vec![]); // TODO
 
@@ -647,7 +653,7 @@ fn impl_abi_event_query(
                 _novax_key,
                 async {
                     let result_native_tuple: Result<std::vec::Vec<EventQueryResult<_>>, _> = self.executor
-                        .execute::<#event_managed_inputs, #event_filters_struct_type>(
+                        .execute::<#event_return_struct_type, #event_filters_struct_type>(
                             &_novax_contract_address,
                             #event_identifier,
                             options,
@@ -738,32 +744,17 @@ fn impl_endpoint_outputs(outputs: &AbiOutputs, abi_types: &AbiTypes, api_generic
     Ok((function_managed_outputs, function_native_outputs))
 }
 
-fn impl_event_inputs(inputs: &AbiEventInputs, abi_types: &AbiTypes, api_generic: &TokenStream) -> Result<(TokenStream, Vec<TokenStream>, Vec<TokenStream>), BuildError> {
+fn impl_event_inputs(inputs: &AbiEventInputs, abi_types: &AbiTypes, api_generic: &TokenStream) -> Result<Vec<TokenStream>, BuildError> {
     let mut managed_outputs_idents: Vec<TokenStream> = vec![];
     let mut native_outputs_idents: Vec<TokenStream> = vec![];
+
     for input in inputs {
         let (managed_output, native_output) = impl_event_input_for_query(input, abi_types, api_generic)?;
         managed_outputs_idents.push(managed_output);
         native_outputs_idents.push(native_output);
     }
 
-    let inputs_len = inputs.len();
-
-    let function_managed_outputs = if inputs.is_empty() {
-        quote! {()}
-    } else if inputs_len == 1 {
-        let multi_value_two_ident = format_ident!("MultiValue2");
-        let ignore_value_ident = format_ident!("IgnoreValue");
-        let managed_output_ident = managed_outputs_idents.first().unwrap();
-
-        quote! {#multi_value_two_ident<#managed_output_ident, #ignore_value_ident>}
-    } else {
-        let multi_value_length = format_ident!("MultiValue{}", inputs_len);
-
-        quote! {#multi_value_length<#(#managed_outputs_idents), *>}
-    };
-
-    Ok((function_managed_outputs, managed_outputs_idents, native_outputs_idents))
+    Ok(managed_outputs_idents)
 }
 
 fn impl_endpoint_inputs(should_include_self: bool, abi_inputs: &AbiInputs, abi_types: &AbiTypes) -> Result<TokenStream, BuildError> {
@@ -870,9 +861,6 @@ fn get_managed_type_for_abi_type(abi_type_name: &str, abi_types: &AbiTypes, api_
             quote! {#managed_type_ident}
         )
     } else {
-        if abi_type_name.starts_with("multi") {
-            panic!("bouhhh");
-        }
         Ok(
             parse_abi_type_name_to_managed_ident(
                 abi_type_name,

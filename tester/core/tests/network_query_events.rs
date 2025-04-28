@@ -1,4 +1,4 @@
-use novax::tester::tester::EventWithOnlyData;
+use novax::tester::tester::{EventWithMultiValueEncodedEventQueryResult, EventWithMultiValueEventFilterOptions, EventWithMultiValueEventQueryResult, EventWithOnlyData};
 use novax::tester::tester::EventWithOnlyDataEventQueryResult;
 use async_trait::async_trait;
 use novax::errors::NovaXError;
@@ -12,7 +12,7 @@ use std::sync::Arc;
 use novax::tester::tester::{EmptyEventEventQueryResult, TesterContract};
 
 const TESTER_POOL_CONTRACT_ADDRESS: &str = "erd1qqqqqqqqqqqqqpgqtqfhy99su9xzjjrq59kpzpp25udtc9eq0n4sr90ax6"; // This is an xExchange LP contract on mainnet.
-const TESTER_CONTRACT_ADDRESS: &str = "erd1qqqqqqqqqqqqqpgq6qamu3fk4qtz8fqd8pnw8s5sgzvt4mspg3yskwxvu3"; // This is the tester contrat on devnet.
+const TESTER_CONTRACT_ADDRESS: &str = "erd1qqqqqqqqqqqqqpgqd8jlfyz7sr7unxlagc0e8u2t96pyt5g6g3ysjwje0c"; // This is the tester contrat on devnet.
 
 #[derive(Clone)]
 struct MockElasticSearchClient;
@@ -39,9 +39,12 @@ impl ElasticSearchClient for MockElasticSearchClient {
             Self::query_swaps_no_filter_with_sort_timestamp_descending_option(),
             Self::query_swaps_with_one_field_filter_no_options(),
             Self::query_swaps_with_two_fields_filter_no_options(),
-            Self::query_swaps_with_all_fields_filter_and_all_options(),
+            Self::query_swaps_with_all_fields_filters_and_all_options(),
             Self::query_empty_events_no_filter_no_options(),
-            Self::query_events_with_only_data_no_filter_no_options()
+            Self::query_events_with_only_data_no_filter_no_options(),
+            Self::query_events_with_multi_value_encoded_and_data_no_filter_no_options(),
+            Self::query_events_with_multi_value_all_fields_filters_no_options(),
+            Self::query_events_with_multi_value_only_multi_value_fields_filters_no_options()
         ];
 
         for (body, response) in known_requests.iter() {
@@ -154,7 +157,7 @@ impl MockElasticSearchClient {
         )
     }
 
-    fn query_swaps_with_all_fields_filter_and_all_options() -> (Value, Value) {
+    fn query_swaps_with_all_fields_filters_and_all_options() -> (Value, Value) {
         let query_body = r#"{"from":0,"size":10,"sort":[{"timestamp":"asc"}],"query":{"bool":{"filter":[{"match":{"address":"erd1qqqqqqqqqqqqqpgqtqfhy99su9xzjjrq59kpzpp25udtc9eq0n4sr90ax6"}},{"term":{"topics":"73776170"}},{"term":{"topics":"5745474c442d613238633539"}},{"term":{"topics":"555344432d333530633465"}},{"term":{"topics":"00000000000000000500d39058120e411e5b4c6e52d1a0781972a67149c67ceb"}},{"term":{"topics":"0dba"}},{"range":{"timestamp":{"gte":"1744986859","lte":"1744986861"}}}]}}}"#;
 
         let response = r#"{"took":23,"timed_out":false,"_shards":{"total":5,"successful":5,"skipped":0,"failed":0},"hits":{"total":{"value":1,"relation":"eq"},"max_score":null,"hits":[{"_index":"events-000001","_id":"6947b73cdc82c67eab1526d36274a5606edb98b66973aa76921f0630b06c78b4-1-11","_score":null,"_source":{"logAddress":"erd1qqqqqqqqqqqqqpgq6wg9syswgy09knrw2tg6q7qew2n8zjwx0n4s377sfe","identifier":"swapTokensFixedOutput","address":"erd1qqqqqqqqqqqqqpgqtqfhy99su9xzjjrq59kpzpp25udtc9eq0n4sr90ax6","data":"00000000000000000500d39058120e411e5b4c6e52d1a0781972a67149c67ceb0000000c5745474c442d6132386335390000000806efca2b9f85e7280000000b555344432d333530633465000000039896800000000701c69a27d6eafb0000000a05e7f164b11b8a72f5a400000005824e12dc3000000000008096900000000000000dba00000000680262ec","topics":["73776170","5745474c442d613238633539","555344432d333530633465","00000000000000000500d39058120e411e5b4c6e52d1a0781972a67149c67ceb","0dba"],"shardID":1,"additionalData":["00000000000000000500d39058120e411e5b4c6e52d1a0781972a67149c67ceb0000000c5745474c442d6132386335390000000806efca2b9f85e7280000000b555344432d333530633465000000039896800000000701c69a27d6eafb0000000a05e7f164b11b8a72f5a400000005824e12dc3000000000008096900000000000000dba00000000680262ec"],"txOrder":0,"uuid":"4DJqRYNYSMWC5fwmV3tLVQ==","txHash":"6947b73cdc82c67eab1526d36274a5606edb98b66973aa76921f0630b06c78b4","order":11,"timestamp":1744986860},"sort":[1744986860000]}]}}"#;
@@ -177,7 +180,7 @@ impl MockElasticSearchClient {
     }
 
     fn query_empty_events_no_filter_no_options() -> (Value, Value) {
-        let query_body = r#"{"query":{"bool":{"filter":[{"match":{"address":"erd1qqqqqqqqqqqqqpgq6qamu3fk4qtz8fqd8pnw8s5sgzvt4mspg3yskwxvu3"}},{"term":{"topics":"656d7074794576656e74"}}]}}}"#;
+        let query_body = r#"{"query":{"bool":{"filter":[{"match":{"address":"erd1qqqqqqqqqqqqqpgqd8jlfyz7sr7unxlagc0e8u2t96pyt5g6g3ysjwje0c"}},{"term":{"topics":"656d7074794576656e74"}}]}}}"#;
 
         let response = r#"{"took":28,"timed_out":false,"_shards":{"total":5,"successful":5,"skipped":0,"failed":0},"hits":{"total":{"value":2,"relation":"eq"},"max_score":0.0,"hits":[{"_index":"events-000001","_id":"529f68b2e497d1b01872a98efd4469d1b429989056fc205cdd010011a2e7a5bd-1-0","_score":0.0,"_source":{"logAddress":"erd1qqqqqqqqqqqqqpgq6qamu3fk4qtz8fqd8pnw8s5sgzvt4mspg3yskwxvu3","identifier":"emitEmptyEvent","address":"erd1qqqqqqqqqqqqqpgq6qamu3fk4qtz8fqd8pnw8s5sgzvt4mspg3yskwxvu3","topics":["656d7074794576656e74"],"shardID":1,"additionalData":[""],"txOrder":0,"uuid":"rGjCHkh5QFWW2K1VTTkiMA==","txHash":"529f68b2e497d1b01872a98efd4469d1b429989056fc205cdd010011a2e7a5bd","order":0,"timestamp":1745249390}},{"_index":"events-000001","_id":"4c206aa3bdda5bbd2eb35650550577fd954cffc64b391fd53085c3baaacdfb46-1-0","_score":0.0,"_source":{"logAddress":"erd1qqqqqqqqqqqqqpgq6qamu3fk4qtz8fqd8pnw8s5sgzvt4mspg3yskwxvu3","identifier":"emitEmptyEvent","address":"erd1qqqqqqqqqqqqqpgq6qamu3fk4qtz8fqd8pnw8s5sgzvt4mspg3yskwxvu3","topics":["656d7074794576656e74"],"shardID":1,"additionalData":[""],"txOrder":0,"uuid":"77f1yI7WSqugNEO_dziobw==","txHash":"4c206aa3bdda5bbd2eb35650550577fd954cffc64b391fd53085c3baaacdfb46","order":0,"timestamp":1745250830}}]}}"#;
 
@@ -188,9 +191,42 @@ impl MockElasticSearchClient {
     }
 
     fn query_events_with_only_data_no_filter_no_options() -> (Value, Value) {
-        let query_body = r#"{"query":{"bool":{"filter":[{"match":{"address":"erd1qqqqqqqqqqqqqpgq6qamu3fk4qtz8fqd8pnw8s5sgzvt4mspg3yskwxvu3"}},{"term":{"topics":"6576656e74576974684f6e6c7944617461"}}]}}}"#;
+        let query_body = r#"{"query":{"bool":{"filter":[{"match":{"address":"erd1qqqqqqqqqqqqqpgqd8jlfyz7sr7unxlagc0e8u2t96pyt5g6g3ysjwje0c"}},{"term":{"topics":"6576656e74576974684f6e6c7944617461"}}]}}}"#;
 
         let response = r#"{"took":6,"timed_out":false,"_shards":{"total":5,"successful":5,"skipped":0,"failed":0},"hits":{"total":{"value":2,"relation":"eq"},"max_score":0.0,"hits":[{"_index":"events-000001","_id":"3b34262f0217745affa0bd4815f9bd7cde1d29e4998494291d4d142b60d8ef11-1-0","_score":0.0,"_source":{"logAddress":"erd1qqqqqqqqqqqqqpgq6qamu3fk4qtz8fqd8pnw8s5sgzvt4mspg3yskwxvu3","identifier":"emitEventWithOnlyData","address":"erd1qqqqqqqqqqqqqpgq6qamu3fk4qtz8fqd8pnw8s5sgzvt4mspg3yskwxvu3","data":"bb6fa113c74ac30ee767aea8d2fa29fdbae24e8e731f3e2930e91ba993a54449000000020230","topics":["6576656e74576974684f6e6c7944617461"],"shardID":1,"txOrder":0,"uuid":"Ws_-RRa5SROwwnpPR64lyw==","additionalData":["bb6fa113c74ac30ee767aea8d2fa29fdbae24e8e731f3e2930e91ba993a54449000000020230"],"txHash":"3b34262f0217745affa0bd4815f9bd7cde1d29e4998494291d4d142b60d8ef11","order":0,"timestamp":1745249372}},{"_index":"events-000001","_id":"5826b45a340fc68f2e39ece57f0d08c71f09220ef3894d65a66b6f6f77ad7137-1-0","_score":0.0,"_source":{"logAddress":"erd1qqqqqqqqqqqqqpgq6qamu3fk4qtz8fqd8pnw8s5sgzvt4mspg3yskwxvu3","identifier":"emitEventWithOnlyData","address":"erd1qqqqqqqqqqqqqpgq6qamu3fk4qtz8fqd8pnw8s5sgzvt4mspg3yskwxvu3","data":"bb6fa113c74ac30ee767aea8d2fa29fdbae24e8e731f3e2930e91ba993a54449000000020235","topics":["6576656e74576974684f6e6c7944617461"],"shardID":1,"additionalData":["bb6fa113c74ac30ee767aea8d2fa29fdbae24e8e731f3e2930e91ba993a54449000000020235"],"txOrder":0,"uuid":"6r-X7ywvQi2XLaW3phKYPQ==","txHash":"5826b45a340fc68f2e39ece57f0d08c71f09220ef3894d65a66b6f6f77ad7137","order":0,"timestamp":1745250848}}]}}"#;
+
+        (
+            Value::from_str(query_body).unwrap(),
+            Value::from_str(response).unwrap(),
+        )
+    }
+
+    fn query_events_with_multi_value_encoded_and_data_no_filter_no_options() -> (Value, Value) {
+        let query_body = r#"{"query":{"bool":{"filter":[{"match":{"address":"erd1qqqqqqqqqqqqqpgqd8jlfyz7sr7unxlagc0e8u2t96pyt5g6g3ysjwje0c"}},{"term":{"topics":"6576656e74576974684d756c746956616c7565456e636f646564"}}]}}}"#;
+
+        let response = r#"{"took":6,"timed_out":false,"_shards":{"total":5,"successful":5,"skipped":0,"failed":0},"hits":{"total":{"value":2,"relation":"eq"},"max_score":0.0,"hits":[{"_index":"events-000001","_id":"4bb80f37b2d2d6fc90217f4c359f40041f8c936eb5fe37f9d0bba6d8d70fc0f9-1-0","_score":0.0,"_source":{"logAddress":"erd1qqqqqqqqqqqqqpgqd8jlfyz7sr7unxlagc0e8u2t96pyt5g6g3ysjwje0c","identifier":"emitEventWithMultiValueEncoded","address":"erd1qqqqqqqqqqqqqpgqd8jlfyz7sr7unxlagc0e8u2t96pyt5g6g3ysjwje0c","data":"05","topics":["6576656e74576974684d756c746956616c7565456e636f646564","01","02","03","04"],"shardID":1,"additionalData":["05"],"txOrder":0,"uuid":"1U_trs0pRKydQelkUBplOA==","txHash":"4bb80f37b2d2d6fc90217f4c359f40041f8c936eb5fe37f9d0bba6d8d70fc0f9","order":0,"timestamp":1745764742}},{"_index":"events-000001","_id":"201be66b1f9e3ab7486fe1d3e090a7ee7cc25669587d7fad102688ced97dddda-1-0","_score":0.0,"_source":{"logAddress":"erd1qqqqqqqqqqqqqpgqd8jlfyz7sr7unxlagc0e8u2t96pyt5g6g3ysjwje0c","identifier":"emitEventWithMultiValueEncoded","address":"erd1qqqqqqqqqqqqqpgqd8jlfyz7sr7unxlagc0e8u2t96pyt5g6g3ysjwje0c","data":"20","topics":["6576656e74576974684d756c746956616c7565456e636f646564","02","04","08","10"],"shardID":1,"additionalData":["20"],"txOrder":0,"uuid":"7GzlQjdbSkWchhoNqDu1IQ==","txHash":"201be66b1f9e3ab7486fe1d3e090a7ee7cc25669587d7fad102688ced97dddda","order":0,"timestamp":1745764766}}]}}"#;
+
+        (
+            Value::from_str(query_body).unwrap(),
+            Value::from_str(response).unwrap(),
+        )
+    }
+
+    fn query_events_with_multi_value_all_fields_filters_no_options() -> (Value, Value) {
+        let query_body = r#"{"query":{"bool":{"filter":[{"match":{"address":"erd1qqqqqqqqqqqqqpgqd8jlfyz7sr7unxlagc0e8u2t96pyt5g6g3ysjwje0c"}},{"term":{"topics":"6576656e74576974684d756c746956616c7565"}},{"term":{"topics":"9fb2d8a743b018eb0539673ecb93f5bc2c653004fe72da7c09016415620971f3"}},{"term":{"topics":"5745474c442d613238633539"}},{"term":{"topics":"555344432d333530633465"}},{"term":{"topics":"0a"}},{"term":{"topics":"01"}},{"term":{"topics":"02"}},{"term":{"topics":"03"}}]}}}"#;
+
+        let response = r#"{"took":5,"timed_out":false,"_shards":{"total":5,"successful":5,"skipped":0,"failed":0},"hits":{"total":{"value":1,"relation":"eq"},"max_score":0.0,"hits":[{"_index":"events-000001","_id":"acb9ee9a4b57500b944283ef2da723ae4817e91edf7ec1fb3dc3502120d3c810-1-0","_score":0.0,"_source":{"logAddress":"erd1qqqqqqqqqqqqqpgqd8jlfyz7sr7unxlagc0e8u2t96pyt5g6g3ysjwje0c","identifier":"emitEventWithMultiValue","address":"erd1qqqqqqqqqqqqqpgqd8jlfyz7sr7unxlagc0e8u2t96pyt5g6g3ysjwje0c","data":"04","topics":["6576656e74576974684d756c746956616c7565","9fb2d8a743b018eb0539673ecb93f5bc2c653004fe72da7c09016415620971f3","5745474c442d613238633539","555344432d333530633465","0a","01","02","03"],"shardID":1,"txOrder":0,"uuid":"8CxRPMYZQQqQiOUeAoK3rg==","additionalData":["04"],"txHash":"acb9ee9a4b57500b944283ef2da723ae4817e91edf7ec1fb3dc3502120d3c810","order":0,"timestamp":1745774258}}]}}"#;
+
+        (
+            Value::from_str(query_body).unwrap(),
+            Value::from_str(response).unwrap(),
+        )
+    }
+
+    fn query_events_with_multi_value_only_multi_value_fields_filters_no_options() -> (Value, Value) {
+        let query_body = r#"{"query":{"bool":{"filter":[{"match":{"address":"erd1qqqqqqqqqqqqqpgqd8jlfyz7sr7unxlagc0e8u2t96pyt5g6g3ysjwje0c"}},{"term":{"topics":"6576656e74576974684d756c746956616c7565"}},{"term":{"topics":"5745474c442d613238633539"}},{"term":{"topics":"555344432d333530633465"}},{"term":{"topics":"01"}},{"term":{"topics":"02"}},{"term":{"topics":"03"}}]}}}"#;
+
+        let response = r#"{"took":14,"timed_out":false,"_shards":{"total":5,"successful":5,"skipped":0,"failed":0},"hits":{"total":{"value":1,"relation":"eq"},"max_score":0.0,"hits":[{"_index":"events-000001","_id":"acb9ee9a4b57500b944283ef2da723ae4817e91edf7ec1fb3dc3502120d3c810-1-0","_score":0.0,"_source":{"logAddress":"erd1qqqqqqqqqqqqqpgqd8jlfyz7sr7unxlagc0e8u2t96pyt5g6g3ysjwje0c","identifier":"emitEventWithMultiValue","address":"erd1qqqqqqqqqqqqqpgqd8jlfyz7sr7unxlagc0e8u2t96pyt5g6g3ysjwje0c","data":"04","topics":["6576656e74576974684d756c746956616c7565","9fb2d8a743b018eb0539673ecb93f5bc2c653004fe72da7c09016415620971f3","5745474c442d613238633539","555344432d333530633465","0a","01","02","03"],"shardID":1,"txOrder":0,"uuid":"8CxRPMYZQQqQiOUeAoK3rg==","additionalData":["04"],"txHash":"acb9ee9a4b57500b944283ef2da723ae4817e91edf7ec1fb3dc3502120d3c810","order":0,"timestamp":1745774258}}]}}"#;
 
         (
             Value::from_str(query_body).unwrap(),
@@ -649,6 +685,158 @@ async fn test_query_events_with_only_data_no_filter_no_options_result() -> Resul
                         address: Address::from_bech32_string("erd1hdh6zy78ftpsaem8465d973flkawyn5wwv0nu2fsayd6nya9g3ysg9k779")?,
                         amount: BigUint::from_str("565").unwrap(),
                     }
+                },
+            }
+        ]
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_query_events_with_multi_value_encoded_no_filter_no_options_result() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .query_events(executor)
+        .event_with_multi_value_encoded(
+            None,
+            None
+        )
+        .await?;
+
+    let expected_len = 2;
+    assert_eq!(result.len(), expected_len);
+
+    assert_eq!(
+        result,
+        vec![
+            EventQueryResult {
+                timestamp: 1745764742,
+                event: EventWithMultiValueEncodedEventQueryResult {
+                    values: vec![
+                        BigUint::from(1u8),
+                        BigUint::from(2u8),
+                        BigUint::from(3u8),
+                        BigUint::from(4u8)
+                    ],
+                    data: BigUint::from(5u8)
+                },
+            },
+            EventQueryResult {
+                timestamp: 1745764766,
+                event: EventWithMultiValueEncodedEventQueryResult {
+                    values: vec![
+                        BigUint::from(2u8),
+                        BigUint::from(4u8),
+                        BigUint::from(8u8),
+                        BigUint::from(16u8)
+                    ],
+                    data: BigUint::from(32u8)
+                },
+            }
+        ]
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_query_events_with_multi_value_all_fields_filters_no_options_result() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .query_events(executor)
+        .event_with_multi_value(
+            None,
+            Some(
+                EventWithMultiValueEventFilterOptions {
+                    first_value: Some(Address::from_bech32_string("erd1n7ed3f6rkqvwkpfevulvhyl4hskx2vqyleed5lqfq9jp2csfw8esg88f5g").unwrap()),
+                    multi_value2: Some(("WEGLD-a28c59".to_string(), "USDC-350c4e".to_string())),
+                    second_value: Some(BigUint::from(10u8)),
+                    values: Some(vec![
+                        BigUint::from(1u8),
+                        BigUint::from(2u8),
+                        BigUint::from(3u8),
+                    ])
+                }
+            )
+        )
+        .await?;
+
+    let expected_len = 1;
+    assert_eq!(result.len(), expected_len);
+
+    assert_eq!(
+        result,
+        vec![
+            EventQueryResult {
+                timestamp: 1745774258,
+                event: EventWithMultiValueEventQueryResult {
+                    first_value: Address::from_bech32_string("erd1n7ed3f6rkqvwkpfevulvhyl4hskx2vqyleed5lqfq9jp2csfw8esg88f5g").unwrap(),
+                    multi_value2: ("WEGLD-a28c59".to_string(), "USDC-350c4e".to_string()),
+                    second_value: BigUint::from(10u8),
+                    values: vec![
+                        BigUint::from(1u8),
+                        BigUint::from(2u8),
+                        BigUint::from(3u8),
+                    ],
+                    data: BigUint::from(4u8)
+                },
+            }
+        ]
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_query_events_with_multi_value_only_multi_value_fields_filters_no_options_result() -> Result<(), NovaXError> {
+    let executor = get_executor();
+
+    let result = TesterContract::new(
+        TESTER_CONTRACT_ADDRESS
+    )
+        .query_events(executor)
+        .event_with_multi_value(
+            None,
+            Some(
+                EventWithMultiValueEventFilterOptions {
+                    first_value: None,
+                    multi_value2: Some(("WEGLD-a28c59".to_string(), "USDC-350c4e".to_string())),
+                    second_value: None,
+                    values: Some(vec![
+                        BigUint::from(1u8),
+                        BigUint::from(2u8),
+                        BigUint::from(3u8),
+                    ])
+                }
+            )
+        )
+        .await?;
+
+    let expected_len = 1;
+    assert_eq!(result.len(), expected_len);
+
+    assert_eq!(
+        result,
+        vec![
+            EventQueryResult {
+                timestamp: 1745774258,
+                event: EventWithMultiValueEventQueryResult {
+                    first_value: Address::from_bech32_string("erd1n7ed3f6rkqvwkpfevulvhyl4hskx2vqyleed5lqfq9jp2csfw8esg88f5g").unwrap(),
+                    multi_value2: ("WEGLD-a28c59".to_string(), "USDC-350c4e".to_string()),
+                    second_value: BigUint::from(10u8),
+                    values: vec![
+                        BigUint::from(1u8),
+                        BigUint::from(2u8),
+                        BigUint::from(3u8),
+                    ],
+                    data: BigUint::from(4u8)
                 },
             }
         ]

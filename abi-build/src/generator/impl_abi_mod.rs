@@ -101,6 +101,7 @@ fn get_mod_imports() -> TokenStream {
         use multiversx_sc_snippets::Interactor;
         use multiversx_sc_scenario::scenario_model::AddressKey;
         use multiversx_sc::api::VMApi;
+        use multiversx_sc::imports::DecodeError;
         use multiversx_sc_scenario::DebugApi;
         use std::sync::Arc;
         use tokio::sync::Mutex;
@@ -111,6 +112,7 @@ fn get_mod_imports() -> TokenStream {
         use novax_executor::QueryEventsExecutor;
         use novax_executor::EventQueryResult;
         use novax_executor::IntoFilterTerms;
+        use novax_executor::DecodableEvent;
         use novax_executor::EventQueryOptions;
         use novax_executor::TokenTransfer;
         use novax_executor::call_result::CallResult;
@@ -125,5 +127,6 @@ fn get_mod_imports() -> TokenStream {
         use multiversx_sc_scenario::imports::Bech32Address;
         use core::marker::PhantomData;
         use multiversx_sc_codec::TopEncodeMulti;
+        use multiversx_sc_codec::TopDecodeMulti;
    }
 }
