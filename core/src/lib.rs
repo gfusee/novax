@@ -65,7 +65,6 @@ pub mod utils;
 // Include the generated client code from the output directory.
 include!(concat!(env!("OUT_DIR"), "/generated_lib.rs"));
 
-pub use multiversx_sdk::data::address::Address as SDKAddress;
 pub use multiversx_sdk::data::vm::VMOutputApi;
 pub use novax_executor::Wallet;
 pub use novax_data::Address;

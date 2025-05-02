@@ -55,7 +55,6 @@ pub mod multisig {
     use multiversx_sc_scenario::scenario_model::TxResponse;
     use multiversx_sc_scenario::ContractInfo;
     use multiversx_sc_scenario::DebugApi;
-    use multiversx_sc_snippets::Interactor;
     use multiversx_sdk::wallet::Wallet;
     use novax_data::Address;
     use novax_data::ManagedConvertible;
@@ -2749,7 +2748,8 @@ pub mod multisig {
         }
     }
     #[doc = r" Derive implementations for the structs."]
-    #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, Clone, Debug)]
+    #[type_abi]
+    #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, Debug)]
     #[doc = r" Represents the managed version of type `#native_name_ident` as defined in the ABI."]
     #[doc = r""]
     #[doc = r" This structure encapsulates fields that have a corresponding managed representation in the smart contract."]
@@ -2839,8 +2839,9 @@ pub mod multisig {
         #[doc = r" This enum encapsulates variants that have a corresponding managed representation in the smart contract."]
         #[doc = r" It's typically used internally for serialization and deserialization to and from the smart contract,"]
         #[doc = r" as well as for other operations that interact directly with the smart contract's ABI."]
+        #[type_abi]
         #[derive(
-            TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, Clone, Debug, ManagedVecItem,
+            TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, Debug, ManagedVecItem,
         )]
         pub enum UserRoleManaged {
             None,
@@ -2921,8 +2922,9 @@ pub mod multisig {
         }
     }
     #[doc = r" Derive implementations for the structs."]
+    #[type_abi]
     #[derive(
-        TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, Clone, Debug, ManagedVecItem,
+        TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, Debug, ManagedVecItem,
     )]
     #[doc = r" Represents the managed version of type `#native_name_ident` as defined in the ABI."]
     #[doc = r""]
@@ -3019,7 +3021,8 @@ pub mod multisig {
         #[doc = r" This enum encapsulates variants that have a corresponding managed representation in the smart contract."]
         #[doc = r" It's typically used internally for serialization and deserialization to and from the smart contract,"]
         #[doc = r" as well as for other operations that interact directly with the smart contract's ABI."]
-        #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, Clone, Debug)]
+        #[type_abi]
+        #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, Debug)]
         pub enum ActionManaged {
             Nothing,
             AddBoardMember(ManagedAddress<StaticApi>),

@@ -11,7 +11,7 @@ repository = "https://github.com/gfusee/novax"
 [dependencies]
 serde = "1.0.188"
 tokio = "1.29.1"
-reqwest = { version = "0.12.4", features = ["json"] }
 http = "1.1.0"
 async-trait = "0.1.73"
+reqwest = { version = "=0.12.9", default-features = false, features = ["rustls-tls"] }
 

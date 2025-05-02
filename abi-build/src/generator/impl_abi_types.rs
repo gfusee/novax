@@ -134,7 +134,7 @@ fn impl_abi_enum_to_discriminant(name: &String, abi_type: &AbiType) -> TokenStre
 
 fn impl_abi_enum_managed_derives(variants: &AbiTypeVariants) -> TokenStream {
     let mut derive_idents: Vec<Ident> = vec![];
-    for derive in ["TopEncode", "TopDecode", "NestedEncode", "NestedDecode", "TypeAbi", "Clone", "Debug"] {
+    for derive in ["TopEncode", "TopDecode", "NestedEncode", "NestedDecode", "Clone", "Debug"] {
         let ident = format_ident!("{}", derive);
         derive_idents.push(ident);
     }
@@ -143,7 +143,10 @@ fn impl_abi_enum_managed_derives(variants: &AbiTypeVariants) -> TokenStream {
         derive_idents.push(format_ident!("{}", "ManagedVecItem"))
     }
 
-    quote! {#[derive(#(#derive_idents), *)]}
+    quote! {
+        #[type_abi]
+        #[derive(#(#derive_idents), *)]
+    }
 }
 
 // (TokenStream, TokenStream) = (managed, native)
@@ -561,7 +564,7 @@ pub(crate) fn impl_abi_event_filter_struct_type(event_name: &str, managed_field_
 
 fn impl_abi_struct_derive(abi_fields: &AbiTypeFields, abi_types: &AbiTypes) -> TokenStream {
     let mut derive_idents: Vec<Ident> = vec![];
-    for derive in ["TopEncode", "TopDecode", "NestedEncode", "NestedDecode", "TypeAbi", "Clone", "Debug"] {
+    for derive in ["TopEncode", "TopDecode", "NestedEncode", "NestedDecode", "Clone", "Debug"] {
         let ident = format_ident!("{}", derive);
         derive_idents.push(ident);
     }
@@ -572,7 +575,10 @@ fn impl_abi_struct_derive(abi_fields: &AbiTypeFields, abi_types: &AbiTypes) -> T
         derive_idents.push(format_ident!("{}", "ManagedVecItem"));
     }
 
-    quote! {#[derive(#(#derive_idents), *)]}
+    quote! {
+        #[type_abi]
+        #[derive(#(#derive_idents), *)]
+    }
 }
 
 fn impl_abi_struct_managed_fields(abi_fields: &AbiTypeFields, abi_types: &AbiTypes) -> Result<TokenStream, BuildError> {

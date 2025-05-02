@@ -83,7 +83,7 @@ impl Wallet {
 
     pub fn get_address(&self) -> Address {
         let public_key = PublicKey::from(&self.0);
-        Address::from(multiversx_sdk::data::address::Address::from(&public_key))
+        Address::from_bytes(*public_key.to_address().as_array())
     }
 
     pub fn sign_transaction(&self, transaction: &SignableTransaction) -> String {

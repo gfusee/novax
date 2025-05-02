@@ -5,7 +5,7 @@ use multiversx_sc::types::ManagedAddress;
 use multiversx_sc_codec::{DecodeError, TopDecode, TopDecodeInput};
 use multiversx_sc_scenario::api::StaticApi;
 use multiversx_sc_scenario::scenario_model::AddressValue;
-use multiversx_sdk::data::address::Address as SDKAddress;
+use multiversx_sdk::data::sdk_address::SdkAddress;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde::de::Error;
 use crate::error::AddressError;
@@ -37,7 +37,7 @@ use crate::types::native::NativeConvertible;
 /// assert_eq!(bech32, "erd1qqqqqqqqqqqqqpgq7ykazrzd905zvnlr88dpfw06677lxe9w0n4suz00uh");
 /// ```
 #[derive(Serialize, Clone, Debug)]
-pub struct Address(SDKAddress);
+pub struct Address(SdkAddress);
 
 impl Default for Address {
     fn default() -> Self {
@@ -69,9 +69,17 @@ impl Address {
     /// let address = Address::from_bech32_string("erd1qqqqqqqqqqqqqpgq7ykazrzd905zvnlr88dpfw06677lxe9w0n4suz00uh").unwrap();
     /// ```
     pub fn from_bech32_string(bech32: &str) -> Result<Address, DataError> {
-        let Ok(address) = SDKAddress::from_bech32_string(bech32) else { return Err(AddressError::InvalidBech32String { invalid_value: bech32.to_string() }.into()) };
+        let Ok((_hrp, dest_address_bytes)) = bech32::decode(bech32) else {
+            return Err(AddressError::InvalidBech32String { invalid_value: bech32.to_string() }.into())
+        };
 
-        Ok(Address(address))
+        if dest_address_bytes.len() != 32 {
+            return Err(AddressError::InvalidBech32String { invalid_value: bech32.to_string() }.into())
+        }
+
+        let dest_address_bytes = <[u8; 32]>::try_from(dest_address_bytes).unwrap();
+
+        Ok(Address(SdkAddress::from_bytes(dest_address_bytes)))
     }
 
     /// Creates an `Address` instance from a byte array.
@@ -88,7 +96,7 @@ impl Address {
     /// let address = Address::from_bytes([0_u8; 32]);
     /// ```
     pub fn from_bytes(bytes: [u8; 32]) -> Address {
-        Address(SDKAddress::from_bytes(bytes))
+        Address(SdkAddress::from_bytes(bytes))
     }
 
     /// Converts the `Address` instance to a Bech32 string representation.
@@ -130,7 +138,7 @@ impl Address {
 
 
 impl Deref for Address {
-    type Target = multiversx_sdk::data::address::Address;
+    type Target = SdkAddress;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -147,7 +155,7 @@ impl<M: ManagedTypeApi> NativeConvertible for ManagedAddress<M> {
     type Native = Address;
 
     fn to_native(&self) -> Self::Native {
-        Address(SDKAddress::from_bytes(self.to_byte_array()))
+        Address(SdkAddress::from_bytes(self.to_byte_array()))
     }
 }
 
@@ -168,7 +176,7 @@ impl ManagedConvertible<ManagedAddress<StaticApi>> for Address {
 impl TopDecode for Address {
     fn top_decode<I>(input: I) -> Result<Self, DecodeError> where I: TopDecodeInput {
         let bytes = ManagedAddress::<StaticApi>::top_decode(input)?.to_byte_array();
-        Ok(Address(SDKAddress::from_bytes(bytes)))
+        Ok(Address(SdkAddress::from_bytes(bytes)))
     }
 }
 
@@ -178,14 +186,14 @@ impl From<&Address> for AddressValue {
     }
 }
 
-impl From<SDKAddress> for Address {
-    fn from(value: SDKAddress) -> Self {
+impl From<SdkAddress> for Address {
+    fn from(value: SdkAddress) -> Self {
         Address::from_bytes(value.to_bytes())
     }
 }
 
-impl From<&SDKAddress> for Address {
-    fn from(value: &SDKAddress) -> Self {
+impl From<&SdkAddress> for Address {
+    fn from(value: &SdkAddress) -> Self {
         Address::from_bytes(value.to_bytes())
     }
 }

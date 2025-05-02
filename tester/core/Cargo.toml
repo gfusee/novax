@@ -11,7 +11,6 @@ license = "GPL-3.0-only"
 [dev-dependencies]
 tokio = "1.30.0"
 hyper = "=1.1.0"
-reqwest = "=0.11.20"
 serde = "1.0.193"
 serde_json = "1.0.108"
 num-bigint = "0.4.3"

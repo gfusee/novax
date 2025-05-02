@@ -1,7 +1,7 @@
 use std::collections::HashMap;
-use multiversx_sdk::data::address::Address;
 use serde::{Deserialize, Serialize};
 use novax::account::AccountInfos;
+use novax::Address;
 use crate::gateway::keys::AddressKeys;
 use crate::world::infos::{ScenarioWorldInfosEsdtTokenAmount, ScenarioWorldInfos};
 
@@ -34,9 +34,9 @@ fn convert_hashmap_address_keys_to_bech32<T>(hashmap: HashMap<[u8; 32], T>) -> H
 #[cfg(test)]
 mod test {
     use std::collections::HashMap;
-    use multiversx_sdk::data::address::Address;
     use num_bigint::BigUint;
     use novax::account::{AccountInfos, AccountInfosAccountData, AccountInfosData};
+    use novax::Address;
     use crate::gateway::keys::{AddressKeys, AddressKeysData};
     use crate::world::serde::{convert_hashmap_address_keys_to_bech32, ScenarioWorldInfosJson};
     use crate::world::infos::{ScenarioWorldInfosEsdtTokenAmount, ScenarioWorldInfos};
