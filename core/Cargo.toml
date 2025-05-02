@@ -1,6 +1,6 @@
 [package]
 name = "novax"
-version = "0.2.4"
+version = "0.2.5"
 edition = "2021"
 license = "GPL-3.0-only"
 readme = "README.md"
@@ -15,8 +15,8 @@ ci = ["novax-abi-build/no-fmt-output"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-novax-data = { path = "../data", version = "0.2.4" }
-novax-executor = { path = "../executor", version = "0.2.4" }
+novax-data = { path = "../data", version = "0.2.5" }
+novax-executor = { path = "../executor", version = "0.2.5" }
 num-bigint = { version = "0.4.3", features = ["serde"] }
 async-trait = "0.1.72"
 serde = "1.0.177"
@@ -30,4 +30,4 @@ multiversx-sc-codec = "=0.22.0"
 reqwest = { version = "=0.12.9", default-features = false, features = ["rustls-tls"] }
 
 [build-dependencies]
-novax-abi-build = { path = "../abi-build", version = "0.2.4" }
+novax-abi-build = { path = "../abi-build", version = "0.2.5" }

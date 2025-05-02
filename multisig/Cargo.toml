@@ -1,6 +1,6 @@
 [package]
 name = "novax-multisig"
-version = "0.2.4"
+version = "0.2.5"
 edition = "2021"
 license = "GPL-3.0-only"
 description = "Utils to interact with multisig contracts using NovaX."
