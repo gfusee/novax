@@ -22,14 +22,12 @@ async-trait = "0.1.72"
 serde = "1.0.177"
 serde_json = "1.0.104"
 tokio = "1.29.1"
-multiversx-sc = "0.52.3"
-multiversx-sc-snippets = "0.52.3"
-multiversx-sdk = "0.4.1"
-multiversx-sc-scenario = "0.52.3"
-multiversx-sc-codec = "0.20.1"
-multiversx-sc-codec-derive = "=0.20.1"
-reqwest = "0.11.18"
-hex = "0.4.3"
+multiversx-sc = "=0.57.1"
+multiversx-sc-snippets = { version = "=0.57.1", default-features = false, features = ["static-tls"] }
+multiversx-sdk = "=0.9.1"
+multiversx-sc-scenario = "=0.57.1"
+multiversx-sc-codec = "=0.22.0"
+reqwest = { version = "=0.12.9", default-features = false, features = ["rustls-tls"] }
 
 [build-dependencies]
 novax-abi-build = { path = "../abi-build", version = "0.2.4" }

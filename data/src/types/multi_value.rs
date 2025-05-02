@@ -10,7 +10,7 @@ macro_rules! multi_value_native_convertible_impl {
                 type Native = ($($name::Native,)+);
 
                 fn to_native(&self) -> Self::Native {
-                    ($((self.0).$n.to_native()),+)
+                    ($((self.as_tuple()).$n.to_native()),+)
                 }
             }
         

@@ -98,7 +98,6 @@ fn get_mod_imports() -> TokenStream {
         use multiversx_sdk::wallet::Wallet;
         use multiversx_sc_codec::Empty;
         use multiversx_sc_scenario::ContractInfo;
-        use multiversx_sc_snippets::Interactor;
         use multiversx_sc_scenario::scenario_model::AddressKey;
         use multiversx_sc::api::VMApi;
         use multiversx_sc::imports::DecodeError;

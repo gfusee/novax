@@ -1,7 +1,7 @@
 use std::str::FromStr;
 use multiversx_sc::imports::{Tx, TxDataFunctionCall, TxEnv, TxFrom, TxGas, TxPayment, TxResultHandler};
 use multiversx_sc::types::ManagedAddress;
-use multiversx_sdk::data::address::Address;
+use multiversx_sdk::data::sdk_address::SdkAddress;
 use num_bigint::BigUint;
 use serde::{de, Deserialize, Serialize, Serializer};
 
@@ -50,7 +50,7 @@ impl<Env, From, Payment, Gas, Data, RH> SendableTransactionConvertible for Tx<En
         RH: TxResultHandler<Env>,
 {
     fn to_sendable_transaction(self) -> SendableTransaction {
-        let receiver = Address::from_bytes(self.to.to_byte_array()).to_bech32_string().unwrap();
+        let receiver = SdkAddress::from_bytes(self.to.to_byte_array()).to_bech32_string().unwrap();
         let egld_value = self.payment
             .clone()
             .into_full_payment_data(&self.env).egld

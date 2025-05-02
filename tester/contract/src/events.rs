@@ -1,7 +1,8 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-#[derive(TopEncode, TopDecode, TypeAbi)]
+#[type_abi]
+#[derive(TopEncode, TopDecode)]
 pub struct EventWithOnlyData<M: ManagedTypeApi> {
     pub address: ManagedAddress<M>,
     pub amount: BigUint<M>

@@ -14,10 +14,10 @@ tokio = "1.30.0"
 novax = { path = "../core", version = "0.2.4" }
 novax-token = { path = "../token", version = "0.2.4" }
 novax-executor = { path = "../executor", version = "0.2.4" }
-multiversx-sc = "0.52.3"
-multiversx-sc-snippets = "0.52.3"
-multiversx-sdk = "0.4.1"
-reqwest = "0.11.18"
+multiversx-sc = "=0.57.1"
+multiversx-sc-snippets = { version = "=0.57.1", default-features = false, features = ["static-tls"] }
+multiversx-sdk = "=0.9.1"
+reqwest = { version = "=0.12.9", default-features = false, features = ["json", "rustls-tls"] }
 serde = "1.0.180"
 serde_json = "1.0.104"
 futures = "0.3.28"

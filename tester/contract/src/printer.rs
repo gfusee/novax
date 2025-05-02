@@ -1,57 +1,66 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode)]
 pub struct TestTokenProperties<M: ManagedTypeApi> {
     pub buffer: ManagedBuffer<M>,
     pub integer: BigUint<M>
 }
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode)]
 pub enum TestEnumProperties<M: ManagedTypeApi> {
     First,
     Second(ManagedBuffer<M>, BigUint<M>),
 }
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode)]
 pub enum TestEnumPropertiesWithFields<M: ManagedTypeApi> {
     First { buffer_value: ManagedBuffer<M>, integer: BigUint<M> },
 }
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode)]
 pub struct CustomStruct<M: ManagedTypeApi> {
     pub first: ManagedBuffer<M>,
     pub second: u64,
     pub third: BigUint<M>
 }
 
-#[derive(TopEncode, TopDecode, TypeAbi)]
+#[type_abi]
+#[derive(TopEncode, TopDecode)]
 pub struct CustomStructWithStructAndVec<M: ManagedTypeApi> {
     pub first: ManagedVec<M, u64>,
     pub second: ManagedVec<M, ManagedBuffer<M>>,
     pub third: CustomStruct<M>
 }
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode)]
 pub enum CustomEnum {
     First,
     Second,
     Third
 }
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode)]
 pub enum CustomEnumWithValues<M: ManagedTypeApi> {
     First(ManagedBuffer<M>, u64, BigUint<M>),
     Second(ManagedVec<M, u64>, ManagedVec<M, ManagedBuffer<M>>, CustomStruct<M>)
 }
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode)]
 pub enum CustomEnumWithFields<M: ManagedTypeApi> {
     First { first_first: ManagedBuffer<M>, first_second: u64, first_third: BigUint<M> },
     Second { second_first: ManagedVec<M, u64>, second_second: ManagedVec<M, ManagedBuffer<M>>, second_third: CustomStruct<M> }
 }
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode)]
 struct CustomStructWithTupleField<M: ManagedTypeApi> {
     pub tuple: (BigUint<M>, ManagedBuffer<M>)
 }

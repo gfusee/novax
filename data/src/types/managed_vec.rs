@@ -1,15 +1,16 @@
+use crate::types::managed::ManagedConvertible;
+use crate::types::native::NativeConvertible;
 use multiversx_sc::api::ManagedTypeApi;
 use multiversx_sc::codec::{NestedEncode, TopEncodeMulti};
 use multiversx_sc::types::{ManagedVec, ManagedVecItem};
 use multiversx_sc_scenario::api::StaticApi;
-use crate::types::managed::ManagedConvertible;
-use crate::types::native::NativeConvertible;
+use std::borrow::Borrow;
 
 impl<M: ManagedTypeApi, T: NativeConvertible + ManagedVecItem> NativeConvertible for ManagedVec<M, T> {
     type Native = Vec<T::Native>;
 
     fn to_native(&self) -> Self::Native {
-        self.into_iter().map(|e| e.to_native()).collect()
+        self.into_iter().map(|e| e.borrow().to_native()).collect()
     }
 }
 
@@ -29,10 +30,10 @@ where
 
 #[cfg(test)]
 mod tests {
-    use multiversx_sc::types::{ManagedBuffer, ManagedVec};
-    use multiversx_sc_scenario::api::StaticApi;
     use crate::types::managed::ManagedConvertible;
     use crate::types::native::NativeConvertible;
+    use multiversx_sc::types::{ManagedBuffer, ManagedVec};
+    use multiversx_sc_scenario::api::StaticApi;
 
     #[test]
     fn test_managed_vec_to_native() {
