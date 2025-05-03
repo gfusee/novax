@@ -3,7 +3,6 @@ use multiversx_sc_scenario::imports::StaticApi;
 use num_bigint::BigUint;
 
 use crate::{ExecutorError, TokenTransfer};
-use crate::error::transaction::TransactionError;
 
 pub enum EgldOrMultiEsdtTransfers {
     Egld(BigUint),
@@ -35,13 +34,19 @@ impl From<EgldOrMultiEsdtTransfers> for EgldOrMultiEsdtPayment<StaticApi> {
 
 pub fn get_egld_or_esdt_transfers(
     egld_value: BigUint,
-    esdt_transfers: Vec<TokenTransfer>
+    mut esdt_transfers: Vec<TokenTransfer>
 ) -> Result<EgldOrMultiEsdtTransfers, ExecutorError> {
     let result = if esdt_transfers.is_empty() {
         EgldOrMultiEsdtTransfers::Egld(egld_value)
     } else {
         if egld_value > BigUint::from(0u8) {
-            return Err(TransactionError::EgldAndEsdtPaymentsDetected.into())
+            esdt_transfers.push(
+                TokenTransfer {
+                    identifier: "EGLD-000000".to_string(),
+                    nonce: 0,
+                    amount: egld_value
+                }
+            )
         }
 
         EgldOrMultiEsdtTransfers::MultiEsdt(esdt_transfers)

@@ -1,7 +1,7 @@
-use num_bigint::BigUint;
-use novax_data::Address;
-use crate::{ExecutorError, SendableTransaction, TokenTransfer};
 use crate::error::transaction::TransactionError;
+use crate::{ExecutorError, SendableTransaction, TokenTransfer};
+use novax_data::Address;
+use num_bigint::BigUint;
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct NormalizationInOut {
@@ -21,15 +21,11 @@ struct TokenPaymentBytes {
 
 impl NormalizationInOut {
     pub fn normalize(mut self) -> Result<NormalizationInOut, ExecutorError> {
-        let esdt_transfers_len = self.esdt_transfers.len();
-
-        if esdt_transfers_len > 0 && self.egld_value > BigUint::from(0u8) {
-            return Err(TransactionError::EgldAndEsdtPaymentsDetected.into());
-        }
+        let mut esdt_transfers_len = self.esdt_transfers.len();
 
         let result = if esdt_transfers_len == 0 {
             self
-        } else if esdt_transfers_len == 1 {
+        } else if esdt_transfers_len == 1 && self.egld_value == BigUint::from(0u8) {
             let transfer = self.esdt_transfers.remove(0);
             let is_fungible = transfer.nonce == 0;
             let encoded_token_payment = encode_transfer(transfer)?;
@@ -74,6 +70,19 @@ impl NormalizationInOut {
                 esdt_transfers: vec![],
             }
         } else {
+            if self.egld_value > BigUint::from(0u8) {
+                self.esdt_transfers.insert(
+                    0,
+                    TokenTransfer {
+                        identifier: "EGLD-000000".to_string(),
+                        nonce: 0,
+                        amount: self.egld_value
+                    }
+                );
+
+                esdt_transfers_len += 1;
+            }
+
             let mut built_in_args: Vec<Vec<u8>> = vec![
                 Address::from_bech32_string(&self.receiver)?.to_bytes().to_vec(),
                 encode_u64(esdt_transfers_len as u64)
@@ -168,10 +177,9 @@ fn encode_transfer(token_transfer: TokenTransfer) -> Result<TokenPaymentBytes, E
 
 #[cfg(test)]
 mod tests {
-    use num_bigint::BigUint;
-    use crate::error::transaction::TransactionError;
-    use crate::{ExecutorError, TokenTransfer};
     use crate::utils::transaction::normalization::NormalizationInOut;
+    use crate::TokenTransfer;
+    use num_bigint::BigUint;
 
     const SENDER: &str = "erd1h4uhy73dev6qrfj7wxsguapzs8632mfwqjswjpsj6kzm2jfrnslqsuduqu";
 
@@ -181,6 +189,7 @@ mod tests {
     const ENDPOINT_NAME: &str = "myEndpoint";
     const ENDPOINT_NAME_HEX: &str = "6d79456e64706f696e74";
 
+    const EGLD_AS_ESDT_NAME_HEX: &str = "45474c442d303030303030";
     const FUNGIBLE_NAME: &str = "WEGLD-abcdef";
     const FUNGIBLE_NAME_HEX: &str = "5745474c442d616263646566";
 
@@ -515,21 +524,55 @@ mod tests {
             sender: SENDER.to_string(),
             receiver: RECEIVER.to_string(),
             function_name: Some(ENDPOINT_NAME.to_string()),
-            arguments: vec![],
-            egld_value: BigUint::from(1u8),
+            arguments: vec![
+                vec![1, 2],
+                vec![3, 4]
+            ],
+            egld_value: BigUint::from(2u8),
             esdt_transfers: vec![
                 TokenTransfer {
                     identifier: FUNGIBLE_NAME.to_string(),
                     nonce: 0,
+                    amount: BigUint::from(10u16),
+                },
+                TokenTransfer {
+                    identifier: NON_FUNGIBLE_NAME.to_string(),
+                    nonce: 1,
                     amount: BigUint::from(100u8),
                 }
             ]
         };
 
-        let result = value.normalize();
+        let result = value.normalize().unwrap();
+        let result_data = result.clone().get_transaction_data();
 
-        let expected: Result<NormalizationInOut, ExecutorError> = Err(TransactionError::EgldAndEsdtPaymentsDetected.into());
+        let expected = NormalizationInOut {
+            sender: SENDER.to_string(),
+            receiver: SENDER.to_string(),
+            function_name: Some("MultiESDTNFTTransfer".to_string()),
+            arguments: vec![
+                hex::decode(RECEIVER_HEX).unwrap(),
+                vec![3],
+                hex::decode(EGLD_AS_ESDT_NAME_HEX).unwrap(),
+                vec![],
+                vec![2],
+                hex::decode(FUNGIBLE_NAME_HEX).unwrap(),
+                vec![],
+                vec![10],
+                hex::decode(NON_FUNGIBLE_NAME_HEX).unwrap(),
+                vec![1],
+                vec![100],
+                hex::decode(ENDPOINT_NAME_HEX).unwrap(),
+                vec![1, 2],
+                vec![3, 4]
+            ],
+            egld_value: BigUint::from(0u8),
+            esdt_transfers: vec![]
+        };
 
-        assert_eq!(result, expected)
+        let expected_data = format!("MultiESDTNFTTransfer@{RECEIVER_HEX}@03@{EGLD_AS_ESDT_NAME_HEX}@@02@{FUNGIBLE_NAME_HEX}@@0a@{NON_FUNGIBLE_NAME_HEX}@01@64@{ENDPOINT_NAME_HEX}@0102@0304");
+
+        assert_eq!(result, expected);
+        assert_eq!(result_data, expected_data);
     }
 }

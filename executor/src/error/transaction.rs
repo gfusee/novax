@@ -4,7 +4,6 @@ use crate::{ExecutorError, TransactionOnNetwork};
 
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub enum TransactionError {
-    EgldAndEsdtPaymentsDetected,
     CannotDeserializeTransactionSendingResponse { response: String },
     ErrorWhileSendingTheTransaction,
     ErrorWhileGettingTransactionOnNetwork { tx_hash: String },
