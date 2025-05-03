@@ -8,11 +8,11 @@ use novax::caching::{CachingDurationStrategy, CachingStrategy};
 use novax::errors::{CachingError, NovaXError};
 
 use crate::date::get_current_timestamp::{get_current_timestamp, GetDuration};
-use crate::redis::client::RedisClient;
+use crate::redis::client::{RedisClient, SingleMultiplexedConnectionRedisClient};
 use crate::redis::error::CachingRedisError;
 use crate::redis::IntoConnectionInfo;
 
-pub type CachingRedis = BaseCachingRedis<redis::Client>;
+pub type CachingRedis = BaseCachingRedis<SingleMultiplexedConnectionRedisClient>;
 
 #[derive(Clone, Debug)]
 pub struct BaseCachingRedis<Client: RedisClient> {
@@ -21,11 +21,11 @@ pub struct BaseCachingRedis<Client: RedisClient> {
 }
 
 impl<Client: RedisClient> BaseCachingRedis<Client> {
-    pub fn new<Info: IntoConnectionInfo>(
+    pub async fn new<Info: IntoConnectionInfo + Send + Sync>(
         info: Info,
         duration_strategy: CachingDurationStrategy
     ) -> Result<Self, CachingRedisError> {
-        let client = Client::open(info)?;
+        let client = Client::open(info).await?;
 
         Ok(
             BaseCachingRedis {
@@ -126,7 +126,7 @@ mod test {
 
     #[async_trait]
     impl RedisClient for MockRedisClient {
-        fn open<Info: IntoConnectionInfo>(_info: Info) -> Result<Self, CachingRedisError> {
+        async fn open<Info: IntoConnectionInfo + Send + Sync>(_info: Info) -> Result<Self, CachingRedisError> {
             Ok(MockRedisClient)
         }
 
@@ -169,7 +169,7 @@ mod test {
 
     #[tokio::test]
     async fn test_get_cache_key_not_found() -> Result<(), NovaXError> {
-        let caching = BaseCachingRedis::<MockRedisClient>::new("", CachingDurationStrategy::EachBlock).unwrap();
+        let caching = BaseCachingRedis::<MockRedisClient>::new("", CachingDurationStrategy::EachBlock).await.unwrap();
         let key = 1;
 
         let result = caching.get_cache::<()>(key).await?;
@@ -181,7 +181,7 @@ mod test {
 
     #[tokio::test]
     async fn test_get_cache_key_found() -> Result<(), NovaXError> {
-        let caching = BaseCachingRedis::<MockRedisClient>::new("", CachingDurationStrategy::EachBlock).unwrap();
+        let caching = BaseCachingRedis::<MockRedisClient>::new("", CachingDurationStrategy::EachBlock).await.unwrap();
         let key = 2;
 
         let result = caching.get_cache::<Vec<u8>>(key).await?;
@@ -193,7 +193,7 @@ mod test {
 
     #[tokio::test]
     async fn test_set_cache() -> Result<(), NovaXError> {
-        let caching = BaseCachingRedis::<MockRedisClient>::new("", CachingDurationStrategy::EachBlock).unwrap();
+        let caching = BaseCachingRedis::<MockRedisClient>::new("", CachingDurationStrategy::EachBlock).await.unwrap();
         let key = 1;
         let value = "test".to_string();
 
@@ -205,7 +205,7 @@ mod test {
     #[tokio::test]
     async fn test_set_cache_start_of_block() -> Result<(), NovaXError> {
         set_mock_time(Duration::from_secs(0));
-        let caching = BaseCachingRedis::<MockRedisClient>::new("", CachingDurationStrategy::EachBlock).unwrap();
+        let caching = BaseCachingRedis::<MockRedisClient>::new("", CachingDurationStrategy::EachBlock).await.unwrap();
         let key = 2;
         let value = "test".to_string();
 
@@ -217,7 +217,7 @@ mod test {
     #[tokio::test]
     async fn test_set_cache_next_block() -> Result<(), NovaXError> {
         set_mock_time(Duration::from_secs(3));
-        let caching = BaseCachingRedis::<MockRedisClient>::new("", CachingDurationStrategy::EachBlock).unwrap();
+        let caching = BaseCachingRedis::<MockRedisClient>::new("", CachingDurationStrategy::EachBlock).await.unwrap();
         let key = 3;
         let value = "test".to_string();
 
@@ -228,7 +228,7 @@ mod test {
 
     #[tokio::test]
     async fn test_get_and_set_cache_key_not_found() -> Result<(), NovaXError> {
-        let caching = BaseCachingRedis::<MockRedisClient>::new("", CachingDurationStrategy::EachBlock).unwrap();
+        let caching = BaseCachingRedis::<MockRedisClient>::new("", CachingDurationStrategy::EachBlock).await.unwrap();
         let key = 1;
 
         let result = caching.get_or_set_cache::<String, _, NovaXError>(key, async {
@@ -244,7 +244,7 @@ mod test {
 
     #[tokio::test]
     async fn test_get_and_set_cache_key_found() -> Result<(), NovaXError> {
-        let caching = BaseCachingRedis::<MockRedisClient>::new("", CachingDurationStrategy::EachBlock).unwrap();
+        let caching = BaseCachingRedis::<MockRedisClient>::new("", CachingDurationStrategy::EachBlock).await.unwrap();
         let key = 2;
 
         let result = caching.get_or_set_cache::<Vec<u8>, _, NovaXError>(key, async {
@@ -260,7 +260,7 @@ mod test {
 
     #[tokio::test]
     async fn test_clear() -> Result<(), NovaXError> {
-        let caching = BaseCachingRedis::<MockRedisClient>::new("", CachingDurationStrategy::EachBlock).unwrap();
+        let caching = BaseCachingRedis::<MockRedisClient>::new("", CachingDurationStrategy::EachBlock).await.unwrap();
 
         caching.clear().await?;
 
