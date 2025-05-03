@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub enum NetworkQueryEventsError {
     ErrorWhileSendingQuery { reason: String },
+    CannotDecodeQueryResponseToJSON { query_response: String },
     ResponseDoesntHaveHitsField { response: String },
     HitDoesntHaveSourceField { hit: String },
     CannotDeserializeHitSource { hit: String, reason: String },
