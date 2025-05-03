@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use crate::error::executor::ExecutorError;
 use crate::error::network_query_events::NetworkQueryEventsError;
 use crate::network::events::models::events::ElasticSearchEvent;
@@ -41,16 +42,19 @@ impl ElasticSearchClient for Elasticsearch {
     }
 
     async fn search(&self, index: &str, query_body: Value) -> Result<Value, ExecutorError> {
-        self
+        let query_response = self
             .search(SearchParts::Index(&[index]))
             .pretty(true)
             .body(query_body)
             .send()
             .await
             .map_err(|err| -> ExecutorError { NetworkQueryEventsError::ErrorWhileSendingQuery { reason: err.to_string() }.into() })?
-            .json::<Value>()
+            .text()
             .await
-            .map_err(|err| -> ExecutorError { NetworkQueryEventsError::ErrorWhileSendingQuery { reason: err.to_string() }.into() })
+            .map_err(|err| -> ExecutorError { NetworkQueryEventsError::ErrorWhileSendingQuery { reason: err.to_string() }.into() })?;
+
+        Value::from_str(&query_response)
+            .map_err(|_| -> ExecutorError { NetworkQueryEventsError::CannotDecodeQueryResponseToJSON { query_response }.into() })
     }
 }
 
