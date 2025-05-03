@@ -34,17 +34,23 @@ impl BlockchainProxy for NetworkBlockchainProxy {
         let json = serde_json::to_string(vm_request)
             .map_err(|_| NetworkQueryError::CannotSerializeVmValuesRequestBody)?;
 
-        let result = Client::new()
+        let result = match Client::new()
             .post(url)
-            .body(json)
+            .body(json.clone())
             .send()
             .await
-            .map_err(|error| NetworkQueryError::ErrorWhileSendingRequest { message: error.to_string() })?;
+        {
+            Ok(result) => result,
+            Err(error) => return Err(NetworkQueryError::ErrorWhileSendingRequest { request_body: json, message: error.to_string() }.into())
+        };
 
-        let text = result
+        let text = match result
             .text()
             .await
-            .map_err(|error| NetworkQueryError::ErrorWhileSendingRequest { message: error.to_string() })?;
+        {
+            Ok(result) => result,
+            Err(error) => return Err(NetworkQueryError::ErrorWhileSendingRequest { request_body: json, message: error.to_string() }.into())
+        };
 
         let response = serde_json::from_str::<VmValuesQueryResponse>(&text)
             .map_err(|_| NetworkQueryError::CannotDeserializeVmValuesResponse)?;

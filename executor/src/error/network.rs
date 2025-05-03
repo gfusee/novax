@@ -12,6 +12,7 @@ pub enum NetworkQueryError {
     /// This error variant is triggered when there is an error while sending a request to the network.
     /// The exact error message is encapsulated in the `message` field.
     ErrorWhileSendingRequest {
+        request_body: String,
         /// Contains a descriptive error message explaining the reason for the failure while sending the request.
         message: String
     },
