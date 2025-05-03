@@ -1,6 +1,6 @@
 [package]
 name = "novax-abi-build"
-version = "0.2.7"
+version = "0.2.8"
 edition = "2021"
 description = "A build-dependency crate for 'nova' which hosts macros and utilities for generating client code based on smart contract ABIs. It facilitates the automated creation of interfaces, types, and implementations for interacting with blockchain contracts."
 license = "GPL-3.0-only"

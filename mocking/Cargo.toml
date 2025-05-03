@@ -1,6 +1,6 @@
 [package]
 name = "novax-mocking"
-version = "0.2.7"
+version = "0.2.8"
 edition = "2021"
 license = "GPL-3.0-only"
 description = "The `novax-mocking` crate is a part of the Nova framework, providing utilities to simulate blockchain environments. It facilitates the creation of a `MockExecutor` and other simulated entities, enabling easy testing and development against smart contract interactions within a controlled, replicated blockchain scenario."
@@ -11,9 +11,9 @@ repository = "https://github.com/gfusee/novax"
 [dependencies]
 num-bigint = "0.4.3"
 tokio = "1.30.0"
-novax = { path = "../core", version = "0.2.7" }
-novax-token = { path = "../token", version = "0.2.7" }
-novax-executor = { path = "../executor", version = "0.2.7" }
+novax = { path = "../core", version = "0.2.8" }
+novax-token = { path = "../token", version = "0.2.8" }
+novax-executor = { path = "../executor", version = "0.2.8" }
 multiversx-sc = "=0.57.1"
 multiversx-sc-snippets = { version = "=0.57.1", default-features = false, features = ["static-tls"] }
 multiversx-sdk = "=0.9.1"
