@@ -1,6 +1,6 @@
 [package]
 name = "tester-contract"
-version = "0.2.10"
+version = "0.2.11"
 authors = ["you"]
 edition = "2021"
 publish = false
