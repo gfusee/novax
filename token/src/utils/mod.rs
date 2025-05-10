@@ -1,6 +1,6 @@
 use crate::error::token::TokenError;
 
-pub(crate) fn parse_identifier(token_identifier: &str) -> Result<(String, u64), TokenError> {
+pub fn parse_identifier(token_identifier: &str) -> Result<(String, u64), TokenError> {
     let parts = token_identifier.split('-').collect::<Vec<&str>>();
     let parts_len = parts.len();
 
