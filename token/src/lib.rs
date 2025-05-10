@@ -7,3 +7,4 @@ pub(crate) mod mock;
 pub(crate) mod utils;
 
 pub use novax_request::gateway::client::GatewayClient;
+pub use crate::utils::parse_identifier;
