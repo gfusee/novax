@@ -21,7 +21,7 @@ pub struct SimulationGatewayRequest {
 
 /// Struct representing the body of a request for transaction simulation, sent to the MultiversX gateway.
 /// This structure is used to simulate transactions via the `/transaction/cost` endpoint.
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct SimulationGatewayRequestBody {
     /// The nonce of the transaction, ensuring transactions are processed in order and exactly once.
@@ -48,6 +48,18 @@ pub struct SimulationGatewayRequestBody {
     /// The identifier of the blockchain network for transaction processing.
     pub chain_id: String,
 
+    /// The guardian address of the sender.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub guardian: Option<String>,
+
+    /// The guardian signature for the transaction. Can be anything such as '00'.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub guardian_signature: Option<String>,
+
     /// The version of the transaction structure/format for network compatibility.
-    pub version: u8
+    pub version: u8,
+
+    /// The options of the transaction
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub options: Option<u8>
 }

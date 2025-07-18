@@ -33,6 +33,21 @@ pub enum GatewayError {
 
     /// This error is thrown when there is a problem parsing the response from a transaction simulation.
     CannotParseSimulationResponse,
+    /// Error that occurs when fetching information for an address from the `/address/{address}/guardian-data` endpoint.
+    CannotFetchAddressGuardianData {
+        /// The blockchain address for which the information fetch operation failed.
+        address: String
+    },
+    /// Represents an error when parsing the address's guardian information fetched from the gateway.
+    CannotParseAddressGuardianData {
+        /// The blockchain address whose information encountered a parsing error.
+        address: String
+    },
+    /// Indicates that no data was available for the requested address's guardian information.
+    NoDataForAddressGuardianData {
+        /// The blockchain address for which the gateway's response lacked necessary details.
+        address: String
+    },
 }
 
 impl From<GatewayError> for ExecutorError {
