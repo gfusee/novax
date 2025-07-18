@@ -12,7 +12,7 @@ use novax_request::gateway::client::GatewayClient;
 use crate::{ExecutorError, GatewayError, SimulationError, SimulationGatewayRequest, SimulationGatewayResponse, TransactionExecutor, TransactionOnNetwork, TransactionOnNetworkTransaction, TransactionOnNetworkTransactionSmartContractResult};
 use crate::call_result::CallResult;
 use crate::network::models::simulate::request::SimulationGatewayRequestBody;
-use crate::network::utils::address::get_address_info;
+use crate::network::utils::address::{get_address_guardian_data, get_address_info};
 use crate::network::utils::network::get_network_config;
 use crate::utils::transaction::normalization::NormalizationInOut;
 use crate::utils::transaction::results::{find_sc_error, find_smart_contract_result};
@@ -61,14 +61,37 @@ impl<Client: GatewayClient> BaseSimulationNetworkExecutor<Client> {
 
         let (
             address_info,
+            address_guardian_data,
             network_config
         ) = join!(
-            get_address_info(&self.client, sender_address),
+            get_address_info(&self.client, sender_address.clone()),
+            get_address_guardian_data(&self.client, sender_address),
             get_network_config(&self.client)
         );
 
         let address_info = address_info?.account;
+        let address_guardian_data = address_guardian_data?;
         let network_config = network_config?.config;
+        
+        // See https://github.com/multiversx/mx-chain-go/issues/7054
+        let (guardian, guardian_signature, version, options) = if address_guardian_data.guardian_data.is_some() {
+            let guardian_data = address_guardian_data.guardian_data.unwrap();
+            
+            if guardian_data.guarded && guardian_data.active_guardian.is_some() {
+                let active_guardian = guardian_data.active_guardian.unwrap();
+
+                (
+                    Some(active_guardian.address),
+                    Some("00".to_string()),
+                    Some(2),
+                    Some(2)
+                )
+            } else {
+                (None, None, None, None)
+            }
+        } else {
+            (None, None, None, None)
+        };
 
         let body = SimulationGatewayRequestBody {
             nonce: address_info.nonce,
@@ -79,10 +102,13 @@ impl<Client: GatewayClient> BaseSimulationNetworkExecutor<Client> {
             gas_limit: data.gas_limit,
             data: base64::engine::general_purpose::STANDARD.encode(data.data),
             chain_id: network_config.erd_chain_id,
-            version: network_config.erd_min_transaction_version,
+            version: version.unwrap_or(network_config.erd_min_transaction_version),
+            guardian,
+            guardian_signature,
+            options
         };
-
-        let Ok((_, Some(text))) = self.client.with_appended_url("/transaction/cost").post(&body).await else {
+        
+        let Ok((_, Some(text))) = self.client.with_appended_url("/transaction/cost?checkSignature=false").post(&body).await else {
             return Err(GatewayError::CannotSimulateTransaction.into())
         };
 

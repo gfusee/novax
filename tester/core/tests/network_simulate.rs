@@ -11,6 +11,7 @@ use tokio::sync::Mutex;
 use novax::Address;
 use novax::errors::NovaXError;
 use novax::executor::{BaseSimulationNetworkExecutor, ExecutorError, SimulationError, SimulationNetworkExecutor, TokenTransfer};
+use novax::pair::pair::PairContract;
 use novax::tester::tester::TesterContract;
 use novax_request::error::request::RequestError;
 use novax_request::gateway::client::GatewayClient;
@@ -18,12 +19,35 @@ use novax_request::gateway::client::GatewayClient;
 mod utils;
 
 const CALLER: &str = "erd1uh67c2lkhyj4vh73akv7jky9sfgvus8awwcj64uju69mmfne5u7q299t7g";
+const GUARDED_CALLER: &str = "erd1n7ed3f6rkqvwkpfevulvhyl4hskx2vqyleed5lqfq9jp2csfw8esg88f5g";
 const TESTER_CONTRACT_ADDRESS: &str = "erd1qqqqqqqqqqqqqpgq7x53hfeg9558dmzjg9lqyfar77z8wrxf5u7qrawwh0";
 const AUTOSCALE_ROUTER_ADDRESS: &str = "erd1qqqqqqqqqqqqqpgqj6lmsyryzqgzxaedrftd33q36mq6u5vtq33sp6p0k6";
+const XEXCHANGE_MAINNET_WEGLD_USDC_PAIR_ADDRESS: &str = "erd1qqqqqqqqqqqqqpgqeel2kumf0r8ffyhth7pqdujjat9nx0862jpsg2pqaq";
 
 fn get_caller_infos() -> (StatusCode, String) {
     let status = StatusCode::OK;
     let data = r#"{"data":{"account":{"address":"erd1uh67c2lkhyj4vh73akv7jky9sfgvus8awwcj64uju69mmfne5u7q299t7g","nonce":5,"balance":"49893375980000000000","username":"","code":"","codeHash":null,"rootHash":null,"codeMetadata":null,"developerReward":"0","ownerAddress":""},"blockInfo":{"nonce":1514622,"hash":"119621492bad699ac2a60ad276720d1735c1d0eebfe70a82498d8a613a22063a","rootHash":"6ba976a765877a1d9183ca270fc0897ff6b23f30411125243394ed39b309a0b1"}},"error":"","code":"successful"}"#.to_string();
+
+    (status, data)
+}
+
+fn get_caller_guardian_data() -> (StatusCode, String) {
+    let status = StatusCode::OK;
+    let data = r#"{"data":{"blockInfo":{"hash":"e0a50f2d11194bbce3afc3eb99d2cb47d33dae2f935010e99faeb092bbb4b8d8","nonce":26110449,"rootHash":"fce4fd21beaa3146f454470c4551a8def9c3ed63a5f0b546bd00253c3feccea3"},"guardianData":{"guarded":false}},"error":"","code":"successful"}"#.to_string();
+    
+    (status, data)
+}
+
+fn get_guarded_caller_infos() -> (StatusCode, String) {
+    let status = StatusCode::OK;
+    let data = r#"{"data":{"account":{"address":"erd1n7ed3f6rkqvwkpfevulvhyl4hskx2vqyleed5lqfq9jp2csfw8esg88f5g","nonce":179,"balance":"664488069288506481","username":"fusee.elrond","code":"","codeHash":null,"rootHash":"kuvckPAaiVgtE67MsL4C7d3Wga+9Cc0DWw86ec96xxc=","codeMetadata":"CAA=","developerReward":"0","ownerAddress":""},"blockInfo":{"nonce":26098120,"hash":"393b1aafda01564391bea7218758482b6af8958c35402b2f5de560621bae3266","rootHash":"f02853d47701e19b8d0f5744774be061caa38e71932445510b96b1ebb8d16e98"}},"error":"","code":"successful"}"#.to_string();
+
+    (status, data)
+}
+
+fn get_guarded_caller_guardian_data() -> (StatusCode, String) {
+    let status = StatusCode::OK;
+    let data = r#"{"data":{"blockInfo":{"hash":"51b5531012fe28ee66a64d8804a8e08ea4eee59895f867a830c140e323c0ef91","nonce":26098114,"rootHash":"c4c7de1602ad24f92f7546a9d601288e71790ba61fecc41b0af2429f78d0241b"},"guardianData":{"activeGuardian":{"activationEpoch":1163,"address":"erd1zcu3trasena34c6excchqs93au4egycn3jcjykdaymjddd5hxwkqny3yhk","serviceUID":"INVISIBLE_GUARDIAN"},"guarded":true}},"error":"","code":"successful"}"#.to_string();
 
     (status, data)
 }
@@ -45,6 +69,13 @@ fn get_return_caller_simulation_data() -> (StatusCode, String) {
 fn get_return_biguint_argument_simulation_data() -> (StatusCode, String) {
     let status = StatusCode::OK;
     let data = r#"{"data":{"txGasUnits":2442787,"returnMessage":"","smartContractResults":{}},"error":"","code":"successful"}"#.to_string();
+
+    (status, data)
+}
+
+fn get_swap_from_guarded_account_simulation_data() -> (StatusCode, String) {
+    let status = StatusCode::OK;
+    let data = r#"{"data":{"txGasUnits":23533204,"returnMessage":"","smartContractResults":{"3beb78e2539f36dbdc0aee36f128c8722f5665cd1f24e257727af7cecc19fa50":{"nonce":0,"value":0,"receiver":"erd1qqqqqqqqqqqqqpgqv0c22xku4vd5ugfh0u53tqufmdkqx5nv2jps8vsccx","sender":"erd1qqqqqqqqqqqqqpgqeel2kumf0r8ffyhth7pqdujjat9nx0862jpsg2pqaq","data":"ESDTTransfer@555344432d633736663166@08@737761704e6f466565416e64466f7277617264@4d45582d343535633537@0000000000000000000000000000000000000000000000000000000000000000","prevTxHash":"292af6eaa23da60211b1d19aceaf2cf335c41625126d9b40f2680881463201f3","originalTxHash":"292af6eaa23da60211b1d19aceaf2cf335c41625126d9b40f2680881463201f3","gasLimit":0,"gasPrice":1000000000,"callType":0,"tokens":["USDC-c76f1f"],"esdtValues":["8"],"operation":"ESDTTransfer","function":"swapNoFeeAndForward"},"65df2e10a502fec9e62eec8b651f5ecae2269b0882ea330edbb5cd16647866bf":{"nonce":180,"value":764667960000000,"receiver":"erd1n7ed3f6rkqvwkpfevulvhyl4hskx2vqyleed5lqfq9jp2csfw8esg88f5g","sender":"erd1qqqqqqqqqqqqqpgqeel2kumf0r8ffyhth7pqdujjat9nx0862jpsg2pqaq","data":"@6f6b@0000000b555344432d63373666316600000000000000000000000241e3","prevTxHash":"292af6eaa23da60211b1d19aceaf2cf335c41625126d9b40f2680881463201f3","originalTxHash":"292af6eaa23da60211b1d19aceaf2cf335c41625126d9b40f2680881463201f3","gasLimit":0,"gasPrice":1000000000,"callType":0,"operation":"transfer","isRefund":true},"6f28819d66335085d82e347c2a0c163bd22268c8e95cf0a3ef936e4a393de17c":{"nonce":0,"value":0,"receiver":"erd1qqqqqqqqqqqqqpgqjsnxqprks7qxfwkcg2m2v9hxkrchgm9akp2segrswt","sender":"erd1qqqqqqqqqqqqqpgqeel2kumf0r8ffyhth7pqdujjat9nx0862jpsg2pqaq","data":"ESDTTransfer@5745474c442d626434643739@746a528800@6465706f7369745377617046656573","prevTxHash":"292af6eaa23da60211b1d19aceaf2cf335c41625126d9b40f2680881463201f3","originalTxHash":"292af6eaa23da60211b1d19aceaf2cf335c41625126d9b40f2680881463201f3","gasLimit":0,"gasPrice":1000000000,"callType":0,"tokens":["WEGLD-bd4d79"],"esdtValues":["500000000000"],"operation":"ESDTTransfer","function":"depositSwapFees"},"794948993cf06e5b731f115dfc07e353e777ba794990c7b69bd65f9b50401d76":{"nonce":0,"value":0,"receiver":"erd1n7ed3f6rkqvwkpfevulvhyl4hskx2vqyleed5lqfq9jp2csfw8esg88f5g","sender":"erd1qqqqqqqqqqqqqpgqeel2kumf0r8ffyhth7pqdujjat9nx0862jpsg2pqaq","data":"ESDTTransfer@555344432d633736663166@41e3","prevTxHash":"292af6eaa23da60211b1d19aceaf2cf335c41625126d9b40f2680881463201f3","originalTxHash":"292af6eaa23da60211b1d19aceaf2cf335c41625126d9b40f2680881463201f3","gasLimit":0,"gasPrice":1000000000,"callType":0,"tokens":["USDC-c76f1f"],"esdtValues":["16867"],"operation":"ESDTTransfer"},"da1ca29e6c866ad47bcd77c8b25a2f8183512e6148d62a3cdfdd4f3032a2250d":{"nonce":0,"value":0,"receiver":"erd1qqqqqqqqqqqqqpgqeel2kumf0r8ffyhth7pqdujjat9nx0862jpsg2pqaq","sender":"erd1n7ed3f6rkqvwkpfevulvhyl4hskx2vqyleed5lqfq9jp2csfw8esg88f5g","data":"swapTokensFixedInput@555344432d633736663166@01","prevTxHash":"292af6eaa23da60211b1d19aceaf2cf335c41625126d9b40f2680881463201f3","originalTxHash":"292af6eaa23da60211b1d19aceaf2cf335c41625126d9b40f2680881463201f3","gasLimit":99521500,"gasPrice":1000000000,"callType":0,"operation":"transfer","function":"swapTokensFixedInput"}},"logs":{"address":"","events":[{"address":"erd1n7ed3f6rkqvwkpfevulvhyl4hskx2vqyleed5lqfq9jp2csfw8esg88f5g","identifier":"ESDTTransfer","topics":["V0VHTEQtYmQ0ZDc5","","A41+pMaAAA==","AAAAAAAAAAAFAM5+q3NpeM6Ukuu/ggbyUurLMzz6VIM="],"data":"","additionalData":null},{"address":"erd1qqqqqqqqqqqqqpgqeel2kumf0r8ffyhth7pqdujjat9nx0862jpsg2pqaq","identifier":"ESDTTransfer","topics":["V0VHTEQtYmQ0ZDc5","","dGpSiAA=","AAAAAAAAAAAFAJQmYAR2h4BkuthCtqYW5rDxdGy9sFU="],"data":"RXhlY3V0ZU9uRGVzdENvbnRleHQ=","additionalData":null},{"address":"erd1qqqqqqqqqqqqqpgqjsnxqprks7qxfwkcg2m2v9hxkrchgm9akp2segrswt","identifier":"depositSwapFees","topics":["ZGVwb3NpdF9zd2FwX2ZlZXNfZXZlbnQ=","AAAAAAAAAAAFAM5+q3NpeM6Ukuu/ggbyUurLMzz6VIM=","iA==","AAAADFdFR0xELWJkNGQ3OQAAAAAAAAAAAAAABXRqUogA"],"data":"","additionalData":null},{"address":"erd1qqqqqqqqqqqqqpgqeel2kumf0r8ffyhth7pqdujjat9nx0862jpsg2pqaq","identifier":"ESDTTransfer","topics":["VVNEQy1jNzZmMWY=","","CA==","AAAAAAAAAAAFAGPwpRrcqxtOITd/KRWDidtsA1JsVIM="],"data":"RXhlY3V0ZU9uRGVzdENvbnRleHQ=","additionalData":null},{"address":"erd1qqqqqqqqqqqqqpgqv0c22xku4vd5ugfh0u53tqufmdkqx5nv2jps8vsccx","identifier":"ESDTLocalBurn","topics":["TUVYLTQ1NWM1Nw==","","TtF3xv5y9+o="],"data":null,"additionalData":null},{"address":"erd1qqqqqqqqqqqqqpgqv0c22xku4vd5ugfh0u53tqufmdkqx5nv2jps8vsccx","identifier":"swapNoFeeAndForward","topics":["c3dhcF9ub19mZWVfYW5kX2ZvcndhcmQ=","TUVYLTQ1NWM1Nw==","AAAAAAAAAAAFAM5+q3NpeM6Ukuu/ggbyUurLMzz6VIM=","BxU="],"data":"AAAAAAAAAAAFAM5+q3NpeM6Ukuu/ggbyUurLMzz6VIMAAAALVVNEQy1jNzZmMWYAAAABCAAAAApNRVgtNDU1YzU3AAAACE7Rd8b+cvfqAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY46SgAAAAAAAAcVAAAAAGh6dSA=","additionalData":null},{"address":"erd1qqqqqqqqqqqqqpgqeel2kumf0r8ffyhth7pqdujjat9nx0862jpsg2pqaq","identifier":"ESDTTransfer","topics":["VVNEQy1jNzZmMWY=","","QeM=","n7LYp0OwGOsFOWc+y5P1vCxlMAT+ctp8CQFkFWIJcfM="],"data":"RGlyZWN0Q2FsbA==","additionalData":null},{"address":"erd1qqqqqqqqqqqqqpgqeel2kumf0r8ffyhth7pqdujjat9nx0862jpsg2pqaq","identifier":"swapTokensFixedInput","topics":["c3dhcA==","V0VHTEQtYmQ0ZDc5","VVNEQy1jNzZmMWY=","n7LYp0OwGOsFOWc+y5P1vCxlMAT+ctp8CQFkFWIJcfM=","BxU="],"data":"n7LYp0OwGOsFOWc+y5P1vCxlMAT+ctp8CQFkFWIJcfMAAAAMV0VHTEQtYmQ0ZDc5AAAABwONfqTGgAAAAAALVVNEQy1jNzZmMWYAAAACQeMAAAAF6NSlEAAAAAAKF3yjYrJIa8l9rwAAAAYBtOecIigAAAAAAY46SgAAAAAAAAcVAAAAAGh6dSA=","additionalData":null},{"address":"erd1qqqqqqqqqqqqqpgqeel2kumf0r8ffyhth7pqdujjat9nx0862jpsg2pqaq","identifier":"completedTxEvent","topics":["KSr26qI9pgIRsdGazq8s8zXEFiUSbZtA8mgIgUYyAfM="],"data":null,"additionalData":null}]}},"error":"","code":"successful"}"#.to_string();
 
     (status, data)
 }
@@ -104,6 +135,12 @@ impl GatewayClient for MockClient {
 
         let result = if url == format!("/address/{CALLER}") {
             get_caller_infos()
+        } else if url == format!("/address/{CALLER}/guardian-data") {
+            get_caller_guardian_data()
+        } else if url == format!("/address/{GUARDED_CALLER}") {
+            get_guarded_caller_infos()
+        } else if url == format!("/address/{GUARDED_CALLER}/guardian-data") {
+            get_guarded_caller_guardian_data()
         } else if url == "/network/config" {
             get_network_config()
         } else {
@@ -126,6 +163,8 @@ impl GatewayClient for MockClient {
             get_autoscale_zap_in_xexchange_two_different_tokens_transaction()
         } else if data == r#"{"nonce":5,"value":"0","receiver":"erd1qqqqqqqqqqqqqpgqj6lmsyryzqgzxaedrftd33q36mq6u5vtq33sp6p0k6","sender":"erd1uh67c2lkhyj4vh73akv7jky9sfgvus8awwcj64uju69mmfne5u7q299t7g","gasPrice":1000000000,"gasLimit":600000000,"data":"RVNEVFRyYW5zZmVyQDU3NDU0NzRjNDQyZDYxMzIzODYzMzUzOUAyNzEwQDdhNjE3MDQ5NmVAMDAwMDAwMDAwMDAwMDAwMDAwMDUwMDU4MTM3MjE0YjBlMTRjMjk0ODYwYTE2YzExMDQyYWE3MWFiYzE3MjA3Y2ViMDAwMDAwMDIwMDAwMDAwYzU3NDU0NzRjNDQyZDYxMzIzODYzMzUzOTAwMDAwMDBiNTU1MzQ0NDMyZDMzMzUzMDYzMzQ2NUBAQDAwMDAwMDBiNTU1MzQ0NDMyZDMzMzUzMDYzMzQ2NTAwMDAwMDAwMDAwMDAwMDAwNTAwNTgxMzcyMTRiMGUxNGMyOTQ4NjBhMTZjMTEwNDJhYTcxYWJjMTcyMDdjZWIwMDAwMDAxNDczNzc2MTcwNTQ2ZjZiNjU2ZTczNDY2OTc4NjU2NDQ5NmU3MDc1NzQwMDAwMDAwMjAwMDAwMDBiNTU1MzQ0NDMyZDMzMzUzMDYzMzQ2NTAwMDAwMDAxMDE=","chainId":"D","version":1}"# {
             get_autoscale_zap_in_error_signaled_in_smart_contract()
+        } else if data == r#"{"nonce":179,"value":"0","receiver":"erd1qqqqqqqqqqqqqpgqeel2kumf0r8ffyhth7pqdujjat9nx0862jpsg2pqaq","sender":"erd1n7ed3f6rkqvwkpfevulvhyl4hskx2vqyleed5lqfq9jp2csfw8esg88f5g","gasPrice":1000000000,"gasLimit":100000000,"data":"RVNEVFRyYW5zZmVyQDU3NDU0NzRjNDQyZDYyNjQzNDY0MzczOUAwMzhkN2VhNGM2ODAwMEA3Mzc3NjE3MDU0NmY2YjY1NmU3MzQ2Njk3ODY1NjQ0OTZlNzA3NTc0QDU1NTM0NDQzMmQ2MzM3MzY2NjMxNjZAMDE=","chainId":"D","guardian":"erd1zcu3trasena34c6excchqs93au4egycn3jcjykdaymjddd5hxwkqny3yhk","guardianSignature":"00","version":2,"options":2}"# {
+            get_swap_from_guarded_account_simulation_data()
         } else {
             unreachable!()
         };
@@ -134,10 +173,10 @@ impl GatewayClient for MockClient {
     }
 }
 
-fn get_executor() -> Arc<Mutex<BaseSimulationNetworkExecutor<MockClient>>> {
+fn get_executor(caller: &str) -> Arc<Mutex<BaseSimulationNetworkExecutor<MockClient>>> {
     let executor = BaseSimulationNetworkExecutor::new(
         MockClient::new(),
-        Address::from_bech32_string(CALLER).unwrap()
+        Address::from_bech32_string(caller).unwrap()
     );
 
     Arc::new(Mutex::new(executor))
@@ -165,7 +204,7 @@ async fn test_debug_network_executor() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_return_caller() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor(CALLER);
 
     let result = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -182,7 +221,7 @@ async fn test_call_return_caller() -> Result<(), NovaXError> {
 
 #[tokio::test]
 async fn test_call_with_biguint_argument() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor(CALLER);
 
     let contract = TesterContract::new(
         TESTER_CONTRACT_ADDRESS
@@ -197,8 +236,45 @@ async fn test_call_with_biguint_argument() -> Result<(), NovaXError> {
 }
 
 #[tokio::test]
+async fn test_swap_from_guarded_account() -> Result<(), NovaXError> {
+    let executor = get_executor(GUARDED_CALLER);
+
+    let result = PairContract::new(XEXCHANGE_MAINNET_WEGLD_USDC_PAIR_ADDRESS)
+        .call(
+            executor,
+            100_000_000
+        )
+        .with_esdt_transfers(
+            &vec![
+                TokenTransfer {
+                    identifier: "WEGLD-bd4d79".to_string(),
+                    nonce: 0,
+                    amount: BigUint::from(10u8).pow(15),
+                }
+            ]
+        )
+        .swap_tokens_fixed_input(
+            &"USDC-c76f1f".to_string(),
+            &BigUint::from(1u8)
+        )
+        .await?
+        .result
+        .unwrap();
+    
+    let expected = novax::pair::pair::EsdtTokenPayment {
+        token_identifier: "USDC-c76f1f".to_string(),
+        token_nonce: 0,
+        amount: BigUint::from_str("16867").unwrap(),
+    };
+    
+    assert_eq!(expected, result);
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_autoscale_swap_and_deposit_transaction() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor(CALLER);
 
     let contract = AutoscaleRouterContract::new(
         AUTOSCALE_ROUTER_ADDRESS
@@ -238,7 +314,7 @@ async fn test_autoscale_swap_and_deposit_transaction() -> Result<(), NovaXError>
 
 #[tokio::test]
 async fn test_autoscale_zap_in_xexchange_two_different_tokens_transaction() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor(CALLER);
 
     let contract = AutoscaleRouterContract::new(
         AUTOSCALE_ROUTER_ADDRESS
@@ -316,7 +392,7 @@ async fn test_autoscale_zap_in_xexchange_two_different_tokens_transaction() -> R
 
 #[tokio::test]
 async fn test_autoscale_zap_in_error_signaled_by_smart_contract() -> Result<(), NovaXError> {
-    let executor = get_executor();
+    let executor = get_executor(CALLER);
 
     let contract = AutoscaleRouterContract::new(
         AUTOSCALE_ROUTER_ADDRESS
