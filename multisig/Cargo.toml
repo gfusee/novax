@@ -1,6 +1,6 @@
 [package]
 name = "novax-multisig"
-version = "0.2.11"
+version = "0.2.12"
 edition = "2021"
 license = "GPL-3.0-only"
 description = "Utils to interact with multisig contracts using NovaX."
@@ -10,9 +10,9 @@ repository = "https://github.com/gfusee/novax"
 
 [dependencies]
 tokio = "1.32.0"
-novax = { path = "../core", version = "0.2.11" }
-novax-data = { path = "../data", version = "0.2.11" }
-novax-executor = { path = "../executor", version = "0.2.11" }
+novax = { path = "../core", version = "0.2.12" }
+novax-data = { path = "../data", version = "0.2.12" }
+novax-executor = { path = "../executor", version = "0.2.12" }
 multiversx-sc = "=0.57.1"
 multiversx-sdk = "=0.9.1"
 multiversx-sc-scenario = "=0.57.1"
